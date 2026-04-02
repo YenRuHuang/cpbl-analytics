@@ -148,13 +148,36 @@ class CpblClient:
         return games
 
     def _parse_game(self, raw: dict, game_sno: int) -> GameData | None:
-        """Parse raw API response into typed GameData."""
-        try:
-            details_raw = json.loads(raw.get("GameDetailJson", "[]"))
-            if not details_raw:
+        """Parse raw API response into typed GameData.
+
+        優先使用 CurtGameDetailJson（對應請求的 gameSno），
+        fallback 到 GameDetailJson 中 GameSno 匹配的項目。
+        """
+        d = None
+
+        # 優先：CurtGameDetailJson 是對應 gameSno 的正確資料
+        curt_json = raw.get("CurtGameDetailJson")
+        if curt_json:
+            try:
+                d = json.loads(curt_json)
+            except (json.JSONDecodeError, TypeError):
+                d = None
+
+        # Fallback：從 GameDetailJson array 中找匹配的 gameSno
+        if d is None:
+            try:
+                details_raw = json.loads(raw.get("GameDetailJson", "[]"))
+                if not details_raw:
+                    return None
+                # 找 GameSno 匹配的，找不到就用第一個
+                d = next(
+                    (g for g in details_raw if g.get("GameSno") == game_sno),
+                    details_raw[0],
+                )
+            except (json.JSONDecodeError, IndexError):
                 return None
-            d = details_raw[0]
-        except (json.JSONDecodeError, IndexError):
+
+        if d is None:
             return None
 
         # Parse game detail
