@@ -48,6 +48,7 @@ class PitchingLine:
     bb: int
     so: int
     hr: int
+    pitch_count: int
 
 
 @dataclass(frozen=True)
@@ -264,6 +265,7 @@ class CpblClient:
                 bb=int(row.get("BasesONBallsCnt", 0) or 0),
                 so=int(row.get("StrikeOutCnt", 0) or 0),
                 hr=int(row.get("HomeRunCnt", 0) or 0),
+                pitch_count=int(row.get("PitchCnt", 0) or 0),
             ))
         return lines
 

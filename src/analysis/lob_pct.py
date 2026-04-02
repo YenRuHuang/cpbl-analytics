@@ -47,20 +47,44 @@ def compute_lob_leaderboard(
     min_ip: float = 5.0,
 ) -> list[LobResult]:
     """計算全聯盟 LOB% 排行。"""
+    # pitcher_box.h 在 CPBL API 中為 None，改從 plate_appearances 反算被安打
     rows = db.execute(text("""
         SELECT
             pb.player_id,
-            REPLACE(pb.player_id, 'cpbl_', '') as player_name,
-            pb.team,
-            COUNT(DISTINCT pb.game_id) as games,
-            SUM(pb.ip) as total_ip,
-            SUM(pb.h) as total_h,
-            SUM(pb.bb) as total_bb,
-            SUM(pb.r) as total_r,
-            SUM(pb.er) as total_er,
-            SUM(pb.hr) as total_hr
+            REPLACE(pb.player_id, 'cpbl_', '') AS player_name,
+            MAX(pb.team) AS team,
+            COUNT(DISTINCT pb.game_id) AS games,
+            SUM(pb.ip) AS total_ip,
+            SUM(pb.r) AS total_r,
+            SUM(pb.er) AS total_er,
+            SUM(pb.hr) AS total_hr,
+            COALESCE(pa_stats.hits, 0) AS total_h,
+            COALESCE(pa_stats.walks, 0) AS total_bb,
+            COALESCE(pa_stats.hbp, 0) AS total_hbp
         FROM pitcher_box pb
         JOIN games g ON pb.game_id = g.game_id
+        LEFT JOIN (
+            SELECT
+                pe.pitcher_id,
+                SUM(CASE WHEN pa.result IN ('single','double','triple','homer') THEN 1 ELSE 0 END) AS hits,
+                SUM(CASE WHEN pa.result = 'walk' THEN 1 ELSE 0 END) AS walks,
+                SUM(CASE WHEN pa.result = 'hit_by_pitch' THEN 1 ELSE 0 END) AS hbp
+            FROM plate_appearances pa
+            JOIN pitch_events pe ON pa.game_id = pe.game_id
+                AND pa.inning = pe.inning
+                AND pa.top_bottom = pe.top_bottom
+                AND pa.pa_seq = pe.pa_seq
+            JOIN games g2 ON pa.game_id = g2.game_id
+            WHERE g2.year = :year
+              AND pe.pitch_seq = (
+                  SELECT MAX(pe2.pitch_seq) FROM pitch_events pe2
+                  WHERE pe2.game_id = pe.game_id
+                    AND pe2.inning = pe.inning
+                    AND pe2.top_bottom = pe.top_bottom
+                    AND pe2.pa_seq = pe.pa_seq
+              )
+            GROUP BY pe.pitcher_id
+        ) pa_stats ON pa_stats.pitcher_id = pb.player_id
         WHERE g.year = :year
         GROUP BY pb.player_id
         HAVING SUM(pb.ip) >= :min_ip
@@ -74,6 +98,7 @@ def compute_lob_leaderboard(
             bb=row.total_bb or 0,
             r=row.total_r or 0,
             hr=row.total_hr or 0,
+            hbp=row.total_hbp or 0,
         )
 
         ip = row.total_ip or 0

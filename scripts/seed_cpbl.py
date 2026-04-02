@@ -246,12 +246,12 @@ def seed_game(db, game_data) -> bool:
         team_name = d.home_team if p.team == "home" else d.away_team
         db.execute(text("""
             INSERT OR REPLACE INTO pitcher_box (game_id, player_id, team, ip,
-                h, r, er, bb, so, hr, source)
-            VALUES (:gid, :pid, :team, :ip, :h, :r, :er, :bb, :so, :hr, 'cpbl')
+                h, r, er, bb, so, hr, pitch_count, source)
+            VALUES (:gid, :pid, :team, :ip, :h, :r, :er, :bb, :so, :hr, :pc, 'cpbl')
         """), {
             "gid": game_id, "pid": player_id, "team": team_name,
             "ip": p.ip, "h": p.h, "r": p.r, "er": p.er,
-            "bb": p.bb, "so": p.so, "hr": p.hr,
+            "bb": p.bb, "so": p.so, "hr": p.hr, "pc": p.pitch_count,
         })
 
     # Insert play-by-play → pitch_events + plate_appearances
