@@ -19,8 +19,9 @@ env/
 !.env.example
 .env.local
 
-# Data directory (except re_matrix.json)
+# Data directory (except DB and re_matrix)
 data/
+!data/cpbl.db
 !data/re_matrix.json
 
 # IDE
