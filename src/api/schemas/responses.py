@@ -57,8 +57,6 @@ class PlayerResponse(BaseModel):
 # ─────────────────────────────────────────────
 
 class LobResponse(BaseModel):
-    """Pitcher LOB% leaderboard entry — mirrors LobResult dataclass."""
-
     player_id: str
     player_name: str
     team: str
@@ -76,8 +74,6 @@ class LobResponse(BaseModel):
 
 
 class BatterLobResponse(BaseModel):
-    """Batter LOB analysis entry."""
-
     player_id: str
     player_name: str
     games: int
@@ -94,8 +90,6 @@ class BatterLobResponse(BaseModel):
 # ─────────────────────────────────────────────
 
 class CountStatsResponse(BaseModel):
-    """Stats for a single count bucket (e.g. '0-0', '2-1')."""
-
     count: str
     pa: int
     result_hit: int
@@ -108,8 +102,6 @@ class CountStatsResponse(BaseModel):
 
 
 class CountSplitResponse(BaseModel):
-    """Full count-split result for one batter."""
-
     player_id: str
     player_name: str
     role: str
@@ -123,13 +115,11 @@ class CountSplitResponse(BaseModel):
 
 
 # ─────────────────────────────────────────────
-# Pitcher Fatigue
+# Pitcher Fatigue — matches FatigueBucket / PitcherFatigueResult
 # ─────────────────────────────────────────────
 
 class FatigueBucketResponse(BaseModel):
-    """Performance stats for a 15-pitch bucket."""
-
-    bucket_label: str          # e.g. "1-15", "16-30"
+    bucket_index: int
     pitch_start: int
     pitch_end: int
     batters_faced: int
@@ -139,33 +129,33 @@ class FatigueBucketResponse(BaseModel):
     ba_against: float | None
     k_pct: float | None
     bb_pct: float | None
+    is_fatigue_point: bool
 
 
 class PitcherFatigueResponse(BaseModel):
-    """Pitcher fatigue curve across pitch count buckets."""
-
     pitcher_id: str
-    name: str
+    year: int
+    total_pitches: int
+    games_analyzed: int
+    overall_ba_against: float | None
+    overall_k_pct: float | None
+    overall_bb_pct: float | None
+    fatigue_threshold_pitch: int | None
     buckets: list[FatigueBucketResponse]
-    fatigue_threshold: int | None    # pitch count where decline detected; None if not found
+    sample_note: str
 
 
 # ─────────────────────────────────────────────
-# Leverage / Clutch
+# Leverage / Clutch — matches LeverageStats
 # ─────────────────────────────────────────────
 
 class LeverageResponse(BaseModel):
-    """Clutch / leverage stats for one batter — mirrors LeverageStats fields."""
-
     player_id: str
     player_name: str
-    team: str | None
     total_pa: int
-    clutch_pa: int               # PA where LI > threshold
+    high_leverage_pa: int
+    high_li_ba: float | None
     overall_ba: float | None
-    clutch_ba: float | None
-    overall_ops: float | None
-    clutch_ops: float | None
-    clutch_score: float | None   # clutch_ba - overall_ba (positive = clutch)
-    leverage_threshold: float
+    clutch_score: float | None
+    high_li_ops: float | None
     sample_note: str

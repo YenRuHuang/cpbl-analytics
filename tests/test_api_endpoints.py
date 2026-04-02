@@ -266,7 +266,7 @@ class TestLobEndpoint:
         assert data == []
 
     def test_lob_pitcher_in_leaderboard(self, client: TestClient) -> None:
-        resp = client.get("/api/analysis/lob?min_ip=0")
+        resp = client.get("/api/analysis/lob?min_ip=0&year=2026")
         data = resp.json()
         player_ids = [e["player_id"] for e in data]
         assert "cpbl_p1" in player_ids
