@@ -97,7 +97,6 @@
               <th class="px-5 py-3 text-left">投手</th>
               <th class="px-5 py-3 text-left">球隊</th>
               <th class="px-5 py-3 text-right cursor-pointer hover:text-white" id="th-lob">LOB% &#8597;</th>
-              <th class="px-5 py-3 text-right cursor-pointer hover:text-white" id="th-era">ERA &#8597;</th>
               <th class="px-5 py-3 text-right cursor-pointer hover:text-white" id="th-ip">局數 &#8597;</th>
               <th class="px-5 py-3 text-right">狀態</th>
             </tr>
@@ -137,7 +136,7 @@
       document.getElementById('tableContainer').classList.add('hidden');
 
       try {
-        const res = await fetch(`${API_BASE}/api/analysis/lob?year=${year}`);
+        const res = await fetch(`${API_BASE}/api/analysis/lob?year=${year}&min_ip=5`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const json = await res.json();
         allData = (json.data || json || []).sort((a, b) => b.lob_pct - a.lob_pct);
@@ -161,16 +160,15 @@
       const teams = ['中信兄弟', '統一獅', '味全龍', '樂天桃猿', '富邦悍將'];
       const names = ['王建民', '陳冠宇', '林子偉', '宋文華', '鄭浩均', '曾仁和', '陳禹勳', '吳俊偉'];
       return names.map((n, i) => ({
-        pitcher_name: n,
+        player_name: n,
         team: teams[i % teams.length],
         lob_pct: 0.55 + Math.random() * 0.35,
-        era: 2.5 + Math.random() * 3,
-        innings_pitched: 60 + Math.random() * 100,
+        ip: 60 + Math.random() * 100,
       }));
     }
 
     function renderChart(data) {
-      const names = data.map(d => d.pitcher_name || d.name || '—');
+      const names = data.map(d => d.player_name || '—');
       const lobs = data.map(d => d.lob_pct || 0);
 
       Plotly.newPlot('lobChart', [
@@ -240,11 +238,10 @@
         statusTd.className = 'px-5 py-3 text-right';
         statusTd.appendChild(statusSpan);
 
-        tr.appendChild(td(d.pitcher_name || d.name || '—', 'l', false, '#ffffff'));
+        tr.appendChild(td(d.player_name || '—', 'l', false, '#ffffff'));
         tr.appendChild(td(d.team || '—', 'l', false, '#9ca3af'));
         tr.appendChild(td((lob * 100).toFixed(1) + '%', 'r', true, '#ffffff'));
-        tr.appendChild(td(d.era != null ? d.era.toFixed(2) : '—', 'r', true, '#d1d5db'));
-        tr.appendChild(td(d.innings_pitched != null ? d.innings_pitched.toFixed(1) : '—', 'r', true, '#d1d5db'));
+        tr.appendChild(td(d.ip != null ? d.ip.toFixed(1) : '—', 'r', true, '#d1d5db'));
         tr.appendChild(statusTd);
         tbody.appendChild(tr);
       });
@@ -257,10 +254,9 @@
     }
 
     document.getElementById('th-lob').addEventListener('click', () => sortTable('lob_pct'));
-    document.getElementById('th-era').addEventListener('click', () => sortTable('era'));
-    document.getElementById('th-ip').addEventListener('click', () => sortTable('innings_pitched'));
+    document.getElementById('th-ip').addEventListener('click', () => sortTable('ip'));
     document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
-    loadData(2026);
+    loadData(2025);
   </script>
 </body>
 </html>

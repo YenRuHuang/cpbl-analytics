@@ -144,27 +144,41 @@
     const API_BASE = window.location.origin;
     let currentData = null;
 
-    // Load pitcher list on page load
+    // Load pitcher list from fatigue endpoint (players table may be empty)
     async function loadPitchers() {
+      const year = document.getElementById('yearSelect').value;
       try {
-        const res = await fetch(`${API_BASE}/api/players?position=pitcher`);
+        const res = await fetch(`${API_BASE}/api/analysis/pitcher-fatigue?year=${year}&min_ip=5`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const pitchers = json.data || json || [];
         const sel = document.getElementById('pitcherSelect');
+        // Clear existing options except the placeholder
+        while (sel.options.length > 1) sel.remove(1);
         pitchers.forEach(p => {
           const opt = document.createElement('option');
-          opt.value = p.player_id || p.id;
-          opt.textContent = (p.player_name || p.name) + (p.team ? ` (${p.team})` : '');
+          opt.value = p.pitcher_id;
+          // Extract display name: remove "cpbl_" prefix
+          const displayName = p.pitcher_id ? p.pitcher_id.replace(/^cpbl_/, '') : '—';
+          const teamLabel = p.team ? ` (${p.team})` : '';
+          opt.textContent = displayName + teamLabel;
           sel.appendChild(opt);
         });
+        if (pitchers.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '無資料（此賽季）';
+          opt.disabled = true;
+          sel.appendChild(opt);
+        }
       } catch (e) {
-        // Fallback: load from fatigue endpoint with demo data
+        // Fallback demo options
         const sel = document.getElementById('pitcherSelect');
+        while (sel.options.length > 1) sel.remove(1);
         const demos = [
-          { value: 'demo-1', label: '王建民 (中信兄弟)' },
-          { value: 'demo-2', label: '陳冠宇 (統一獅)' },
-          { value: 'demo-3', label: '林子偉 (味全龍)' },
+          { value: 'cpbl_王建民', label: '王建民 (中信兄弟)' },
+          { value: 'cpbl_陳冠宇', label: '陳冠宇 (統一獅)' },
+          { value: 'cpbl_林子偉', label: '林子偉 (味全龍)' },
         ];
         demos.forEach(d => {
           const opt = document.createElement('option');
@@ -194,7 +208,7 @@
       document.getElementById('loadingState').classList.remove('hidden');
 
       try {
-        const res = await fetch(`${API_BASE}/api/analysis/pitcher-fatigue?pitcher_id=${pitcherId}&year=${year}`);
+        const res = await fetch(`${API_BASE}/api/analysis/pitcher-fatigue/${encodeURIComponent(pitcherId)}?year=${year}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const json = await res.json();
         currentData = json.data || json;
@@ -341,6 +355,10 @@
         tbody.appendChild(tr);
       });
     }
+
+    document.getElementById('yearSelect').addEventListener('change', () => {
+      loadPitchers();
+    });
 
     loadPitchers();
   </script>

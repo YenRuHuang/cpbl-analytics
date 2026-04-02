@@ -154,18 +154,18 @@
 
     function buildDemoData() {
       const players = [
-        { batter_name: '陳傑憲', team: '統一獅', overall_ba: 0.298, high_lev_ba: 0.341 },
-        { batter_name: '江坤宇', team: '中信兄弟', overall_ba: 0.312, high_lev_ba: 0.285 },
-        { batter_name: '王柏融', team: '樂天桃猿', overall_ba: 0.285, high_lev_ba: 0.310 },
-        { batter_name: '胡金龍', team: '味全龍', overall_ba: 0.260, high_lev_ba: 0.240 },
-        { batter_name: '吳俊良', team: '富邦悍將', overall_ba: 0.275, high_lev_ba: 0.300 },
-        { batter_name: '林安可', team: '中信兄弟', overall_ba: 0.290, high_lev_ba: 0.268 },
-        { batter_name: '高國輝', team: '樂天桃猿', overall_ba: 0.265, high_lev_ba: 0.289 },
-        { batter_name: '周思齊', team: '統一獅', overall_ba: 0.245, high_lev_ba: 0.218 },
-        { batter_name: '陳品捷', team: '味全龍', overall_ba: 0.270, high_lev_ba: 0.295 },
-        { batter_name: '林智勝', team: '富邦悍將', overall_ba: 0.255, high_lev_ba: 0.231 },
-        { batter_name: '朱育賢', team: '中信兄弟', overall_ba: 0.280, high_lev_ba: 0.305 },
-        { batter_name: '蔣少宏', team: '樂天桃猿', overall_ba: 0.235, high_lev_ba: 0.258 },
+        { player_name: '陳傑憲', team: '統一獅', overall_ba: 0.298, high_li_ba: 0.341 },
+        { player_name: '江坤宇', team: '中信兄弟', overall_ba: 0.312, high_li_ba: 0.285 },
+        { player_name: '王柏融', team: '樂天桃猿', overall_ba: 0.285, high_li_ba: 0.310 },
+        { player_name: '胡金龍', team: '味全龍', overall_ba: 0.260, high_li_ba: 0.240 },
+        { player_name: '吳俊良', team: '富邦悍將', overall_ba: 0.275, high_li_ba: 0.300 },
+        { player_name: '林安可', team: '中信兄弟', overall_ba: 0.290, high_li_ba: 0.268 },
+        { player_name: '高國輝', team: '樂天桃猿', overall_ba: 0.265, high_li_ba: 0.289 },
+        { player_name: '周思齊', team: '統一獅', overall_ba: 0.245, high_li_ba: 0.218 },
+        { player_name: '陳品捷', team: '味全龍', overall_ba: 0.270, high_li_ba: 0.295 },
+        { player_name: '林智勝', team: '富邦悍將', overall_ba: 0.255, high_li_ba: 0.231 },
+        { player_name: '朱育賢', team: '中信兄弟', overall_ba: 0.280, high_li_ba: 0.305 },
+        { player_name: '蔣少宏', team: '樂天桃猿', overall_ba: 0.235, high_li_ba: 0.258 },
       ];
       return players;
     }
@@ -178,10 +178,12 @@
       document.getElementById('playerDetail').classList.add('hidden');
 
       try {
-        const res = await fetch(`${API_BASE}/api/analysis/clutch?year=${year}`);
+        const res = await fetch(`${API_BASE}/api/analysis/clutch?year=${year}&min_pa=10`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const json = await res.json();
-        allData = json.data || json || [];
+        const raw = json.data || json || [];
+        // Filter out entries with no high-leverage data
+        allData = raw.filter(d => d.high_li_ba != null);
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('playerCount').textContent = `共 ${allData.length} 名打者`;
       } catch (e) {
@@ -199,18 +201,19 @@
     }
 
     function renderChart(data) {
-      const minBA = Math.min(...data.map(d => Math.min(d.overall_ba, d.high_lev_ba))) - 0.02;
-      const maxBA = Math.max(...data.map(d => Math.max(d.overall_ba, d.high_lev_ba))) + 0.02;
+      if (data.length === 0) return;
+      const minBA = Math.min(...data.map(d => Math.min(d.overall_ba || 0, d.high_li_ba || 0))) - 0.02;
+      const maxBA = Math.max(...data.map(d => Math.max(d.overall_ba || 0, d.high_li_ba || 0))) + 0.02;
 
-      const clutchPlayers = data.filter(d => d.high_lev_ba >= d.overall_ba);
-      const chokePlayers = data.filter(d => d.high_lev_ba < d.overall_ba);
+      const clutchPlayers = data.filter(d => d.high_li_ba >= d.overall_ba);
+      const chokePlayers = data.filter(d => d.high_li_ba < d.overall_ba);
 
       const makePlotData = (players, color, name) => ({
         type: 'scatter',
         mode: 'markers',
         x: players.map(d => d.overall_ba),
-        y: players.map(d => d.high_lev_ba),
-        text: players.map(d => d.batter_name || d.name || '—'),
+        y: players.map(d => d.high_li_ba),
+        text: players.map(d => d.player_name || '—'),
         customdata: players,
         name: name,
         marker: { color: color, size: 9, opacity: 0.85, line: { color: '#141920', width: 1 } },
@@ -264,15 +267,15 @@
         const pt = evt.points[0];
         if (!pt || !pt.customdata) return;
         const d = pt.customdata;
-        const diff = (d.high_lev_ba - d.overall_ba);
+        const diff = (d.high_li_ba - d.overall_ba);
         const isClutch = diff >= 0;
 
-        document.getElementById('detailName').textContent = d.batter_name || d.name || '—';
+        document.getElementById('detailName').textContent = d.player_name || '—';
         document.getElementById('detailTeam').textContent = d.team || '—';
-        document.getElementById('detailBA').textContent = d.overall_ba.toFixed(3);
+        document.getElementById('detailBA').textContent = (d.overall_ba || 0).toFixed(3);
 
         const hlEl = document.getElementById('detailHighLevBA');
-        hlEl.textContent = d.high_lev_ba.toFixed(3);
+        hlEl.textContent = (d.high_li_ba || 0).toFixed(3);
         hlEl.style.color = isClutch ? '#4ade80' : '#f87171';
 
         const diffEl = document.getElementById('detailDiff');
@@ -285,7 +288,7 @@
 
     function renderTable(data) {
       const sorted = [...data].sort((a, b) => {
-        const da = (b.high_lev_ba - b.overall_ba) - (a.high_lev_ba - a.overall_ba);
+        const da = (b.high_li_ba - b.overall_ba) - (a.high_li_ba - a.overall_ba);
         return da;
       });
 
@@ -293,7 +296,7 @@
       tbody.replaceChildren();
 
       sorted.forEach((d, i) => {
-        const diff = d.high_lev_ba - d.overall_ba;
+        const diff = d.high_li_ba - d.overall_ba;
         const isClutch = diff >= 0;
         const tr = document.createElement('tr');
         tr.className = (i % 2 === 0 ? '' : 'bg-white/[0.02]') +
@@ -302,10 +305,10 @@
         tr.addEventListener('click', () => {
           const hlEl = document.getElementById('detailHighLevBA');
           const diffEl = document.getElementById('detailDiff');
-          document.getElementById('detailName').textContent = d.batter_name || d.name || '—';
+          document.getElementById('detailName').textContent = d.player_name || '—';
           document.getElementById('detailTeam').textContent = d.team || '—';
-          document.getElementById('detailBA').textContent = d.overall_ba.toFixed(3);
-          hlEl.textContent = d.high_lev_ba.toFixed(3);
+          document.getElementById('detailBA').textContent = (d.overall_ba || 0).toFixed(3);
+          hlEl.textContent = (d.high_li_ba || 0).toFixed(3);
           hlEl.style.color = isClutch ? '#4ade80' : '#f87171';
           diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(3);
           diffEl.style.color = isClutch ? '#4ade80' : '#f87171';
@@ -330,10 +333,10 @@
         badge.textContent = isClutch ? '關鍵強打' : '壓力下滑';
         badgeTd.appendChild(badge);
 
-        tr.appendChild(td(d.batter_name || d.name || '—', 'l', false, '#ffffff'));
+        tr.appendChild(td(d.player_name || '—', 'l', false, '#ffffff'));
         tr.appendChild(td(d.team || '—', 'l', false, '#9ca3af'));
-        tr.appendChild(td(d.overall_ba.toFixed(3), 'r', true, '#d1d5db'));
-        tr.appendChild(td(d.high_lev_ba.toFixed(3), 'r', true, isClutch ? '#4ade80' : '#f87171'));
+        tr.appendChild(td((d.overall_ba || 0).toFixed(3), 'r', true, '#d1d5db'));
+        tr.appendChild(td((d.high_li_ba || 0).toFixed(3), 'r', true, isClutch ? '#4ade80' : '#f87171'));
         tr.appendChild(td((diff >= 0 ? '+' : '') + diff.toFixed(3), 'r', true, isClutch ? '#4ade80' : '#f87171'));
         tr.appendChild(badgeTd);
         tbody.appendChild(tr);
@@ -341,7 +344,7 @@
     }
 
     document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
-    loadData(2026);
+    loadData(2025);
   </script>
 </body>
 </html>

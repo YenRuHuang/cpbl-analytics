@@ -49,12 +49,12 @@
     <div class="mb-6 bg-surface-card border border-surface-border rounded-xl p-5">
       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
         <div class="flex-1">
-          <label class="block text-xs text-gray-400 mb-1.5">搜尋打者（名字或 ID）</label>
+          <label class="block text-xs text-gray-400 mb-1.5">輸入打者 ID（格式：cpbl_姓名，例：cpbl_林安可）</label>
           <div class="relative">
             <input
               type="text"
               id="batterSearch"
-              placeholder="例：陳傑憲、b001..."
+              placeholder="例：cpbl_林安可、cpbl_陳傑憲..."
               class="w-full bg-surface border border-surface-border text-white text-sm rounded-lg px-3 py-2 pr-10
                      focus:outline-none focus:border-brand placeholder-gray-600"
             />
@@ -65,10 +65,7 @@
               </svg>
             </div>
           </div>
-          <!-- Dropdown suggestions -->
-          <div id="searchDropdown"
-            class="hidden absolute z-20 bg-surface-card border border-surface-border rounded-lg shadow-xl mt-1 max-h-48 overflow-y-auto text-sm w-80">
-          </div>
+          <p class="text-xs text-gray-600 mt-1">按 Enter 或點擊「查詢」載入資料</p>
         </div>
         <div>
           <label class="block text-xs text-gray-400 mb-1.5">賽季</label>
@@ -79,6 +76,10 @@
             <option value="2024">2024</option>
           </select>
         </div>
+        <button id="searchBtn"
+          class="bg-brand hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors">
+          查詢
+        </button>
         <button id="loadDemoBtn"
           class="bg-purple-700 hover:bg-purple-600 text-white text-sm px-4 py-2 rounded-lg transition-colors">
           載入 Demo
@@ -341,65 +342,25 @@
       document.getElementById('metricToggle').classList.add('hidden');
     }
 
-    // Search batter
-    let searchTimeout = null;
-    document.getElementById('batterSearch').addEventListener('input', function() {
-      clearTimeout(searchTimeout);
-      const q = this.value.trim();
-      const dd = document.getElementById('searchDropdown');
-      if (q.length < 1) { dd.classList.add('hidden'); return; }
+    // Search batter by direct ID entry
+    function triggerSearch() {
+      const q = document.getElementById('batterSearch').value.trim();
+      if (!q) return;
+      // Accept either "cpbl_林安可" or just "林安可" and prepend prefix if needed
+      const batterId = q.startsWith('cpbl_') ? q : 'cpbl_' + q;
+      const displayName = batterId.replace(/^cpbl_/, '');
+      selectedBatterId = batterId;
+      document.getElementById('selectedBatterName').textContent = displayName;
+      document.getElementById('selectedBatter').classList.remove('hidden');
+      const year = document.getElementById('yearSelect').value;
+      loadCountData(selectedBatterId, year, displayName);
+    }
 
-      searchTimeout = setTimeout(async () => {
-        document.getElementById('searchSpinner').classList.remove('hidden');
-        try {
-          const res = await fetch(`${API_BASE}/api/players?search=${encodeURIComponent(q)}&position=batter`);
-          if (!res.ok) throw new Error();
-          const json = await res.json();
-          const players = json.data || json || [];
-          dd.replaceChildren();
-          if (players.length === 0) {
-            const empty = document.createElement('div');
-            empty.className = 'px-4 py-3 text-gray-500 text-xs';
-            empty.textContent = '找不到球員';
-            dd.appendChild(empty);
-          } else {
-            players.slice(0, 10).forEach(p => {
-              const item = document.createElement('button');
-              item.className = 'w-full text-left px-4 py-2.5 hover:bg-brand/20 transition-colors flex items-center justify-between';
-              const nameSpan = document.createElement('span');
-              nameSpan.className = 'text-white text-sm';
-              nameSpan.textContent = p.player_name || p.name || '—';
-              const teamSpan = document.createElement('span');
-              teamSpan.className = 'text-gray-500 text-xs';
-              teamSpan.textContent = p.team || '';
-              item.appendChild(nameSpan);
-              item.appendChild(teamSpan);
-              item.addEventListener('click', () => {
-                selectedBatterId = p.player_id || p.id;
-                const name = p.player_name || p.name || '—';
-                document.getElementById('batterSearch').value = name;
-                document.getElementById('selectedBatterName').textContent = name + (p.team ? ` (${p.team})` : '');
-                document.getElementById('selectedBatter').classList.remove('hidden');
-                dd.classList.add('hidden');
-                const year = document.getElementById('yearSelect').value;
-                loadCountData(selectedBatterId, year, name);
-              });
-              dd.appendChild(item);
-            });
-          }
-          dd.classList.remove('hidden');
-        } catch (e) {
-          dd.classList.add('hidden');
-        }
-        document.getElementById('searchSpinner').classList.add('hidden');
-      }, 350);
+    document.getElementById('batterSearch').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') triggerSearch();
     });
 
-    document.addEventListener('click', e => {
-      if (!e.target.closest('#batterSearch') && !e.target.closest('#searchDropdown')) {
-        document.getElementById('searchDropdown').classList.add('hidden');
-      }
-    });
+    document.getElementById('searchBtn').addEventListener('click', triggerSearch);
 
     // Metric toggle
     document.querySelectorAll('.metric-btn').forEach(btn => {
