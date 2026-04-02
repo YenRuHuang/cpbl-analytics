@@ -145,6 +145,20 @@ class PitcherFatigueResponse(BaseModel):
     sample_note: str
 
 
+class PitcherFatigueSummaryResponse(BaseModel):
+    """Leaderboard entry — matches PitcherFatigueSummary dataclass."""
+    pitcher_id: str
+    team: str | None
+    year: int
+    total_ip: float
+    games: int
+    total_pitches: int
+    fatigue_threshold_pitch: int | None
+    overall_ba_against: float | None
+    overall_k_pct: float | None
+    sample_note: str
+
+
 # ─────────────────────────────────────────────
 # Leverage / Clutch — matches LeverageStats
 # ─────────────────────────────────────────────

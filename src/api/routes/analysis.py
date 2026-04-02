@@ -12,6 +12,7 @@ from src.api.schemas.responses import (
     LeverageResponse,
     LobResponse,
     PitcherFatigueResponse,
+    PitcherFatigueSummaryResponse,
 )
 from src.db.engine import get_db
 
@@ -148,17 +149,26 @@ def pitcher_fatigue(
     return _fatigue_result_to_response(result)
 
 
-@router.get("/pitcher-fatigue", response_model=list[PitcherFatigueResponse])
+@router.get("/pitcher-fatigue", response_model=list[PitcherFatigueSummaryResponse])
 def pitcher_fatigue_leaderboard(
     year: int = Query(default=2025, description="Season year"),
     min_ip: float = Query(default=20.0, ge=0, description="Minimum innings pitched"),
-) -> list[PitcherFatigueResponse]:
+) -> list[PitcherFatigueSummaryResponse]:
     from src.analysis.pitcher_fatigue import compute_fatigue_leaderboard
 
     with get_db() as db:
         results = compute_fatigue_leaderboard(db, year=year, min_ip=min_ip)
 
-    return [_fatigue_result_to_response(r) for r in results]
+    return [
+        PitcherFatigueSummaryResponse(
+            pitcher_id=r.pitcher_id, team=r.team, year=r.year,
+            total_ip=r.total_ip, games=r.games, total_pitches=r.total_pitches,
+            fatigue_threshold_pitch=r.fatigue_threshold_pitch,
+            overall_ba_against=r.overall_ba_against, overall_k_pct=r.overall_k_pct,
+            sample_note=r.sample_note,
+        )
+        for r in results
+    ]
 
 
 # ─────────────────────────────────────────────
