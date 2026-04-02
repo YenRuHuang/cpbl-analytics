@@ -15,15 +15,8 @@ from src.etl.cpbl_client import CpblClient
 
 
 def _runners_str(first: str, second: str, third: str) -> str:
-    """Convert base runner names to '1_3' style string."""
-    bits = []
-    if first:
-        bits.append("1")
-    if second:
-        bits.append("2")
-    if third:
-        bits.append("3")
-    return "".join(bits) if bits else "000"
+    """Convert base runner names to RE24 format: '000', '100', '010', '111' etc."""
+    return f"{'1' if first else '0'}{'1' if second else '0'}{'1' if third else '0'}"
 
 
 def _detect_pa_result(content: str, action: str, batting_action: str) -> str | None:

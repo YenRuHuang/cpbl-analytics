@@ -226,8 +226,13 @@
     }
 
     function renderChart(data, metric) {
-      const situations = data.situations || [];
-      const labels = situations.map(s => s.label || s.situation || '—');
+      // Build situations from ahead/behind/even/two_strike
+      const situations = [];
+      if (data.ahead) situations.push({ ...data.ahead, label: '打者有利 (Ahead)', situation: 'ahead' });
+      if (data.behind) situations.push({ ...data.behind, label: '投手有利 (Behind)', situation: 'behind' });
+      if (data.even) situations.push({ ...data.even, label: '平均 (Even)', situation: 'even' });
+      if (data.two_strike) situations.push({ ...data.two_strike, label: '兩好球 (Two-Strike)', situation: 'two_strike' });
+      const labels = situations.map(s => s.label);
       const colors = situations.map(s => GROUP_COLORS[s.situation] || '#9ca3af');
 
       if (metric === 'all') {
@@ -304,7 +309,7 @@
     }
 
     function renderTable(data) {
-      const perCount = data.per_count || [];
+      const perCount = data.by_count || data.per_count || [];
       const tbody = document.getElementById('countsTableBody');
       tbody.replaceChildren();
 
@@ -322,8 +327,14 @@
           return el;
         }
 
-        tr.appendChild(td(d.count || '—', 'l', true, '#ffffff'));
-        tr.appendChild(td(d.situation || '—', 'l', false, '#9ca3af'));
+        // Classify count into situation group
+        const AHEAD = ['1-0','2-0','2-1','3-0','3-1'];
+        const BEHIND = ['0-1','0-2','1-2'];
+        const EVEN = ['0-0','1-1','2-2','3-2'];
+        const c = d.count || '';
+        const sit = AHEAD.includes(c) ? '打者有利' : BEHIND.includes(c) ? '投手有利' : EVEN.includes(c) ? '平均' : '—';
+        tr.appendChild(td(c, 'l', true, '#ffffff'));
+        tr.appendChild(td(sit, 'l', false, '#9ca3af'));
         tr.appendChild(td(d.pa != null ? String(d.pa) : '—', 'r', true, '#d1d5db'));
         tr.appendChild(td(d.ba != null ? d.ba.toFixed(3) : '—', 'r', true, '#ffffff'));
         tr.appendChild(td(d.k_pct != null ? (d.k_pct * 100).toFixed(1) + '%' : '—', 'r', true, '#f87171'));

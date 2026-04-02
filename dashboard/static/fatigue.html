@@ -211,7 +211,7 @@
         const res = await fetch(`${API_BASE}/api/analysis/pitcher-fatigue/${encodeURIComponent(pitcherId)}?year=${year}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const json = await res.json();
-        currentData = json.data || json;
+        currentData = json.buckets || json.data || (Array.isArray(json) ? json : []);
         document.getElementById('loadingState').classList.add('hidden');
         renderFatigueChart(currentData);
         renderFatigueTable(currentData);
@@ -244,7 +244,7 @@
     }
 
     function renderFatigueChart(data) {
-      const buckets = data.map(d => d.pitch_bucket || d.bucket || '—');
+      const buckets = data.map(d => d.pitch_start && d.pitch_end ? `${d.pitch_start}-${d.pitch_end}` : (d.pitch_bucket || d.bucket || '—'));
       const bas = data.map(d => d.ba_against || 0);
       const kpcts = data.map(d => d.k_pct || 0);
 
@@ -346,8 +346,9 @@
         }
         statusTd.appendChild(badge);
 
-        tr.appendChild(td(d.pitch_bucket || d.bucket || '—', 'l', false, '#ffffff'));
-        tr.appendChild(td(d.pa != null ? String(d.pa) : '—', 'r', true, '#d1d5db'));
+        const bucketLabel = d.pitch_start && d.pitch_end ? `${d.pitch_start}-${d.pitch_end}` : (d.pitch_bucket || d.bucket || '—');
+        tr.appendChild(td(bucketLabel, 'l', false, '#ffffff'));
+        tr.appendChild(td(d.batters_faced != null ? String(d.batters_faced) : (d.pa != null ? String(d.pa) : '—'), 'r', true, '#d1d5db'));
         tr.appendChild(td(ba > 0 ? ba.toFixed(3) : '—', 'r', true, isFatigue ? '#f87171' : '#ffffff'));
         tr.appendChild(td(d.k_pct != null ? (d.k_pct * 100).toFixed(1) + '%' : '—', 'r', true, '#d1d5db'));
         tr.appendChild(td(d.bb_pct != null ? (d.bb_pct * 100).toFixed(1) + '%' : '—', 'r', true, '#d1d5db'));
