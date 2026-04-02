@@ -49,6 +49,12 @@ def create_app() -> FastAPI:
             name="dashboard",
         )
 
+    # ── Root redirect to dashboard ─────────────────────────────────
+    @app.get("/", include_in_schema=False)
+    def root():
+        from starlette.responses import RedirectResponse
+        return RedirectResponse(url="/dashboard/")
+
     # ── Health check ──────────────────────────────────────────────
     @app.get("/health", tags=["meta"], include_in_schema=False)
     def health() -> JSONResponse:
