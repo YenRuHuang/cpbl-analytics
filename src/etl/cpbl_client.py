@@ -221,7 +221,7 @@ class CpblClient:
 
         lines: list[BattingLine] = []
         for row in rows:
-            team = "home" if row.get("VisitingHomeType") == "H" else "away"
+            team = "home" if row.get("VisitingHomeType") in ("H", "2") else "away"
             lines.append(BattingLine(
                 player_name=row.get("HitterName", ""),
                 team=team,
@@ -248,7 +248,7 @@ class CpblClient:
 
         lines: list[PitchingLine] = []
         for row in rows:
-            team = "home" if row.get("VisitingHomeType") == "H" else "away"
+            team = "home" if row.get("VisitingHomeType") in ("H", "2") else "away"
             # Parse IP: "5.2" means 5 and 2/3 innings
             ip_raw = row.get("InningPitchedCnt", 0) or 0
             ip_div3 = row.get("InningPitchedDiv3Cnt", 0) or 0

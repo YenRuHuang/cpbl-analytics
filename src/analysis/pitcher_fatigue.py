@@ -336,14 +336,14 @@ def compute_fatigue_leaderboard(
     pitcher_rows = db.execute(text("""
         SELECT
             pb.player_id,
-            pb.team,
+            MAX(pb.team) AS team,
             COUNT(DISTINCT pb.game_id) AS games,
             SUM(pb.ip) AS total_ip,
             SUM(pb.pitch_count) AS total_pitches
         FROM pitcher_box pb
         JOIN games g ON pb.game_id = g.game_id
         WHERE g.year = :year
-        GROUP BY pb.player_id, pb.team
+        GROUP BY pb.player_id
         HAVING SUM(pb.ip) >= :min_ip
         ORDER BY SUM(pb.ip) DESC
     """), {"year": year, "min_ip": min_ip}).fetchall()
