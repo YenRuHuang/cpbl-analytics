@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CPBL Analytics — 進階數據分析</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .module-card:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/index.html" class="flex items-center gap-2">
+        <span class="text-2xl">⚾</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="/lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="/fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="/clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="/counts.html" class="hover:text-white transition-colors">球數分析</a>
+      </div>
+      <!-- Mobile menu toggle placeholder -->
+      <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+        &#9776;
+      </button>
+    </div>
+    <!-- Mobile menu -->
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="/lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="/fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="/clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="/counts.html" class="block py-1 hover:text-white">球數分析</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="max-w-6xl mx-auto px-4 py-16 text-center">
+    <div class="inline-flex items-center gap-2 bg-brand/10 border border-brand/30 rounded-full px-4 py-1 text-brand text-xs mb-6">
+      Powered by Rebas Open Data
+    </div>
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-4">
+      CPBL Analytics
+    </h1>
+    <p class="text-xl text-gray-400 mb-2">進階數據分析</p>
+    <p class="text-gray-500 max-w-2xl mx-auto text-sm leading-relaxed">
+      以賽伯計量學方法解讀中華職棒數據，從 LOB%、投手疲勞指數到關鍵時刻表現，<br class="hidden sm:block" />提供超越傳統打擊率的分析視角。
+    </p>
+  </header>
+
+  <!-- Module Cards -->
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+      <!-- LOB% -->
+      <a href="/lob.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-brand/50 hover:shadow-lg hover:shadow-brand/10">
+        <div class="text-3xl mb-3">📊</div>
+        <h2 class="text-lg font-bold text-white mb-2">LOB% 分析</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          殘壘率（Left-On-Base%）反映投手的幸運程度。過高代表運氣好，過低代表運氣差，可預測未來 ERA 回歸方向。
+        </p>
+        <div class="mt-4 text-brand text-xs font-semibold">查看分析 →</div>
+      </a>
+
+      <!-- Fatigue -->
+      <a href="/fatigue.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10">
+        <div class="text-3xl mb-3">🔥</div>
+        <h2 class="text-lg font-bold text-white mb-2">投手疲勞</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          追蹤投手在不同投球數區間的表現變化，找出疲勞閾值，協助教練做出最佳換投時機決策。
+        </p>
+        <div class="mt-4 text-yellow-400 text-xs font-semibold">查看分析 →</div>
+      </a>
+
+      <!-- Clutch -->
+      <a href="/clutch.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10">
+        <div class="text-3xl mb-3">⚡</div>
+        <h2 class="text-lg font-bold text-white mb-2">關鍵時刻表現</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          比較打者在高槓桿指數情境下的打擊率與整體打擊率，找出真正在壓力下能表現的關鍵球員。
+        </p>
+        <div class="mt-4 text-green-400 text-xs font-semibold">查看分析 →</div>
+      </a>
+
+      <!-- Count Splits -->
+      <a href="/counts.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10">
+        <div class="text-3xl mb-3">🎯</div>
+        <h2 class="text-lg font-bold text-white mb-2">球數分布分析</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          分析打者在領先球數、落後球數、平球數及兩好球等不同情境下的打擊表現，找出球種策略弱點。
+        </p>
+        <div class="mt-4 text-purple-400 text-xs font-semibold">查看分析 →</div>
+      </a>
+
+    </div>
+
+    <!-- Data Source Section -->
+    <div class="mt-12 bg-surface-card border border-surface-border rounded-xl p-6">
+      <h3 class="text-sm font-semibold text-gray-300 mb-3">關於本系統</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-500">
+        <div>
+          <span class="text-gray-400 font-medium block mb-1">資料來源</span>
+          Rebas Open Data、CPBL 官網公開統計
+        </div>
+        <div>
+          <span class="text-gray-400 font-medium block mb-1">更新頻率</span>
+          每日賽後自動更新（ETL pipeline）
+        </div>
+        <div>
+          <span class="text-gray-400 font-medium block mb-1">授權</span>
+          ODC-By License（標示來源即可使用）
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+</body>
+</html>

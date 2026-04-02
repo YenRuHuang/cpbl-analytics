@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>球數分布分析 — CPBL Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>body { background-color: #141920; }</style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
+      <a href="/index.html" class="flex items-center gap-2 mr-4">
+        <span class="text-2xl">&#9898;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <a href="/lob.html" class="text-sm text-gray-400 hover:text-white transition-colors">LOB%</a>
+      <a href="/fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
+      <a href="/clutch.html" class="text-sm text-gray-400 hover:text-white transition-colors">關鍵時刻</a>
+      <a href="/counts.html" class="text-sm text-purple-400 font-semibold">球數分析</a>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
+    <h1 class="text-3xl font-extrabold text-white">球數分布分析</h1>
+    <p class="text-gray-400 mt-1 text-sm">分析打者在不同球數情境下的打擊、三振、保送表現，找出策略弱點</p>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+
+    <!-- Batter Search -->
+    <div class="mb-6 bg-surface-card border border-surface-border rounded-xl p-5">
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+        <div class="flex-1">
+          <label class="block text-xs text-gray-400 mb-1.5">搜尋打者（名字或 ID）</label>
+          <div class="relative">
+            <input
+              type="text"
+              id="batterSearch"
+              placeholder="例：陳傑憲、b001..."
+              class="w-full bg-surface border border-surface-border text-white text-sm rounded-lg px-3 py-2 pr-10
+                     focus:outline-none focus:border-brand placeholder-gray-600"
+            />
+            <div id="searchSpinner" class="hidden absolute right-3 top-2.5">
+              <svg class="animate-spin h-4 w-4 text-brand" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Dropdown suggestions -->
+          <div id="searchDropdown"
+            class="hidden absolute z-20 bg-surface-card border border-surface-border rounded-lg shadow-xl mt-1 max-h-48 overflow-y-auto text-sm w-80">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5">賽季</label>
+          <select id="yearSelect"
+            class="bg-surface border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+        </div>
+        <button id="loadDemoBtn"
+          class="bg-purple-700 hover:bg-purple-600 text-white text-sm px-4 py-2 rounded-lg transition-colors">
+          載入 Demo
+        </button>
+      </div>
+      <!-- Selected batter badge -->
+      <div id="selectedBatter" class="hidden mt-3 flex items-center gap-2">
+        <span class="text-xs text-gray-500">已選擇：</span>
+        <span id="selectedBatterName" class="text-sm font-semibold text-purple-300"></span>
+        <button onclick="clearBatter()" class="text-gray-500 hover:text-white text-xs ml-1">&#10005;</button>
+      </div>
+    </div>
+
+    <!-- Loading / Error -->
+    <div id="loadingState" class="hidden flex items-center justify-center py-16 text-gray-500">
+      <svg class="animate-spin h-6 w-6 mr-3 text-brand" viewBox="0 0 24 24" fill="none">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      </svg>
+      載入中…
+    </div>
+    <div id="errorState" class="hidden bg-red-900/20 border border-red-700/40 rounded-xl p-6 text-center text-red-400 text-sm mb-4">
+      <p class="font-semibold mb-1">無法載入資料（顯示 Demo 資料）</p>
+      <p id="errorMsg" class="text-red-500/70"></p>
+    </div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="flex flex-col items-center justify-center py-20 text-gray-600">
+      <span class="text-5xl mb-4">&#127919;</span>
+      <p>請搜尋打者或點擊「載入 Demo」</p>
+    </div>
+
+    <!-- Metric Toggle -->
+    <div id="metricToggle" class="hidden mb-4 flex gap-2">
+      <button class="metric-btn active bg-purple-700 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors" data-metric="ba">打擊率</button>
+      <button class="metric-btn bg-surface-card border border-surface-border text-gray-400 text-xs font-semibold px-4 py-1.5 rounded-full hover:text-white transition-colors" data-metric="k_pct">三振率</button>
+      <button class="metric-btn bg-surface-card border border-surface-border text-gray-400 text-xs font-semibold px-4 py-1.5 rounded-full hover:text-white transition-colors" data-metric="bb_pct">保送率</button>
+      <button class="metric-btn bg-surface-card border border-surface-border text-gray-400 text-xs font-semibold px-4 py-1.5 rounded-full hover:text-white transition-colors" data-metric="all">全部</button>
+    </div>
+
+    <!-- Chart -->
+    <div id="chartContainer" class="hidden bg-surface-card border border-surface-border rounded-xl p-4">
+      <div id="countsChart" style="height:420px;"></div>
+    </div>
+
+    <!-- Per-Count Detail Table -->
+    <div id="tableContainer" class="hidden mt-6 bg-surface-card border border-surface-border rounded-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-surface-border">
+        <h2 class="font-semibold text-white text-sm">各球數詳細數據</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-surface-border text-gray-500 text-xs uppercase tracking-wide">
+              <th class="px-5 py-3 text-left">球數</th>
+              <th class="px-5 py-3 text-left">情境</th>
+              <th class="px-5 py-3 text-right">打席數</th>
+              <th class="px-5 py-3 text-right">打擊率</th>
+              <th class="px-5 py-3 text-right">三振率</th>
+              <th class="px-5 py-3 text-right">保送率</th>
+            </tr>
+          </thead>
+          <tbody id="countsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let currentData = null;
+    let selectedBatterId = null;
+    let activeMetric = 'ba';
+
+    const COUNT_GROUPS = {
+      ahead: { label: '打者領先', color: '#4ade80', counts: ['1-0', '2-0', '3-0', '3-1', '2-1'] },
+      behind: { label: '投手領先', color: '#f87171', counts: ['0-1', '0-2', '1-2'] },
+      even: { label: '平局', color: '#9ca3af', counts: ['0-0', '1-1', '2-2'] },
+      two_strike: { label: '兩好球', color: '#fb923c', counts: ['0-2', '1-2', '2-2', '3-2'] },
+    };
+
+    const GROUP_COLORS = {
+      ahead: '#4ade80',
+      behind: '#f87171',
+      even: '#9ca3af',
+      two_strike: '#fb923c',
+    };
+
+    function buildDemoData(batterName) {
+      const situations = [
+        { situation: 'ahead', label: '打者領先', ba: 0.342, k_pct: 0.120, bb_pct: 0.045, pa: 180 },
+        { situation: 'behind', label: '投手領先', ba: 0.218, k_pct: 0.285, bb_pct: 0.020, pa: 145 },
+        { situation: 'even', label: '平局', ba: 0.278, k_pct: 0.190, bb_pct: 0.080, pa: 220 },
+        { situation: 'two_strike', label: '兩好球', ba: 0.195, k_pct: 0.310, bb_pct: 0.035, pa: 190 },
+      ];
+      const perCount = [
+        { count: '0-0', situation: '平局', ba: 0.285, k_pct: 0.18, bb_pct: 0.08, pa: 85 },
+        { count: '0-1', situation: '投手領先', ba: 0.230, k_pct: 0.25, bb_pct: 0.02, pa: 72 },
+        { count: '0-2', situation: '兩好球', ba: 0.180, k_pct: 0.35, bb_pct: 0.01, pa: 55 },
+        { count: '1-0', situation: '打者領先', ba: 0.320, k_pct: 0.14, bb_pct: 0.04, pa: 68 },
+        { count: '1-1', situation: '平局', ba: 0.275, k_pct: 0.20, bb_pct: 0.07, pa: 78 },
+        { count: '1-2', situation: '兩好球', ba: 0.200, k_pct: 0.30, bb_pct: 0.03, pa: 82 },
+        { count: '2-0', situation: '打者領先', ba: 0.350, k_pct: 0.10, bb_pct: 0.05, pa: 42 },
+        { count: '2-1', situation: '打者領先', ba: 0.330, k_pct: 0.13, bb_pct: 0.06, pa: 55 },
+        { count: '2-2', situation: '兩好球', ba: 0.210, k_pct: 0.28, bb_pct: 0.04, pa: 70 },
+        { count: '3-0', situation: '打者領先', ba: 0.400, k_pct: 0.05, bb_pct: 0.30, pa: 22 },
+        { count: '3-1', situation: '打者領先', ba: 0.360, k_pct: 0.09, bb_pct: 0.18, pa: 38 },
+        { count: '3-2', situation: '兩好球', ba: 0.245, k_pct: 0.22, bb_pct: 0.12, pa: 60 },
+      ];
+      return { batter_name: batterName || 'Demo 打者', situations, per_count: perCount };
+    }
+
+    async function loadCountData(batterId, year, batterName) {
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('chartContainer').classList.add('hidden');
+      document.getElementById('tableContainer').classList.add('hidden');
+      document.getElementById('metricToggle').classList.add('hidden');
+      document.getElementById('loadingState').classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/analysis/count-splits/${batterId}?year=${year}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const json = await res.json();
+        currentData = json.data || json;
+        document.getElementById('loadingState').classList.add('hidden');
+      } catch (e) {
+        currentData = buildDemoData(batterName);
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorMsg').textContent = e.message;
+      }
+
+      renderChart(currentData, activeMetric);
+      renderTable(currentData);
+      document.getElementById('chartContainer').classList.remove('hidden');
+      document.getElementById('tableContainer').classList.remove('hidden');
+      document.getElementById('metricToggle').classList.remove('hidden');
+    }
+
+    function renderChart(data, metric) {
+      const situations = data.situations || [];
+      const labels = situations.map(s => s.label || s.situation || '—');
+      const colors = situations.map(s => GROUP_COLORS[s.situation] || '#9ca3af');
+
+      if (metric === 'all') {
+        // Grouped bar: BA, K%, BB% per situation
+        const traces = [
+          {
+            type: 'bar',
+            name: '打擊率',
+            x: labels,
+            y: situations.map(s => s.ba || 0),
+            marker: { color: '#818cf8' },
+            hovertemplate: '%{x}<br>打擊率: %{y:.3f}<extra></extra>',
+          },
+          {
+            type: 'bar',
+            name: '三振率',
+            x: labels,
+            y: situations.map(s => s.k_pct || 0),
+            marker: { color: '#f87171' },
+            hovertemplate: '%{x}<br>三振率: %{y:.1%}<extra></extra>',
+          },
+          {
+            type: 'bar',
+            name: '保送率',
+            x: labels,
+            y: situations.map(s => s.bb_pct || 0),
+            marker: { color: '#4ade80' },
+            hovertemplate: '%{x}<br>保送率: %{y:.1%}<extra></extra>',
+          },
+        ];
+        Plotly.newPlot('countsChart', traces, {
+          barmode: 'group',
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'transparent',
+          font: { color: '#9ca3af', family: 'sans-serif' },
+          margin: { t: 20, r: 30, b: 60, l: 60 },
+          xaxis: { gridcolor: '#2d3748', linecolor: '#2d3748' },
+          yaxis: { gridcolor: '#2d3748', linecolor: '#2d3748', zeroline: false, tickformat: '.3f' },
+          legend: { orientation: 'h', x: 0, y: 1.08, font: { size: 11 } },
+          bargap: 0.2,
+          bargroupgap: 0.08,
+        }, { responsive: true, displayModeBar: false });
+        return;
+      }
+
+      const metricLabels = { ba: '打擊率', k_pct: '三振率', bb_pct: '保送率' };
+      Plotly.newPlot('countsChart', [{
+        type: 'bar',
+        x: labels,
+        y: situations.map(s => s[metric] || 0),
+        marker: { color: colors, line: { color: 'transparent' } },
+        text: situations.map(s => {
+          const v = s[metric] || 0;
+          return metric === 'ba' ? v.toFixed(3) : (v * 100).toFixed(1) + '%';
+        }),
+        textposition: 'outside',
+        textfont: { size: 11, color: '#9ca3af' },
+        hovertemplate: '<b>%{x}</b><br>' + metricLabels[metric] + ': %{y:.3f}<extra></extra>',
+      }], {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#9ca3af', family: 'sans-serif' },
+        margin: { t: 30, r: 30, b: 60, l: 60 },
+        xaxis: { gridcolor: '#2d3748', linecolor: '#2d3748' },
+        yaxis: {
+          title: metricLabels[metric],
+          gridcolor: '#2d3748',
+          linecolor: '#2d3748',
+          zeroline: false,
+          tickformat: metric === 'ba' ? '.3f' : '.0%',
+        },
+        bargap: 0.35,
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    function renderTable(data) {
+      const perCount = data.per_count || [];
+      const tbody = document.getElementById('countsTableBody');
+      tbody.replaceChildren();
+
+      perCount.forEach((d, i) => {
+        const tr = document.createElement('tr');
+        tr.className = (i % 2 === 0 ? '' : 'bg-white/[0.02]') +
+          ' border-b border-surface-border/50 hover:bg-white/[0.04] transition-colors';
+
+        function td(text, align, mono, color) {
+          const el = document.createElement('td');
+          el.className = 'px-5 py-3' + (align === 'r' ? ' text-right' : '') +
+            (mono ? ' font-mono' : '');
+          if (color) el.style.color = color;
+          el.textContent = text;
+          return el;
+        }
+
+        tr.appendChild(td(d.count || '—', 'l', true, '#ffffff'));
+        tr.appendChild(td(d.situation || '—', 'l', false, '#9ca3af'));
+        tr.appendChild(td(d.pa != null ? String(d.pa) : '—', 'r', true, '#d1d5db'));
+        tr.appendChild(td(d.ba != null ? d.ba.toFixed(3) : '—', 'r', true, '#ffffff'));
+        tr.appendChild(td(d.k_pct != null ? (d.k_pct * 100).toFixed(1) + '%' : '—', 'r', true, '#f87171'));
+        tr.appendChild(td(d.bb_pct != null ? (d.bb_pct * 100).toFixed(1) + '%' : '—', 'r', true, '#4ade80'));
+        tbody.appendChild(tr);
+      });
+    }
+
+    function clearBatter() {
+      selectedBatterId = null;
+      document.getElementById('selectedBatter').classList.add('hidden');
+      document.getElementById('batterSearch').value = '';
+      document.getElementById('emptyState').classList.remove('hidden');
+      document.getElementById('chartContainer').classList.add('hidden');
+      document.getElementById('tableContainer').classList.add('hidden');
+      document.getElementById('metricToggle').classList.add('hidden');
+    }
+
+    // Search batter
+    let searchTimeout = null;
+    document.getElementById('batterSearch').addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const q = this.value.trim();
+      const dd = document.getElementById('searchDropdown');
+      if (q.length < 1) { dd.classList.add('hidden'); return; }
+
+      searchTimeout = setTimeout(async () => {
+        document.getElementById('searchSpinner').classList.remove('hidden');
+        try {
+          const res = await fetch(`${API_BASE}/api/players?search=${encodeURIComponent(q)}&position=batter`);
+          if (!res.ok) throw new Error();
+          const json = await res.json();
+          const players = json.data || json || [];
+          dd.replaceChildren();
+          if (players.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'px-4 py-3 text-gray-500 text-xs';
+            empty.textContent = '找不到球員';
+            dd.appendChild(empty);
+          } else {
+            players.slice(0, 10).forEach(p => {
+              const item = document.createElement('button');
+              item.className = 'w-full text-left px-4 py-2.5 hover:bg-brand/20 transition-colors flex items-center justify-between';
+              const nameSpan = document.createElement('span');
+              nameSpan.className = 'text-white text-sm';
+              nameSpan.textContent = p.player_name || p.name || '—';
+              const teamSpan = document.createElement('span');
+              teamSpan.className = 'text-gray-500 text-xs';
+              teamSpan.textContent = p.team || '';
+              item.appendChild(nameSpan);
+              item.appendChild(teamSpan);
+              item.addEventListener('click', () => {
+                selectedBatterId = p.player_id || p.id;
+                const name = p.player_name || p.name || '—';
+                document.getElementById('batterSearch').value = name;
+                document.getElementById('selectedBatterName').textContent = name + (p.team ? ` (${p.team})` : '');
+                document.getElementById('selectedBatter').classList.remove('hidden');
+                dd.classList.add('hidden');
+                const year = document.getElementById('yearSelect').value;
+                loadCountData(selectedBatterId, year, name);
+              });
+              dd.appendChild(item);
+            });
+          }
+          dd.classList.remove('hidden');
+        } catch (e) {
+          dd.classList.add('hidden');
+        }
+        document.getElementById('searchSpinner').classList.add('hidden');
+      }, 350);
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#batterSearch') && !e.target.closest('#searchDropdown')) {
+        document.getElementById('searchDropdown').classList.add('hidden');
+      }
+    });
+
+    // Metric toggle
+    document.querySelectorAll('.metric-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.metric-btn').forEach(b => {
+          b.className = 'metric-btn bg-surface-card border border-surface-border text-gray-400 text-xs font-semibold px-4 py-1.5 rounded-full hover:text-white transition-colors';
+          b.removeAttribute('data-active');
+        });
+        this.className = 'metric-btn active bg-purple-700 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors';
+        activeMetric = this.dataset.metric;
+        if (currentData) renderChart(currentData, activeMetric);
+      });
+    });
+
+    // Demo button
+    document.getElementById('loadDemoBtn').addEventListener('click', () => {
+      selectedBatterId = 'demo';
+      const name = 'Demo 打者';
+      document.getElementById('selectedBatterName').textContent = name;
+      document.getElementById('selectedBatter').classList.remove('hidden');
+      document.getElementById('batterSearch').value = name;
+      const year = document.getElementById('yearSelect').value;
+      loadCountData('demo', year, name);
+    });
+
+    document.getElementById('yearSelect').addEventListener('change', () => {
+      if (selectedBatterId) {
+        const year = document.getElementById('yearSelect').value;
+        const name = document.getElementById('selectedBatterName').textContent;
+        loadCountData(selectedBatterId, year, name);
+      }
+    });
+  </script>
+</body>
+</html>

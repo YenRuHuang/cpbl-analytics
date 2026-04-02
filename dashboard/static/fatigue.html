@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>投手疲勞分析 — CPBL Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>body { background-color: #141920; }</style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
+      <a href="/index.html" class="flex items-center gap-2 mr-4">
+        <span class="text-2xl">&#9898;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <a href="/lob.html" class="text-sm text-gray-400 hover:text-white transition-colors">LOB%</a>
+      <a href="/fatigue.html" class="text-sm text-yellow-400 font-semibold">投手疲勞</a>
+      <a href="/clutch.html" class="text-sm text-gray-400 hover:text-white transition-colors">關鍵時刻</a>
+      <a href="/counts.html" class="text-sm text-gray-400 hover:text-white transition-colors">球數分析</a>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
+    <h1 class="text-3xl font-extrabold text-white">投手疲勞分析</h1>
+    <p class="text-gray-400 mt-1 text-sm">追蹤投手在不同投球數區間的效率變化，找出疲勞閾值</p>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+
+    <!-- Pitcher Selector -->
+    <div class="mb-6 bg-surface-card border border-surface-border rounded-xl p-5">
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+        <div class="flex-1">
+          <label class="block text-xs text-gray-400 mb-1.5">選擇投手</label>
+          <select id="pitcherSelect"
+            class="w-full bg-surface border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+            <option value="">-- 請選擇 --</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5">賽季</label>
+          <select id="yearSelect"
+            class="bg-surface border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+        </div>
+        <button id="analyzeBtn"
+          class="bg-brand hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors disabled:opacity-40"
+          disabled>
+          分析
+        </button>
+      </div>
+      <!-- Fatigue warning zone info -->
+      <div id="fatigueInfo" class="hidden mt-4 bg-red-900/20 border border-red-700/30 rounded-lg px-4 py-3 flex items-center gap-3 text-sm">
+        <span class="text-2xl">&#9888;</span>
+        <span id="fatigueText" class="text-red-300"></span>
+      </div>
+    </div>
+
+    <!-- Loading / Error -->
+    <div id="loadingState" class="hidden flex items-center justify-center py-16 text-gray-500">
+      <svg class="animate-spin h-6 w-6 mr-3 text-brand" viewBox="0 0 24 24" fill="none">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      </svg>
+      載入中…
+    </div>
+    <div id="errorState" class="hidden bg-red-900/20 border border-red-700/40 rounded-xl p-6 text-center text-red-400 text-sm">
+      <p class="font-semibold mb-1">無法載入資料</p>
+      <p id="errorMsg" class="text-red-500/70"></p>
+    </div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="flex flex-col items-center justify-center py-20 text-gray-600">
+      <span class="text-5xl mb-4">&#128202;</span>
+      <p>請選擇投手後點擊「分析」</p>
+    </div>
+
+    <!-- Chart -->
+    <div id="chartContainer" class="hidden bg-surface-card border border-surface-border rounded-xl p-4">
+      <div class="flex items-center gap-4 mb-3 px-2 text-xs text-gray-400">
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-2 rounded-sm bg-blue-400 inline-block"></span> 被打擊率（左軸）
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-2 rounded-sm bg-green-400 inline-block"></span> 三振率（右軸）
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-2 rounded-sm bg-red-500/60 inline-block"></span> 疲勞警戒區
+        </div>
+      </div>
+      <div id="fatigueChart" style="height:420px;"></div>
+    </div>
+
+    <!-- Stats Table -->
+    <div id="tableContainer" class="hidden mt-6 bg-surface-card border border-surface-border rounded-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-surface-border">
+        <h2 class="font-semibold text-white text-sm">各投球數區間詳細數據</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-surface-border text-gray-500 text-xs uppercase tracking-wide">
+              <th class="px-5 py-3 text-left">投球數區間</th>
+              <th class="px-5 py-3 text-right">打席數</th>
+              <th class="px-5 py-3 text-right">被打擊率</th>
+              <th class="px-5 py-3 text-right">三振率</th>
+              <th class="px-5 py-3 text-right">保送率</th>
+              <th class="px-5 py-3 text-right">狀態</th>
+            </tr>
+          </thead>
+          <tbody id="fatigueTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let currentData = null;
+
+    // Load pitcher list on page load
+    async function loadPitchers() {
+      try {
+        const res = await fetch(`${API_BASE}/api/players?position=pitcher`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const pitchers = json.data || json || [];
+        const sel = document.getElementById('pitcherSelect');
+        pitchers.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.player_id || p.id;
+          opt.textContent = (p.player_name || p.name) + (p.team ? ` (${p.team})` : '');
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        // Fallback: load from fatigue endpoint with demo data
+        const sel = document.getElementById('pitcherSelect');
+        const demos = [
+          { value: 'demo-1', label: '王建民 (中信兄弟)' },
+          { value: 'demo-2', label: '陳冠宇 (統一獅)' },
+          { value: 'demo-3', label: '林子偉 (味全龍)' },
+        ];
+        demos.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.value;
+          opt.textContent = d.label;
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    document.getElementById('pitcherSelect').addEventListener('change', function() {
+      document.getElementById('analyzeBtn').disabled = !this.value;
+    });
+
+    document.getElementById('analyzeBtn').addEventListener('click', () => {
+      const pid = document.getElementById('pitcherSelect').value;
+      const year = document.getElementById('yearSelect').value;
+      if (pid) loadFatigueData(pid, year);
+    });
+
+    async function loadFatigueData(pitcherId, year) {
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('chartContainer').classList.add('hidden');
+      document.getElementById('tableContainer').classList.add('hidden');
+      document.getElementById('fatigueInfo').classList.add('hidden');
+      document.getElementById('loadingState').classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/analysis/pitcher-fatigue?pitcher_id=${pitcherId}&year=${year}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const json = await res.json();
+        currentData = json.data || json;
+        document.getElementById('loadingState').classList.add('hidden');
+        renderFatigueChart(currentData);
+        renderFatigueTable(currentData);
+      } catch (e) {
+        currentData = buildDemoFatigueData();
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorMsg').textContent = e.message + ' — 顯示 Demo 資料';
+        renderFatigueChart(currentData);
+        renderFatigueTable(currentData);
+      }
+
+      document.getElementById('chartContainer').classList.remove('hidden');
+      document.getElementById('tableContainer').classList.remove('hidden');
+    }
+
+    function buildDemoFatigueData() {
+      const buckets = ['1-20', '21-40', '41-60', '61-80', '81-100', '101+'];
+      const bas = [0.230, 0.240, 0.245, 0.260, 0.285, 0.320];
+      const krs = [0.220, 0.215, 0.205, 0.185, 0.160, 0.130];
+      const bbrs = [0.065, 0.070, 0.075, 0.085, 0.100, 0.120];
+      const pas = [95, 88, 82, 76, 60, 30];
+      return buckets.map((b, i) => ({
+        pitch_bucket: b,
+        pa: pas[i],
+        ba_against: bas[i],
+        k_pct: krs[i],
+        bb_pct: bbrs[i],
+      }));
+    }
+
+    function renderFatigueChart(data) {
+      const buckets = data.map(d => d.pitch_bucket || d.bucket || '—');
+      const bas = data.map(d => d.ba_against || 0);
+      const kpcts = data.map(d => d.k_pct || 0);
+
+      // Find fatigue threshold: bucket where BA jumps > 15% from baseline
+      const baseline = bas[0] || 0.240;
+      let fatigueIdx = data.findIndex((_, i) => i > 1 && bas[i] > baseline * 1.15);
+      if (fatigueIdx < 0) fatigueIdx = data.length - 1;
+
+      // Warning highlight shape
+      const shapes = [];
+      if (fatigueIdx < buckets.length) {
+        shapes.push({
+          type: 'rect',
+          x0: fatigueIdx - 0.5,
+          x1: buckets.length - 0.5,
+          y0: 0,
+          y1: 1,
+          yref: 'paper',
+          fillcolor: 'rgba(239,68,68,0.08)',
+          line: { color: 'rgba(239,68,68,0.3)', width: 1 },
+        });
+      }
+
+      // Show warning info
+      if (fatigueIdx < buckets.length) {
+        document.getElementById('fatigueInfo').classList.remove('hidden');
+        document.getElementById('fatigueText').textContent =
+          `疲勞警戒區從「${buckets[fatigueIdx]}」球開始，被打擊率較初期上升超過 15%`;
+      }
+
+      Plotly.newPlot('fatigueChart', [
+        {
+          type: 'scatter',
+          mode: 'lines+markers',
+          x: buckets,
+          y: bas,
+          name: '被打擊率',
+          yaxis: 'y',
+          line: { color: '#60a5fa', width: 2 },
+          marker: { size: 7, color: '#60a5fa' },
+          hovertemplate: '<b>%{x} 球</b><br>被打擊率: %{y:.3f}<extra></extra>',
+        },
+        {
+          type: 'scatter',
+          mode: 'lines+markers',
+          x: buckets,
+          y: kpcts,
+          name: '三振率',
+          yaxis: 'y2',
+          line: { color: '#4ade80', width: 2, dash: 'dot' },
+          marker: { size: 7, color: '#4ade80' },
+          hovertemplate: '<b>%{x} 球</b><br>三振率: %{y:.1%}<extra></extra>',
+        },
+      ], {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#9ca3af', family: 'sans-serif' },
+        margin: { t: 10, r: 70, b: 60, l: 60 },
+        xaxis: { title: '投球數區間', gridcolor: '#2d3748', linecolor: '#2d3748' },
+        yaxis: { title: '被打擊率', tickformat: '.3f', gridcolor: '#2d3748', linecolor: '#2d3748', zeroline: false },
+        yaxis2: { title: '三振率', tickformat: '.0%', overlaying: 'y', side: 'right', gridcolor: 'transparent', zeroline: false },
+        legend: { orientation: 'h', x: 0, y: 1.08, font: { size: 11 } },
+        shapes: shapes,
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    function renderFatigueTable(data) {
+      const baseline = data[0] ? data[0].ba_against || 0.240 : 0.240;
+      const tbody = document.getElementById('fatigueTableBody');
+      tbody.replaceChildren();
+
+      data.forEach((d, i) => {
+        const ba = d.ba_against || 0;
+        const isFatigue = i > 1 && ba > baseline * 1.15;
+        const tr = document.createElement('tr');
+        tr.className = (i % 2 === 0 ? '' : 'bg-white/[0.02]') +
+          ' border-b border-surface-border/50 hover:bg-white/[0.04] transition-colors' +
+          (isFatigue ? ' bg-red-900/10' : '');
+
+        function td(text, align, mono, color) {
+          const el = document.createElement('td');
+          el.className = 'px-5 py-3' + (align === 'r' ? ' text-right' : '') +
+            (mono ? ' font-mono' : '');
+          if (color) el.style.color = color;
+          el.textContent = text;
+          return el;
+        }
+
+        const statusTd = document.createElement('td');
+        statusTd.className = 'px-5 py-3 text-right';
+        const badge = document.createElement('span');
+        badge.className = 'text-xs font-semibold';
+        if (isFatigue) {
+          badge.style.color = '#f87171';
+          badge.textContent = '疲勞警戒';
+        } else {
+          badge.style.color = '#4ade80';
+          badge.textContent = '正常';
+        }
+        statusTd.appendChild(badge);
+
+        tr.appendChild(td(d.pitch_bucket || d.bucket || '—', 'l', false, '#ffffff'));
+        tr.appendChild(td(d.pa != null ? String(d.pa) : '—', 'r', true, '#d1d5db'));
+        tr.appendChild(td(ba > 0 ? ba.toFixed(3) : '—', 'r', true, isFatigue ? '#f87171' : '#ffffff'));
+        tr.appendChild(td(d.k_pct != null ? (d.k_pct * 100).toFixed(1) + '%' : '—', 'r', true, '#d1d5db'));
+        tr.appendChild(td(d.bb_pct != null ? (d.bb_pct * 100).toFixed(1) + '%' : '—', 'r', true, '#d1d5db'));
+        tr.appendChild(statusTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadPitchers();
+  </script>
+</body>
+</html>

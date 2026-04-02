@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LOB% 分析 — CPBL Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>body { background-color: #141920; }</style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
+      <a href="/index.html" class="flex items-center gap-2 mr-4">
+        <span class="text-2xl">&#9898;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <a href="/lob.html" class="text-sm text-brand font-semibold">LOB%</a>
+      <a href="/fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
+      <a href="/clutch.html" class="text-sm text-gray-400 hover:text-white transition-colors">關鍵時刻</a>
+      <a href="/counts.html" class="text-sm text-gray-400 hover:text-white transition-colors">球數分析</a>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white">LOB% 分析</h1>
+        <p class="text-gray-400 mt-1 text-sm">殘壘率 — 反映投手的幸運程度與未來 ERA 回歸空間</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <label for="yearSelect" class="text-sm text-gray-400">賽季</label>
+        <select id="yearSelect"
+          class="bg-surface-card border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-4 mt-4 text-xs">
+      <div class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm bg-green-500 inline-block"></span>
+        <span class="text-gray-400">LOB% &gt; 78%（偏高 / 幸運）</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm bg-gray-400 inline-block"></span>
+        <span class="text-gray-400">65%–78%（正常區間）</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-sm bg-red-500 inline-block"></span>
+        <span class="text-gray-400">LOB% &lt; 65%（偏低 / 不幸）</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+    <div id="loadingState" class="flex items-center justify-center py-20 text-gray-500">
+      <svg class="animate-spin h-6 w-6 mr-3 text-brand" viewBox="0 0 24 24" fill="none">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      </svg>
+      載入中…
+    </div>
+    <div id="errorState" class="hidden bg-red-900/20 border border-red-700/40 rounded-xl p-6 text-center text-red-400 text-sm mb-4">
+      <p class="font-semibold mb-1">無法載入資料（顯示 Demo 資料）</p>
+      <p id="errorMsg" class="text-red-500/70"></p>
+    </div>
+    <div id="chartContainer" class="hidden bg-surface-card border border-surface-border rounded-xl p-4">
+      <div id="lobChart" style="height:480px;"></div>
+    </div>
+    <div id="tableContainer" class="hidden mt-6 bg-surface-card border border-surface-border rounded-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-surface-border flex items-center justify-between">
+        <h2 class="font-semibold text-white text-sm">完整投手列表</h2>
+        <span id="playerCount" class="text-xs text-gray-500"></span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-surface-border text-gray-500 text-xs uppercase tracking-wide">
+              <th class="px-5 py-3 text-left">投手</th>
+              <th class="px-5 py-3 text-left">球隊</th>
+              <th class="px-5 py-3 text-right cursor-pointer hover:text-white" id="th-lob">LOB% &#8597;</th>
+              <th class="px-5 py-3 text-right cursor-pointer hover:text-white" id="th-era">ERA &#8597;</th>
+              <th class="px-5 py-3 text-right cursor-pointer hover:text-white" id="th-ip">局數 &#8597;</th>
+              <th class="px-5 py-3 text-right">狀態</th>
+            </tr>
+          </thead>
+          <tbody id="lobTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let allData = [];
+    let sortKey = 'lob_pct';
+    let sortAsc = false;
+
+    function getLobColor(lob) {
+      if (lob > 0.78) return '#22c55e';
+      if (lob < 0.65) return '#ef4444';
+      return '#9ca3af';
+    }
+
+    function getLobStatus(lob) {
+      if (lob > 0.78) return { text: '偏高', color: '#4ade80' };
+      if (lob < 0.65) return { text: '偏低', color: '#f87171' };
+      return { text: '正常', color: '#9ca3af' };
+    }
+
+    async function loadData(year) {
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('chartContainer').classList.add('hidden');
+      document.getElementById('tableContainer').classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/analysis/lob?year=${year}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const json = await res.json();
+        allData = (json.data || json || []).sort((a, b) => b.lob_pct - a.lob_pct);
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('playerCount').textContent = `共 ${allData.length} 名投手`;
+      } catch (e) {
+        allData = buildDemoData();
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorMsg').textContent = e.message;
+        document.getElementById('playerCount').textContent = 'Demo 資料（API 未連線）';
+      }
+
+      renderChart(allData.slice(0, 20));
+      renderTable(allData);
+      document.getElementById('chartContainer').classList.remove('hidden');
+      document.getElementById('tableContainer').classList.remove('hidden');
+    }
+
+    function buildDemoData() {
+      const teams = ['中信兄弟', '統一獅', '味全龍', '樂天桃猿', '富邦悍將'];
+      const names = ['王建民', '陳冠宇', '林子偉', '宋文華', '鄭浩均', '曾仁和', '陳禹勳', '吳俊偉'];
+      return names.map((n, i) => ({
+        pitcher_name: n,
+        team: teams[i % teams.length],
+        lob_pct: 0.55 + Math.random() * 0.35,
+        era: 2.5 + Math.random() * 3,
+        innings_pitched: 60 + Math.random() * 100,
+      }));
+    }
+
+    function renderChart(data) {
+      const names = data.map(d => d.pitcher_name || d.name || '—');
+      const lobs = data.map(d => d.lob_pct || 0);
+
+      Plotly.newPlot('lobChart', [
+        {
+          type: 'bar',
+          x: names,
+          y: lobs,
+          marker: { color: lobs.map(getLobColor), line: { color: 'transparent' } },
+          name: 'LOB%',
+          text: lobs.map(v => (v * 100).toFixed(1) + '%'),
+          textposition: 'outside',
+          textfont: { size: 10, color: '#9ca3af' },
+          hovertemplate: '<b>%{x}</b><br>LOB%: %{y:.1%}<extra></extra>',
+        },
+        {
+          type: 'scatter',
+          mode: 'lines',
+          x: names,
+          y: Array(names.length).fill(0.70),
+          name: '聯盟平均 (0.70)',
+          line: { color: '#f59e0b', dash: 'dash', width: 1.5 },
+          hoverinfo: 'skip',
+        }
+      ], {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#9ca3af', family: 'sans-serif' },
+        margin: { t: 20, r: 20, b: 110, l: 50 },
+        xaxis: { tickfont: { size: 11 }, tickangle: -35, gridcolor: '#2d3748', linecolor: '#2d3748' },
+        yaxis: { tickformat: '.0%', range: [0, 1.1], gridcolor: '#2d3748', linecolor: '#2d3748', zeroline: false },
+        legend: { orientation: 'h', x: 0, y: 1.08, font: { size: 11 } },
+        bargap: 0.3,
+      }, { responsive: true, displayModeBar: false });
+    }
+
+    function renderTable(data) {
+      const sorted = [...data].sort((a, b) => {
+        const av = a[sortKey] ?? 0;
+        const bv = b[sortKey] ?? 0;
+        return sortAsc ? av - bv : bv - av;
+      });
+
+      const tbody = document.getElementById('lobTableBody');
+      tbody.replaceChildren();
+
+      sorted.forEach((d, i) => {
+        const lob = d.lob_pct || 0;
+        const status = getLobStatus(lob);
+        const tr = document.createElement('tr');
+        tr.className = (i % 2 === 0 ? '' : 'bg-white/[0.02]') +
+          ' border-b border-surface-border/50 hover:bg-white/[0.04] transition-colors';
+
+        function td(text, align, mono, color) {
+          const el = document.createElement('td');
+          el.className = 'px-5 py-3' + (align === 'r' ? ' text-right' : '') +
+            (mono ? ' font-mono' : '');
+          if (color) el.style.color = color;
+          el.textContent = text;
+          return el;
+        }
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'text-xs font-semibold';
+        statusSpan.style.color = status.color;
+        statusSpan.textContent = status.text;
+        const statusTd = document.createElement('td');
+        statusTd.className = 'px-5 py-3 text-right';
+        statusTd.appendChild(statusSpan);
+
+        tr.appendChild(td(d.pitcher_name || d.name || '—', 'l', false, '#ffffff'));
+        tr.appendChild(td(d.team || '—', 'l', false, '#9ca3af'));
+        tr.appendChild(td((lob * 100).toFixed(1) + '%', 'r', true, '#ffffff'));
+        tr.appendChild(td(d.era != null ? d.era.toFixed(2) : '—', 'r', true, '#d1d5db'));
+        tr.appendChild(td(d.innings_pitched != null ? d.innings_pitched.toFixed(1) : '—', 'r', true, '#d1d5db'));
+        tr.appendChild(statusTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function sortTable(key) {
+      if (sortKey === key) sortAsc = !sortAsc;
+      else { sortKey = key; sortAsc = false; }
+      renderTable(allData);
+    }
+
+    document.getElementById('th-lob').addEventListener('click', () => sortTable('lob_pct'));
+    document.getElementById('th-era').addEventListener('click', () => sortTable('era'));
+    document.getElementById('th-ip').addEventListener('click', () => sortTable('innings_pitched'));
+    document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
+    loadData(2026);
+  </script>
+</body>
+</html>

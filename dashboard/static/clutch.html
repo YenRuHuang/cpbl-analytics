@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>關鍵時刻表現 — CPBL Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>body { background-color: #141920; }</style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
+      <a href="/index.html" class="flex items-center gap-2 mr-4">
+        <span class="text-2xl">&#9898;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <a href="/lob.html" class="text-sm text-gray-400 hover:text-white transition-colors">LOB%</a>
+      <a href="/fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
+      <a href="/clutch.html" class="text-sm text-green-400 font-semibold">關鍵時刻</a>
+      <a href="/counts.html" class="text-sm text-gray-400 hover:text-white transition-colors">球數分析</a>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white">關鍵時刻表現</h1>
+        <p class="text-gray-400 mt-1 text-sm">高槓桿指數情境下的打擊率 vs 整體打擊率</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <label for="yearSelect" class="text-sm text-gray-400">賽季</label>
+        <select id="yearSelect"
+          class="bg-surface-card border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex flex-wrap gap-4 mt-4 text-xs">
+      <div class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+        <span class="text-gray-400">高槓桿 BA &gt; 整體 BA（關鍵時刻更好）</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+        <span class="text-gray-400">高槓桿 BA &lt; 整體 BA（壓力下掉球）</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-12 h-0.5 bg-yellow-400 inline-block border-dashed border-yellow-400" style="border-style:dashed;border-top-width:1.5px;height:0"></span>
+        <span class="text-gray-400">對角線（無差異）</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+
+    <!-- Loading / Error -->
+    <div id="loadingState" class="flex items-center justify-center py-20 text-gray-500">
+      <svg class="animate-spin h-6 w-6 mr-3 text-brand" viewBox="0 0 24 24" fill="none">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      </svg>
+      載入中…
+    </div>
+    <div id="errorState" class="hidden bg-red-900/20 border border-red-700/40 rounded-xl p-6 text-center text-red-400 text-sm mb-4">
+      <p class="font-semibold mb-1">無法載入資料（顯示 Demo 資料）</p>
+      <p id="errorMsg" class="text-red-500/70"></p>
+    </div>
+
+    <!-- Player Detail Panel -->
+    <div id="playerDetail" class="hidden mb-4 bg-brand/10 border border-brand/30 rounded-xl px-5 py-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-xs text-brand mb-1">選取球員</p>
+          <p id="detailName" class="text-lg font-bold text-white"></p>
+          <p id="detailTeam" class="text-gray-400 text-sm"></p>
+        </div>
+        <div class="grid grid-cols-3 gap-6 text-center">
+          <div>
+            <p class="text-xs text-gray-500 mb-0.5">整體 BA</p>
+            <p id="detailBA" class="text-xl font-mono font-bold text-white"></p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-0.5">高槓桿 BA</p>
+            <p id="detailHighLevBA" class="text-xl font-mono font-bold"></p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-0.5">差異</p>
+            <p id="detailDiff" class="text-xl font-mono font-bold"></p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('playerDetail').classList.add('hidden')"
+          class="text-gray-500 hover:text-white text-lg leading-none ml-4">&#10005;</button>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div id="chartContainer" class="hidden bg-surface-card border border-surface-border rounded-xl p-4">
+      <div id="clutchChart" style="height:520px;"></div>
+    </div>
+
+    <!-- Table -->
+    <div id="tableContainer" class="hidden mt-6 bg-surface-card border border-surface-border rounded-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-surface-border flex items-center justify-between">
+        <h2 class="font-semibold text-white text-sm">完整排行（依 Clutch 差異排序）</h2>
+        <span id="playerCount" class="text-xs text-gray-500"></span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-surface-border text-gray-500 text-xs uppercase tracking-wide">
+              <th class="px-5 py-3 text-left">打者</th>
+              <th class="px-5 py-3 text-left">球隊</th>
+              <th class="px-5 py-3 text-right">整體 BA</th>
+              <th class="px-5 py-3 text-right">高槓桿 BA</th>
+              <th class="px-5 py-3 text-right">差異</th>
+              <th class="px-5 py-3 text-right">評定</th>
+            </tr>
+          </thead>
+          <tbody id="clutchTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let allData = [];
+
+    function buildDemoData() {
+      const players = [
+        { batter_name: '陳傑憲', team: '統一獅', overall_ba: 0.298, high_lev_ba: 0.341 },
+        { batter_name: '江坤宇', team: '中信兄弟', overall_ba: 0.312, high_lev_ba: 0.285 },
+        { batter_name: '王柏融', team: '樂天桃猿', overall_ba: 0.285, high_lev_ba: 0.310 },
+        { batter_name: '胡金龍', team: '味全龍', overall_ba: 0.260, high_lev_ba: 0.240 },
+        { batter_name: '吳俊良', team: '富邦悍將', overall_ba: 0.275, high_lev_ba: 0.300 },
+        { batter_name: '林安可', team: '中信兄弟', overall_ba: 0.290, high_lev_ba: 0.268 },
+        { batter_name: '高國輝', team: '樂天桃猿', overall_ba: 0.265, high_lev_ba: 0.289 },
+        { batter_name: '周思齊', team: '統一獅', overall_ba: 0.245, high_lev_ba: 0.218 },
+        { batter_name: '陳品捷', team: '味全龍', overall_ba: 0.270, high_lev_ba: 0.295 },
+        { batter_name: '林智勝', team: '富邦悍將', overall_ba: 0.255, high_lev_ba: 0.231 },
+        { batter_name: '朱育賢', team: '中信兄弟', overall_ba: 0.280, high_lev_ba: 0.305 },
+        { batter_name: '蔣少宏', team: '樂天桃猿', overall_ba: 0.235, high_lev_ba: 0.258 },
+      ];
+      return players;
+    }
+
+    async function loadData(year) {
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('chartContainer').classList.add('hidden');
+      document.getElementById('tableContainer').classList.add('hidden');
+      document.getElementById('playerDetail').classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/analysis/clutch?year=${year}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const json = await res.json();
+        allData = json.data || json || [];
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('playerCount').textContent = `共 ${allData.length} 名打者`;
+      } catch (e) {
+        allData = buildDemoData();
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorMsg').textContent = e.message;
+        document.getElementById('playerCount').textContent = 'Demo 資料（API 未連線）';
+      }
+
+      renderChart(allData);
+      renderTable(allData);
+      document.getElementById('chartContainer').classList.remove('hidden');
+      document.getElementById('tableContainer').classList.remove('hidden');
+    }
+
+    function renderChart(data) {
+      const minBA = Math.min(...data.map(d => Math.min(d.overall_ba, d.high_lev_ba))) - 0.02;
+      const maxBA = Math.max(...data.map(d => Math.max(d.overall_ba, d.high_lev_ba))) + 0.02;
+
+      const clutchPlayers = data.filter(d => d.high_lev_ba >= d.overall_ba);
+      const chokePlayers = data.filter(d => d.high_lev_ba < d.overall_ba);
+
+      const makePlotData = (players, color, name) => ({
+        type: 'scatter',
+        mode: 'markers',
+        x: players.map(d => d.overall_ba),
+        y: players.map(d => d.high_lev_ba),
+        text: players.map(d => d.batter_name || d.name || '—'),
+        customdata: players,
+        name: name,
+        marker: { color: color, size: 9, opacity: 0.85, line: { color: '#141920', width: 1 } },
+        hovertemplate: '<b>%{text}</b><br>整體 BA: %{x:.3f}<br>高槓桿 BA: %{y:.3f}<extra></extra>',
+      });
+
+      // Diagonal reference line
+      const diagLine = {
+        type: 'scatter',
+        mode: 'lines',
+        x: [minBA, maxBA],
+        y: [minBA, maxBA],
+        name: '中性對角線',
+        line: { color: '#f59e0b', dash: 'dash', width: 1.5 },
+        hoverinfo: 'skip',
+      };
+
+      const layout = {
+        paper_bgcolor: 'transparent',
+        plot_bgcolor: 'transparent',
+        font: { color: '#9ca3af', family: 'sans-serif' },
+        margin: { t: 20, r: 30, b: 60, l: 60 },
+        xaxis: {
+          title: '整體打擊率（Overall BA）',
+          range: [minBA, maxBA],
+          gridcolor: '#2d3748',
+          linecolor: '#2d3748',
+          zeroline: false,
+          tickformat: '.3f',
+        },
+        yaxis: {
+          title: '高槓桿打擊率（High-Leverage BA）',
+          range: [minBA, maxBA],
+          gridcolor: '#2d3748',
+          linecolor: '#2d3748',
+          zeroline: false,
+          tickformat: '.3f',
+        },
+        legend: { orientation: 'h', x: 0, y: 1.06, font: { size: 11 } },
+      };
+
+      const traces = [
+        makePlotData(clutchPlayers, '#4ade80', '關鍵時刻更強'),
+        makePlotData(chokePlayers, '#f87171', '壓力下下滑'),
+        diagLine,
+      ];
+
+      Plotly.newPlot('clutchChart', traces, layout, { responsive: true, displayModeBar: false });
+
+      document.getElementById('clutchChart').on('plotly_click', evt => {
+        const pt = evt.points[0];
+        if (!pt || !pt.customdata) return;
+        const d = pt.customdata;
+        const diff = (d.high_lev_ba - d.overall_ba);
+        const isClutch = diff >= 0;
+
+        document.getElementById('detailName').textContent = d.batter_name || d.name || '—';
+        document.getElementById('detailTeam').textContent = d.team || '—';
+        document.getElementById('detailBA').textContent = d.overall_ba.toFixed(3);
+
+        const hlEl = document.getElementById('detailHighLevBA');
+        hlEl.textContent = d.high_lev_ba.toFixed(3);
+        hlEl.style.color = isClutch ? '#4ade80' : '#f87171';
+
+        const diffEl = document.getElementById('detailDiff');
+        diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(3);
+        diffEl.style.color = isClutch ? '#4ade80' : '#f87171';
+
+        document.getElementById('playerDetail').classList.remove('hidden');
+      });
+    }
+
+    function renderTable(data) {
+      const sorted = [...data].sort((a, b) => {
+        const da = (b.high_lev_ba - b.overall_ba) - (a.high_lev_ba - a.overall_ba);
+        return da;
+      });
+
+      const tbody = document.getElementById('clutchTableBody');
+      tbody.replaceChildren();
+
+      sorted.forEach((d, i) => {
+        const diff = d.high_lev_ba - d.overall_ba;
+        const isClutch = diff >= 0;
+        const tr = document.createElement('tr');
+        tr.className = (i % 2 === 0 ? '' : 'bg-white/[0.02]') +
+          ' border-b border-surface-border/50 hover:bg-white/[0.04] transition-colors cursor-pointer';
+
+        tr.addEventListener('click', () => {
+          const hlEl = document.getElementById('detailHighLevBA');
+          const diffEl = document.getElementById('detailDiff');
+          document.getElementById('detailName').textContent = d.batter_name || d.name || '—';
+          document.getElementById('detailTeam').textContent = d.team || '—';
+          document.getElementById('detailBA').textContent = d.overall_ba.toFixed(3);
+          hlEl.textContent = d.high_lev_ba.toFixed(3);
+          hlEl.style.color = isClutch ? '#4ade80' : '#f87171';
+          diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(3);
+          diffEl.style.color = isClutch ? '#4ade80' : '#f87171';
+          document.getElementById('playerDetail').classList.remove('hidden');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        function td(text, align, mono, color) {
+          const el = document.createElement('td');
+          el.className = 'px-5 py-3' + (align === 'r' ? ' text-right' : '') +
+            (mono ? ' font-mono' : '');
+          if (color) el.style.color = color;
+          el.textContent = text;
+          return el;
+        }
+
+        const badgeTd = document.createElement('td');
+        badgeTd.className = 'px-5 py-3 text-right';
+        const badge = document.createElement('span');
+        badge.className = 'text-xs font-semibold';
+        badge.style.color = isClutch ? '#4ade80' : '#f87171';
+        badge.textContent = isClutch ? '關鍵強打' : '壓力下滑';
+        badgeTd.appendChild(badge);
+
+        tr.appendChild(td(d.batter_name || d.name || '—', 'l', false, '#ffffff'));
+        tr.appendChild(td(d.team || '—', 'l', false, '#9ca3af'));
+        tr.appendChild(td(d.overall_ba.toFixed(3), 'r', true, '#d1d5db'));
+        tr.appendChild(td(d.high_lev_ba.toFixed(3), 'r', true, isClutch ? '#4ade80' : '#f87171'));
+        tr.appendChild(td((diff >= 0 ? '+' : '') + diff.toFixed(3), 'r', true, isClutch ? '#4ade80' : '#f87171'));
+        tr.appendChild(badgeTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
+    loadData(2026);
+  </script>
+</body>
+</html>
