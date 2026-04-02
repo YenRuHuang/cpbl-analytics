@@ -27,15 +27,15 @@
   <!-- Nav -->
   <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/index.html" class="flex items-center gap-2">
+      <a href="/dashboard/index.html" class="flex items-center gap-2">
         <span class="text-2xl">⚾</span>
         <span class="font-bold text-lg text-white">CPBL Analytics</span>
       </a>
       <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
-        <a href="/lob.html" class="hover:text-white transition-colors">LOB%</a>
-        <a href="/fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
-        <a href="/clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
-        <a href="/counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="/dashboard/lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="/dashboard/fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="/dashboard/clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="/dashboard/counts.html" class="hover:text-white transition-colors">球數分析</a>
       </div>
       <!-- Mobile menu toggle placeholder -->
       <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
@@ -44,10 +44,10 @@
     </div>
     <!-- Mobile menu -->
     <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
-      <a href="/lob.html" class="block py-1 hover:text-white">LOB%</a>
-      <a href="/fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
-      <a href="/clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
-      <a href="/counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="/dashboard/lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="/dashboard/fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="/dashboard/clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="/dashboard/counts.html" class="block py-1 hover:text-white">球數分析</a>
     </div>
   </nav>
 
@@ -70,7 +70,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
       <!-- LOB% -->
-      <a href="/lob.html"
+      <a href="/dashboard/lob.html"
          class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-brand/50 hover:shadow-lg hover:shadow-brand/10">
         <div class="text-3xl mb-3">📊</div>
         <h2 class="text-lg font-bold text-white mb-2">LOB% 分析</h2>
@@ -81,7 +81,7 @@
       </a>
 
       <!-- Fatigue -->
-      <a href="/fatigue.html"
+      <a href="/dashboard/fatigue.html"
          class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10">
         <div class="text-3xl mb-3">🔥</div>
         <h2 class="text-lg font-bold text-white mb-2">投手疲勞</h2>
@@ -92,7 +92,7 @@
       </a>
 
       <!-- Clutch -->
-      <a href="/clutch.html"
+      <a href="/dashboard/clutch.html"
          class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10">
         <div class="text-3xl mb-3">⚡</div>
         <h2 class="text-lg font-bold text-white mb-2">關鍵時刻表現</h2>
@@ -103,7 +103,7 @@
       </a>
 
       <!-- Count Splits -->
-      <a href="/counts.html"
+      <a href="/dashboard/counts.html"
          class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10">
         <div class="text-3xl mb-3">🎯</div>
         <h2 class="text-lg font-bold text-white mb-2">球數分布分析</h2>
