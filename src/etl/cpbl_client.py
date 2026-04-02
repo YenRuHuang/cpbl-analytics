@@ -193,6 +193,9 @@ class CpblClient:
         except json.JSONDecodeError:
             return []
 
+        if not rows:
+            return []
+
         lines: list[BattingLine] = []
         for row in rows:
             team = "home" if row.get("VisitingHomeType") == "H" else "away"
@@ -215,6 +218,9 @@ class CpblClient:
         try:
             rows = json.loads(pitching_json) if isinstance(pitching_json, str) else pitching_json
         except json.JSONDecodeError:
+            return []
+
+        if not rows:
             return []
 
         lines: list[PitchingLine] = []
@@ -242,6 +248,9 @@ class CpblClient:
         try:
             rows = json.loads(plays_json) if isinstance(plays_json, str) else plays_json
         except json.JSONDecodeError:
+            return []
+
+        if not rows:
             return []
 
         plays: list[PlayByPlay] = []
