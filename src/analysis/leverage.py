@@ -47,19 +47,17 @@ def _is_hit(result: str | None) -> bool:
     """判斷打席結果是否為安打。"""
     if result is None:
         return False
-    result_upper = result.upper()
-    # 常見安打代碼：1B, 2B, 3B, HR
-    return any(code in result_upper for code in ("1B", "2B", "3B", "HR"))
+    r = result.lower()
+    return r in ("single", "double", "triple", "homer", "1b", "2b", "3b", "hr")
 
 
 def _is_at_bat(result: str | None) -> bool:
-    """判斷打席是否計入打數（排除 BB/HBP/SAC）。"""
+    """判斷打席是否計入打數（排除 BB/HBP/SAC 等不計打數的打席）。"""
     if result is None:
         return False
-    result_upper = result.upper()
-    # 排除不計打數的打席
-    exclude = ("BB", "HBP", "SAC", "IBB", "SF")
-    return not any(code in result_upper for code in exclude)
+    r = result.lower()
+    non_ab = ("walk", "hit_by_pitch", "sac_bunt", "sac_fly", "bb", "hbp", "ibb", "sac", "sf")
+    return r not in non_ab
 
 
 def _sample_note(high_li_pa: int) -> str:

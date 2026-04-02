@@ -144,15 +144,30 @@ def _fetch_pitcher_pitch_events(
     pitcher_id: str,
     year: int,
 ) -> list:
-    """從 pitch_events 取得投手的逐球資料。"""
+    """從 pitch_events + plate_appearances 取得投手每球資料含打席結果。
+
+    只回傳每個 PA 的最後一球（有 PA result 的），用來計算 bucket 統計。
+    """
     return db.execute(text("""
         SELECT
             pe.pitch_number_game,
-            pe.pitch_result
+            pa.result AS pa_result
         FROM pitch_events pe
         JOIN games g ON pe.game_id = g.game_id
+        JOIN plate_appearances pa ON pe.game_id = pa.game_id
+            AND pe.inning = pa.inning
+            AND pe.top_bottom = pa.top_bottom
+            AND pe.pa_seq = pa.pa_seq
         WHERE pe.pitcher_id = :pid
           AND g.year = :year
+          AND pe.pitch_result IN ('in_play', 'swinging_strike', 'called_strike', 'strike')
+          AND pe.pitch_seq = (
+              SELECT MAX(pe2.pitch_seq) FROM pitch_events pe2
+              WHERE pe2.game_id = pe.game_id
+                AND pe2.inning = pe.inning
+                AND pe2.top_bottom = pe.top_bottom
+                AND pe2.pa_seq = pe.pa_seq
+          )
         ORDER BY pe.game_id, pe.pitch_number_game
     """), {"pid": pitcher_id, "year": year}).fetchall()
 
@@ -209,12 +224,12 @@ def _aggregate_into_buckets(
                 "batters_faced": 0,
             }
 
-        result = (row.pitch_result or "").lower()
+        result = (row.pa_result or "").lower()
 
-        is_hit = any(k in result for k in ("hit", "single", "double", "triple", "homer"))
-        is_walk = "walk" in result or result in ("bb", "ibb")
-        is_k = "strikeout" in result or result in ("k", "so")
-        is_out = "out" in result or "fly" in result or "ground" in result
+        is_hit = result in ("single", "double", "triple", "homer")
+        is_walk = result in ("walk", "hit_by_pitch", "bb", "ibb")
+        is_k = result in ("strikeout", "k", "so")
+        is_out = result in ("out", "error", "fielders_choice", "sac_fly", "sac_bunt")
 
         if is_hit:
             bucket_data[b_idx]["hits"] += 1

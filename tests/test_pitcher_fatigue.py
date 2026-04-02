@@ -16,7 +16,7 @@ def _make_row(pitch_number: int, result: str):
     """Create a minimal mock row object for pitcher pitch events."""
     class _Row:
         pitch_number_game = pitch_number
-        pitch_result = result
+        pa_result = result
     return _Row()
 
 
@@ -121,7 +121,7 @@ class TestDetectFatigueThreshold:
 
 class TestAggregateIntoBuckets:
     def test_basic_aggregation(self) -> None:
-        rows = [_make_row(1, "hit"), _make_row(2, "strikeout"), _make_row(3, "walk")]
+        rows = [_make_row(1, "single"), _make_row(2, "strikeout"), _make_row(3, "walk")]
         buckets = _aggregate_into_buckets(rows, bucket_size=15)
         assert len(buckets) == 1
         assert buckets[0].hits == 1
@@ -129,12 +129,12 @@ class TestAggregateIntoBuckets:
         assert buckets[0].walks == 1
 
     def test_two_buckets(self) -> None:
-        rows = [_make_row(1, "hit"), _make_row(16, "strikeout")]
+        rows = [_make_row(1, "single"), _make_row(16, "strikeout")]
         buckets = _aggregate_into_buckets(rows, bucket_size=15)
         assert len(buckets) == 2
 
     def test_zero_pitch_number_ignored(self) -> None:
-        rows = [_make_row(0, "hit"), _make_row(1, "walk")]
+        rows = [_make_row(0, "single"), _make_row(1, "walk")]
         buckets = _aggregate_into_buckets(rows, bucket_size=15)
         assert buckets[0].hits == 0
         assert buckets[0].walks == 1
