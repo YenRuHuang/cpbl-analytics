@@ -160,7 +160,6 @@ def _fetch_pitcher_pitch_events(
             AND pe.pa_seq = pa.pa_seq
         WHERE pe.pitcher_id = :pid
           AND g.year = :year
-          AND pe.pitch_result IN ('in_play', 'swinging_strike', 'called_strike', 'strike')
           AND pe.pitch_seq = (
               SELECT MAX(pe2.pitch_seq) FROM pitch_events pe2
               WHERE pe2.game_id = pe.game_id
