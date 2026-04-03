@@ -25,14 +25,14 @@
   <!-- Nav -->
   <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
-      <a href="/dashboard/index.html" class="flex items-center gap-2 mr-4">
+      <a href="index.html" class="flex items-center gap-2 mr-4">
         <span class="text-2xl">&#9898;</span>
         <span class="font-bold text-lg text-white">CPBL Analytics</span>
       </a>
-      <a href="/dashboard/lob.html" class="text-sm text-brand font-semibold">LOB%</a>
-      <a href="/dashboard/fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
-      <a href="/dashboard/clutch.html" class="text-sm text-gray-400 hover:text-white transition-colors">關鍵時刻</a>
-      <a href="/dashboard/counts.html" class="text-sm text-gray-400 hover:text-white transition-colors">球數分析</a>
+      <a href="lob.html" class="text-sm text-brand font-semibold">LOB%</a>
+      <a href="fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
+      <a href="clutch.html" class="text-sm text-gray-400 hover:text-white transition-colors">關鍵時刻</a>
+      <a href="counts.html" class="text-sm text-gray-400 hover:text-white transition-colors">球數分析</a>
     </div>
   </nav>
 
@@ -112,7 +112,6 @@
   </footer>
 
   <script>
-    const API_BASE = window.location.origin;
     let allData = [];
     let sortKey = 'lob_pct';
     let sortAsc = false;
@@ -136,7 +135,7 @@
       document.getElementById('tableContainer').classList.add('hidden');
 
       try {
-        const res = await fetch(`${API_BASE}/api/analysis/lob?year=${year}&min_ip=5`);
+        const res = await fetch(`api/analysis/lob_${year}.json`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const json = await res.json();
         allData = (json.data || json || []).sort((a, b) => b.lob_pct - a.lob_pct);
