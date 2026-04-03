@@ -50,6 +50,7 @@ def export_year(year: int) -> None:
             "clutch_score": r.clutch_score, "sample_note": r.sample_note,
         }
         for r in clutch
+        if r.high_li_ba is not None  # 過濾無高壓打席的球員
     ]
     _write(OUT / f"analysis/clutch_{year}.json", clutch_data)
 

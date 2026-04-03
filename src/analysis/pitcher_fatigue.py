@@ -85,25 +85,53 @@ def _detect_fatigue_threshold(
     overall_ba: float | None,
     overall_k: float | None,
 ) -> int | None:
-    """找到第一個出現衰退跡象的 bucket 的投球數起點。"""
-    if overall_ba is None and overall_k is None:
+    """找到第一個出現衰退跡象的 bucket 的投球數起點。
+
+    用前期 bucket 當 baseline（而非全場平均），這樣不會被疲勞後的
+    數據拉高平均，也不會讓第一個 bucket 誤判為疲勞點。
+    - 3+ buckets → 前 2 個 bucket 當 baseline，從第 3 個開始偵測
+    - 2 buckets → 第 1 個當 baseline，看第 2 個
+    - 1 bucket → 不偵測
+    """
+    if len(buckets) < 2:
         return None
 
-    for bucket in buckets:
+    # 決定 baseline 範圍
+    if len(buckets) >= 3:
+        baseline_buckets = buckets[:2]
+        detect_from = 2
+    else:
+        baseline_buckets = buckets[:1]
+        detect_from = 1
+
+    # 計算 baseline BA 和 K%
+    bl_bf = sum(b.batters_faced for b in baseline_buckets)
+    bl_hits = sum(b.hits for b in baseline_buckets)
+    bl_k = sum(b.strikeouts for b in baseline_buckets)
+    bl_walks = sum(b.walks for b in baseline_buckets)
+    bl_ab = bl_bf - bl_walks
+
+    baseline_ba = _safe_divide(bl_hits, bl_ab)
+    baseline_k = _safe_divide(bl_k, bl_bf)
+
+    if baseline_ba is None and baseline_k is None:
+        return None
+
+    for bucket in buckets[detect_from:]:
         if bucket.batters_faced < 3:
             continue
 
         ba_triggered = (
-            overall_ba is not None
+            baseline_ba is not None
             and bucket.ba_against is not None
-            and overall_ba > 0
-            and (bucket.ba_against - overall_ba) / overall_ba > _BA_RISE_THRESHOLD
+            and baseline_ba > 0
+            and (bucket.ba_against - baseline_ba) / baseline_ba > _BA_RISE_THRESHOLD
         )
         k_triggered = (
-            overall_k is not None
+            baseline_k is not None
             and bucket.k_pct is not None
-            and overall_k > 0
-            and (overall_k - bucket.k_pct) / overall_k > _K_DROP_THRESHOLD
+            and baseline_k > 0
+            and (baseline_k - bucket.k_pct) / baseline_k > _K_DROP_THRESHOLD
         )
 
         if ba_triggered or k_triggered:
@@ -286,9 +314,15 @@ def compute_pitcher_fatigue(
     if not rows:
         return None
 
-    total_pitches = max(
-        (r.pitch_number_game or 0) for r in rows
-    ) if rows else 0
+    # 全季總投球數 = 每場最大 pitch_number_game 的加總
+    game_pitches = db.execute(text("""
+        SELECT pe.game_id, MAX(pe.pitch_number_game) AS max_pitch
+        FROM pitch_events pe
+        JOIN games g ON pe.game_id = g.game_id
+        WHERE pe.pitcher_id = :pid AND g.year = :year
+        GROUP BY pe.game_id
+    """), {"pid": pitcher_id, "year": year}).fetchall()
+    total_pitches = sum(r.max_pitch or 0 for r in game_pitches) if game_pitches else 0
 
     buckets = _aggregate_into_buckets(rows, _BUCKET_SIZE)
     if not buckets:
