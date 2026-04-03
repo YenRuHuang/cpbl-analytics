@@ -84,48 +84,72 @@ def compute_batter_count_splits(
     因為目前 pitch_events 可能還沒有資料（需要 Rebas Open Data），
     先用 CPBL LiveLogJson 的逐球資料做簡化版。
     """
-    # 從 pitch_events 查（如果有資料）
+    # 每個 PA 取 MAX(balls_before) 和 MAX(strikes_before) 作為到達的最高球數
+    # 因為 CPBL pitch data 的 balls_before/strikes_before 在最後一球不可靠
+    # 但序列中到達的最高 count 是可信的
     rows = db.execute(text("""
         SELECT
-            pe.balls_before,
-            pe.strikes_before,
-            pe.pitch_result,
+            MIN(pe.balls_before, 3) AS max_balls,
+            MIN(pe.strikes_before, 2) AS max_strikes,
             pa.result
-        FROM pitch_events pe
+        FROM (
+            SELECT
+                pe.game_id, pe.inning, pe.top_bottom, pe.pa_seq,
+                MAX(pe.balls_before) AS balls_before,
+                MAX(pe.strikes_before) AS strikes_before
+            FROM pitch_events pe
+            JOIN games g ON pe.game_id = g.game_id
+            WHERE pe.batter_id = :bid AND g.year = :year
+            GROUP BY pe.game_id, pe.inning, pe.top_bottom, pe.pa_seq
+        ) pe
         JOIN plate_appearances pa ON pe.game_id = pa.game_id
             AND pe.inning = pa.inning
             AND pe.top_bottom = pa.top_bottom
             AND pe.pa_seq = pa.pa_seq
-        JOIN games g ON pe.game_id = g.game_id
-        WHERE pe.batter_id = :bid AND g.year = :year
     """), {"bid": batter_id, "year": year}).fetchall()
 
     if not rows:
         return None
 
-    # 聚合每個 count 的最終打席結果（只看每個 PA 的最後一球）
-    # 簡化：用 pitch_events 的結果分類
+    # 用 0-0 count 的逐球資料計算 first pitch swing %
+    first_pitch_rows = db.execute(text("""
+        SELECT pe.pitch_result
+        FROM pitch_events pe
+        JOIN games g ON pe.game_id = g.game_id
+        WHERE pe.batter_id = :bid AND g.year = :year
+          AND pe.balls_before = 0 AND pe.strikes_before = 0
+          AND pe.pitch_seq = 1
+    """), {"bid": batter_id, "year": year}).fetchall()
+
+    swing_count = sum(
+        1 for r in first_pitch_rows
+        if (r.pitch_result or "").lower() in ("in_play", "swinging_strike", "foul")
+    )
+    first_pitch_swing = (
+        round(swing_count / len(first_pitch_rows), 3)
+        if first_pitch_rows else None
+    )
+
+    # 聚合每個 terminal count 的打席結果
     count_map: dict[str, dict] = {}
 
     for row in rows:
-        count = _classify_count(row.balls_before, row.strikes_before)
+        count = _classify_count(row.max_balls, row.max_strikes)
         if count not in count_map:
             count_map[count] = {"count": count, "pa": 0, "hits": 0, "outs": 0, "bb": 0, "k": 0}
 
         result = (row.result or "").lower()
-        if "in_play" in (row.pitch_result or "").lower():
-            count_map[count]["pa"] += 1
-            if any(h in result for h in ["single", "double", "triple", "homer", "hit"]):
-                count_map[count]["hits"] += 1
-            else:
-                count_map[count]["outs"] += 1
-        elif "strikeout" in result or result == "k":
-            count_map[count]["pa"] += 1
+        count_map[count]["pa"] += 1
+
+        if result in ("single", "double", "triple", "homer"):
+            count_map[count]["hits"] += 1
+        elif result in ("strikeout", "k", "so"):
             count_map[count]["k"] += 1
             count_map[count]["outs"] += 1
-        elif "walk" in result or result == "bb":
-            count_map[count]["pa"] += 1
+        elif result in ("walk", "hit_by_pitch", "bb", "ibb"):
             count_map[count]["bb"] += 1
+        else:
+            count_map[count]["outs"] += 1
 
     count_list = list(count_map.values())
     total_pa = sum(c["pa"] for c in count_list)
@@ -155,6 +179,6 @@ def compute_batter_count_splits(
         behind=_aggregate_counts(count_list, COUNT_BEHIND),
         even=_aggregate_counts(count_list, COUNT_EVEN),
         two_strike=_aggregate_counts(count_list, COUNT_TWO_STRIKE),
-        first_pitch_swing_pct=None,  # 需要逐球 swing 資料
+        first_pitch_swing_pct=first_pitch_swing,
         by_count=by_count,
     )
