@@ -63,17 +63,23 @@
     </div>
     <div class="flex flex-wrap gap-4 mt-4 text-xs">
       <div class="flex items-center gap-1.5">
-        <span class="w-3 h-3 rounded-sm bg-green-500 inline-block"></span>
-        <span class="text-gray-400">LOB% &gt; 78%（偏高 / 幸運）</span>
+        <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+        <span class="text-gray-400">LOB% &gt; 78%（偏高 / 幸運，ERA 可能回升）</span>
       </div>
       <div class="flex items-center gap-1.5">
-        <span class="w-3 h-3 rounded-sm bg-gray-400 inline-block"></span>
+        <span class="w-3 h-3 rounded-full bg-gray-400 inline-block"></span>
         <span class="text-gray-400">65%–78%（正常區間）</span>
       </div>
       <div class="flex items-center gap-1.5">
-        <span class="w-3 h-3 rounded-sm bg-red-500 inline-block"></span>
-        <span class="text-gray-400">LOB% &lt; 65%（偏低 / 不幸）</span>
+        <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+        <span class="text-gray-400">LOB% &lt; 65%（偏低 / 不幸，ERA 可能下降）</span>
       </div>
+    </div>
+    <div class="flex items-center gap-3 mt-3">
+      <label class="text-xs text-gray-500">最低局數</label>
+      <input type="range" id="minIpSlider" min="0" max="80" step="5" value="0"
+        class="w-32 h-1.5 accent-blue-500 cursor-pointer" />
+      <span id="minIpLabel" class="text-xs text-gray-400 font-mono w-12">0 IP</span>
     </div>
   </header>
 
@@ -168,7 +174,9 @@
 
       document.getElementById('chartContainer').classList.remove('hidden');
       document.getElementById('tableContainer').classList.remove('hidden');
-      renderChart(allData.slice(0, 20));
+      const minIp = parseInt(document.getElementById('minIpSlider').value) || 0;
+      const filtered = minIp > 0 ? allData.filter(d => (d.ip || 0) >= minIp) : allData;
+      renderChart(filtered);
       renderTable(allData);
     }
 
@@ -184,71 +192,116 @@
     }
 
     function renderChart(data) {
-      const names = data.map(d => d.player_name || '—');
-      const lobs = data.map(d => d.lob_pct || 0);
+      const high = data.filter(d => (d.lob_pct || 0) > 0.78);
+      const normal = data.filter(d => (d.lob_pct || 0) >= 0.65 && (d.lob_pct || 0) <= 0.78);
+      const low = data.filter(d => (d.lob_pct || 0) < 0.65);
+
+      const toScatter = arr => arr.map(d => ({
+        value: [d.ip || 0, d.lob_pct || 0],
+        raw: d,
+      }));
 
       if (lobChart) lobChart.dispose();
       lobChart = echarts.init(document.getElementById('lobChart'));
 
       lobChart.setOption({
         backgroundColor: 'transparent',
-        grid: { top: 40, right: 16, bottom: 80, left: 50, containLabel: true },
+        grid: { top: 40, right: 30, bottom: 70, left: 60, containLabel: true },
         tooltip: {
-          trigger: 'axis',
+          trigger: 'item',
           backgroundColor: '#252e3e',
           borderColor: '#2d3748',
           textStyle: { color: '#f3f4f6', fontSize: 13 },
-          formatter: params => {
-            const p = params[0];
-            return `<b>${p.name}</b><br/>LOB%: ${(p.value * 100).toFixed(1)}%`;
+          formatter: p => {
+            if (!p.data || !p.data.raw) return '';
+            const d = p.data.raw;
+            const lob = (d.lob_pct || 0);
+            const status = lob > 0.78 ? '偏高（幸運）' : lob < 0.65 ? '偏低（不幸）' : '正常';
+            return `<b>${d.player_name}</b> — ${d.team || ''}<br/>` +
+              `LOB%: ${(lob * 100).toFixed(1)}%<br/>` +
+              `局數: ${(d.ip || 0).toFixed(1)} IP<br/>` +
+              `<span style="color:${getLobColor(lob)}">${status}</span>`;
           },
         },
+        legend: {
+          data: ['偏高 >78%', '正常 65-78%', '偏低 <65%'],
+          top: 0,
+          textStyle: { color: '#9ca3af', fontSize: 11 },
+        },
         xAxis: {
-          type: 'category',
-          data: names,
-          axisLabel: { rotate: 35, fontSize: 11, color: '#9ca3af', interval: 0 },
+          type: 'value',
+          name: '局數 (IP)',
+          nameLocation: 'middle',
+          nameGap: 35,
+          nameTextStyle: { color: '#9ca3af', fontSize: 12 },
+          axisLabel: { color: '#9ca3af' },
+          splitLine: { lineStyle: { color: '#2d3748' } },
           axisLine: { lineStyle: { color: '#2d3748' } },
-          axisTick: { lineStyle: { color: '#2d3748' } },
         },
         yAxis: {
           type: 'value',
-          min: 0,
-          max: 1.05,
+          name: 'LOB%',
+          nameLocation: 'middle',
+          nameGap: 45,
+          nameTextStyle: { color: '#9ca3af', fontSize: 12 },
           axisLabel: { formatter: v => (v * 100).toFixed(0) + '%', color: '#9ca3af' },
           splitLine: { lineStyle: { color: '#2d3748' } },
           axisLine: { show: false },
         },
-        series: [{
-          type: 'bar',
-          data: lobs.map(v => ({
-            value: v,
-            itemStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: getLobColor(v) },
-                { offset: 1, color: getLobColor(v) + '66' },
-              ]),
-              borderRadius: [3, 3, 0, 0],
+        series: [
+          {
+            name: '偏高 >78%',
+            type: 'scatter',
+            data: toScatter(high),
+            symbolSize: 10,
+            itemStyle: { color: '#4ade80', borderColor: '#141920', borderWidth: 1, opacity: 0.85 },
+            emphasis: { focus: 'self', itemStyle: { borderWidth: 2, borderColor: '#fff', shadowBlur: 8, shadowColor: '#4ade8066' } },
+          },
+          {
+            name: '正常 65-78%',
+            type: 'scatter',
+            data: toScatter(normal),
+            symbolSize: 10,
+            itemStyle: { color: '#6b7280', borderColor: '#141920', borderWidth: 1, opacity: 0.75 },
+            emphasis: { focus: 'self', itemStyle: { borderWidth: 2, borderColor: '#fff' } },
+          },
+          {
+            name: '偏低 <65%',
+            type: 'scatter',
+            data: toScatter(low),
+            symbolSize: 10,
+            itemStyle: { color: '#f87171', borderColor: '#141920', borderWidth: 1, opacity: 0.85 },
+            emphasis: { focus: 'self', itemStyle: { borderWidth: 2, borderColor: '#fff', shadowBlur: 8, shadowColor: '#f8717166' } },
+          },
+          {
+            name: '聯盟均值',
+            type: 'line',
+            data: [],
+            markLine: {
+              silent: true,
+              symbol: 'none',
+              lineStyle: { color: '#f59e0b', type: 'dashed', width: 1.5 },
+              label: { formatter: '聯盟均值 70%', position: 'insideEndTop', color: '#f59e0b', fontSize: 10 },
+              data: [{ yAxis: 0.70 }],
             },
-          })),
-          barMaxWidth: 36,
-          label: {
-            show: true,
-            position: 'top',
-            formatter: p => (p.value * 100).toFixed(1) + '%',
-            fontSize: 10,
-            color: '#9ca3af',
+            tooltip: { show: false },
           },
-          markLine: {
-            silent: true,
-            symbol: 'none',
-            lineStyle: { color: '#f59e0b', type: 'dashed', width: 1.5 },
-            label: { formatter: '聯盟均值 70%', position: 'insideEndTop', color: '#f59e0b', fontSize: 10 },
-            data: [{ yAxis: 0.70 }],
-          },
-          animationDuration: 800,
-          animationEasing: 'cubicOut',
-        }],
-        dataZoom: [{ type: 'inside', start: 0, end: 100 }],
+        ],
+        animationDuration: 600,
+      });
+
+      lobChart.on('click', params => {
+        if (!params.data || !params.data.raw) return;
+        const d = params.data.raw;
+        // Scroll to this player in the table
+        const rows = document.querySelectorAll('#lobTableBody tr');
+        rows.forEach(row => {
+          if (row.cells[0] && row.cells[0].textContent === d.player_name) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.style.outline = '2px solid #3b82f6';
+            setTimeout(() => { row.style.outline = ''; }, 2000);
+          }
+        });
       });
     }
 
@@ -306,6 +359,15 @@
     document.getElementById('th-lob').addEventListener('click', () => sortTable('lob_pct'));
     document.getElementById('th-ip').addEventListener('click', () => sortTable('ip'));
     document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
+
+    document.getElementById('minIpSlider').addEventListener('input', function() {
+      const v = parseInt(this.value) || 0;
+      document.getElementById('minIpLabel').textContent = v + ' IP';
+      if (allData.length === 0) return;
+      const filtered = v > 0 ? allData.filter(d => (d.ip || 0) >= v) : allData;
+      renderChart(filtered);
+    });
+
     loadData(2025);
   </script>
 </body>
