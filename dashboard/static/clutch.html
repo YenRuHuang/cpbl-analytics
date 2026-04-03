@@ -225,10 +225,10 @@
         document.getElementById('playerCount').textContent = 'Demo 資料（API 未連線）';
       }
 
-      renderChart(allData);
-      renderTable(allData);
       document.getElementById('chartContainer').classList.remove('hidden');
       document.getElementById('tableContainer').classList.remove('hidden');
+      renderChart(allData);
+      renderTable(allData);
     }
 
     function renderChart(data) {

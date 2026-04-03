@@ -225,19 +225,17 @@
         const json = await res.json();
         currentData = json.buckets || json.data || (Array.isArray(json) ? json : []);
         document.getElementById('loadingState').classList.add('hidden');
-        renderFatigueChart(currentData);
-        renderFatigueTable(currentData);
       } catch (e) {
         currentData = buildDemoFatigueData();
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('errorState').classList.remove('hidden');
         document.getElementById('errorMsg').textContent = e.message + ' — 顯示 Demo 資料';
-        renderFatigueChart(currentData);
-        renderFatigueTable(currentData);
       }
 
       document.getElementById('chartContainer').classList.remove('hidden');
       document.getElementById('tableContainer').classList.remove('hidden');
+      renderFatigueChart(currentData);
+      renderFatigueTable(currentData);
     }
 
     function buildDemoFatigueData() {

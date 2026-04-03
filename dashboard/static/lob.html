@@ -166,10 +166,10 @@
         document.getElementById('playerCount').textContent = 'Demo 資料（API 未連線）';
       }
 
-      renderChart(allData.slice(0, 20));
-      renderTable(allData);
       document.getElementById('chartContainer').classList.remove('hidden');
       document.getElementById('tableContainer').classList.remove('hidden');
+      renderChart(allData.slice(0, 20));
+      renderTable(allData);
     }
 
     function buildDemoData() {
