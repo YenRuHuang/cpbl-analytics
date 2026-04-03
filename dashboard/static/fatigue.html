@@ -247,14 +247,12 @@
       const bas = data.map(d => d.ba_against || 0);
       const kpcts = data.map(d => d.k_pct || 0);
 
-      // Find fatigue threshold: bucket where BA jumps > 15% from baseline
-      const baseline = bas[0] || 0.240;
-      let fatigueIdx = data.findIndex((_, i) => i > 1 && bas[i] > baseline * 1.15);
-      if (fatigueIdx < 0) fatigueIdx = data.length - 1;
+      // 用後端的 is_fatigue_point 找疲勞起點
+      const fatigueIdx = data.findIndex(d => d.is_fatigue_point);
 
       // Warning highlight shape
       const shapes = [];
-      if (fatigueIdx < buckets.length) {
+      if (fatigueIdx >= 0) {
         shapes.push({
           type: 'rect',
           x0: fatigueIdx - 0.5,
@@ -265,13 +263,9 @@
           fillcolor: 'rgba(239,68,68,0.08)',
           line: { color: 'rgba(239,68,68,0.3)', width: 1 },
         });
-      }
-
-      // Show warning info
-      if (fatigueIdx < buckets.length) {
         document.getElementById('fatigueInfo').classList.remove('hidden');
         document.getElementById('fatigueText').textContent =
-          `疲勞警戒區從「${buckets[fatigueIdx]}」球開始，被打擊率較初期上升超過 15%`;
+          `疲勞警戒區從「${buckets[fatigueIdx]}」球開始，被打擊率較初期上升超過 20%`;
       }
 
       Plotly.newPlot('fatigueChart', [
@@ -311,13 +305,12 @@
     }
 
     function renderFatigueTable(data) {
-      const baseline = data[0] ? data[0].ba_against || 0.240 : 0.240;
       const tbody = document.getElementById('fatigueTableBody');
       tbody.replaceChildren();
 
       data.forEach((d, i) => {
         const ba = d.ba_against || 0;
-        const isFatigue = i > 1 && ba > baseline * 1.15;
+        const isFatigue = !!d.is_fatigue_point;
         const tr = document.createElement('tr');
         tr.className = (i % 2 === 0 ? '' : 'bg-white/[0.02]') +
           ' border-b border-surface-border/50 hover:bg-white/[0.04] transition-colors' +

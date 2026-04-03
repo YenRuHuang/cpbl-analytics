@@ -144,12 +144,14 @@ def _mark_fatigue_buckets(
     buckets: list[FatigueBucket],
     fatigue_threshold_pitch: int | None,
 ) -> list[FatigueBucket]:
-    """回傳標記了 is_fatigue_point 的新 bucket list（immutable 重建）。"""
+    """回傳標記了 is_fatigue_point 的新 bucket list（immutable 重建）。
+    從疲勞起點開始，之後所有 bucket 都標為疲勞。
+    """
     result: list[FatigueBucket] = []
     for b in buckets:
         is_fatigue = (
             fatigue_threshold_pitch is not None
-            and b.pitch_start == fatigue_threshold_pitch
+            and b.pitch_start >= fatigue_threshold_pitch
         )
         result.append(FatigueBucket(
             bucket_index=b.bucket_index,
