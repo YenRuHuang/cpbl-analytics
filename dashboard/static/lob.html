@@ -53,6 +53,10 @@
         <p class="text-gray-400 mt-1 text-sm">殘壘率 — 反映投手的幸運程度與未來 ERA 回歸空間</p>
       </div>
       <div class="flex items-center gap-3">
+        <select id="teamFilter"
+          class="bg-surface-card border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+          <option value="">全部球隊</option>
+        </select>
         <label for="yearSelect" class="text-sm text-gray-400">賽季</label>
         <select id="yearSelect"
           class="bg-surface-card border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
@@ -172,12 +176,15 @@
         document.getElementById('playerCount').textContent = 'Demo 資料（API 未連線）';
       }
 
+      // Build team filter options
+      const teams = [...new Set(allData.map(d => d.team).filter(Boolean))].sort();
+      const teamSel = document.getElementById('teamFilter');
+      while (teamSel.options.length > 1) teamSel.remove(1);
+      teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSel.appendChild(o); });
+
       document.getElementById('chartContainer').classList.remove('hidden');
       document.getElementById('tableContainer').classList.remove('hidden');
-      const minIp = parseInt(document.getElementById('minIpSlider').value) || 0;
-      const filtered = minIp > 0 ? allData.filter(d => (d.ip || 0) >= minIp) : allData;
-      renderChart(filtered);
-      renderTable(allData);
+      applyFilters();
     }
 
     function buildDemoData() {
@@ -353,20 +360,27 @@
     function sortTable(key) {
       if (sortKey === key) sortAsc = !sortAsc;
       else { sortKey = key; sortAsc = false; }
-      renderTable(allData);
     }
 
-    document.getElementById('th-lob').addEventListener('click', () => sortTable('lob_pct'));
-    document.getElementById('th-ip').addEventListener('click', () => sortTable('ip'));
-    document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
-
-    document.getElementById('minIpSlider').addEventListener('input', function() {
-      const v = parseInt(this.value) || 0;
-      document.getElementById('minIpLabel').textContent = v + ' IP';
-      if (allData.length === 0) return;
-      const filtered = v > 0 ? allData.filter(d => (d.ip || 0) >= v) : allData;
+    function applyFilters() {
+      const minIp = parseInt(document.getElementById('minIpSlider').value) || 0;
+      const team = document.getElementById('teamFilter').value;
+      let filtered = allData;
+      if (team) filtered = filtered.filter(d => d.team === team);
+      if (minIp > 0) filtered = filtered.filter(d => (d.ip || 0) >= minIp);
       renderChart(filtered);
+      renderTable(team ? filtered : allData);
+      document.getElementById('playerCount').textContent = `共 ${filtered.length} 名投手`;
+    }
+
+    document.getElementById('th-lob').addEventListener('click', () => { sortTable('lob_pct'); applyFilters(); });
+    document.getElementById('th-ip').addEventListener('click', () => { sortTable('ip'); applyFilters(); });
+    document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
+    document.getElementById('minIpSlider').addEventListener('input', function() {
+      document.getElementById('minIpLabel').textContent = (parseInt(this.value) || 0) + ' IP';
+      if (allData.length) applyFilters();
     });
+    document.getElementById('teamFilter').addEventListener('change', () => { if (allData.length) applyFilters(); });
 
     loadData(2025);
   </script>

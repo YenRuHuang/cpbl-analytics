@@ -57,6 +57,13 @@
     <!-- Pitcher Selector -->
     <div class="mb-6 bg-surface-card border border-surface-border rounded-xl p-5">
       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5">球隊</label>
+          <select id="teamFilter"
+            class="bg-surface border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+            <option value="">全部球隊</option>
+          </select>
+        </div>
         <div class="flex-1">
           <label class="block text-xs text-gray-400 mb-1.5">選擇投手</label>
           <select id="pitcherSelect"
@@ -151,8 +158,8 @@
   <script>
     let currentData = null;
     let fatigueChart = null;
+    let allPitchers = [];
 
-    // Load pitcher list from static fatigue leaderboard JSON
     async function loadPitchers() {
       const year = document.getElementById('yearSelect').value;
       try {
@@ -161,42 +168,46 @@
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('json')) throw new Error('此賽季尚無資料');
         const json = await res.json();
-        const pitchers = json.data || json || [];
-        const sel = document.getElementById('pitcherSelect');
-        // Clear existing options except the placeholder
-        while (sel.options.length > 1) sel.remove(1);
-        pitchers.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.pitcher_id;
-          // Extract display name: remove "cpbl_" prefix
-          const displayName = p.pitcher_id ? p.pitcher_id.replace(/^cpbl_/, '') : '—';
-          const teamLabel = p.team ? ` (${p.team})` : '';
-          opt.textContent = displayName + teamLabel;
-          sel.appendChild(opt);
-        });
-        if (pitchers.length === 0) {
-          const opt = document.createElement('option');
-          opt.value = '';
-          opt.textContent = '無資料（此賽季）';
-          opt.disabled = true;
-          sel.appendChild(opt);
-        }
+        allPitchers = json.data || json || [];
+
+        // Build team filter
+        const teams = [...new Set(allPitchers.map(p => p.team).filter(Boolean))].sort();
+        const teamSel = document.getElementById('teamFilter');
+        while (teamSel.options.length > 1) teamSel.remove(1);
+        teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSel.appendChild(o); });
+
+        filterPitcherList();
       } catch (e) {
-        // Fallback demo options
-        const sel = document.getElementById('pitcherSelect');
-        while (sel.options.length > 1) sel.remove(1);
-        const demos = [
-          { value: 'cpbl_王建民', label: '王建民 (中信兄弟)' },
-          { value: 'cpbl_陳冠宇', label: '陳冠宇 (統一獅)' },
-          { value: 'cpbl_林子偉', label: '林子偉 (味全龍)' },
+        allPitchers = [
+          { pitcher_id: 'cpbl_王建民', team: '中信兄弟' },
+          { pitcher_id: 'cpbl_陳冠宇', team: '統一獅' },
+          { pitcher_id: 'cpbl_林子偉', team: '味全龍' },
         ];
-        demos.forEach(d => {
-          const opt = document.createElement('option');
-          opt.value = d.value;
-          opt.textContent = d.label;
-          sel.appendChild(opt);
-        });
+        filterPitcherList();
       }
+    }
+
+    function filterPitcherList() {
+      const team = document.getElementById('teamFilter').value;
+      const filtered = team ? allPitchers.filter(p => p.team === team) : allPitchers;
+      const sel = document.getElementById('pitcherSelect');
+      while (sel.options.length > 1) sel.remove(1);
+      filtered.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.pitcher_id;
+        const displayName = p.pitcher_id ? p.pitcher_id.replace(/^cpbl_/, '') : '—';
+        const teamLabel = p.team ? ` (${p.team})` : '';
+        opt.textContent = displayName + teamLabel;
+        sel.appendChild(opt);
+      });
+      if (filtered.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '無資料';
+        opt.disabled = true;
+        sel.appendChild(opt);
+      }
+      document.getElementById('analyzeBtn').disabled = true;
     }
 
     document.getElementById('pitcherSelect').addEventListener('change', function() {
@@ -410,12 +421,15 @@
 
     document.getElementById('yearSelect').addEventListener('change', () => {
       loadPitchers();
-      // 切年份時清除上一個投手的圖表/表格
       document.getElementById('chartContainer').classList.add('hidden');
       document.getElementById('tableContainer').classList.add('hidden');
       document.getElementById('fatigueInfo').classList.add('hidden');
       document.getElementById('emptyState').classList.remove('hidden');
       document.getElementById('analyzeBtn').disabled = true;
+    });
+
+    document.getElementById('teamFilter').addEventListener('change', () => {
+      filterPitcherList();
     });
 
     loadPitchers();

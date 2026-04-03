@@ -53,6 +53,10 @@
         <p class="text-gray-400 mt-1 text-sm">高槓桿指數情境下的打擊率 vs 整體打擊率</p>
       </div>
       <div class="flex items-center gap-3">
+        <select id="teamFilter"
+          class="bg-surface-card border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
+          <option value="">全部球隊</option>
+        </select>
         <label for="yearSelect" class="text-sm text-gray-400">賽季</label>
         <select id="yearSelect"
           class="bg-surface-card border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
@@ -225,10 +229,23 @@
         document.getElementById('playerCount').textContent = 'Demo 資料（API 未連線）';
       }
 
+      // Build team filter
+      const teams = [...new Set(allData.map(d => d.team).filter(Boolean))].sort();
+      const teamSel = document.getElementById('teamFilter');
+      while (teamSel.options.length > 1) teamSel.remove(1);
+      teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSel.appendChild(o); });
+
       document.getElementById('chartContainer').classList.remove('hidden');
       document.getElementById('tableContainer').classList.remove('hidden');
-      renderChart(allData);
-      renderTable(allData);
+      applyClutchFilter();
+    }
+
+    function applyClutchFilter() {
+      const team = document.getElementById('teamFilter').value;
+      const filtered = team ? allData.filter(d => d.team === team) : allData;
+      renderChart(filtered);
+      renderTable(filtered);
+      document.getElementById('playerCount').textContent = `共 ${filtered.length} 名打者`;
     }
 
     function renderChart(data) {
@@ -380,6 +397,7 @@
     }
 
     document.getElementById('yearSelect').addEventListener('change', e => loadData(e.target.value));
+    document.getElementById('teamFilter').addEventListener('change', () => { if (allData.length) applyClutchFilter(); });
     loadData(2025);
   </script>
 </body>
