@@ -66,9 +66,9 @@ class PitcherFatigueSummary:
     sample_note: str
 
 
-def _safe_divide(numerator: int, denominator: int) -> float | None:
+def _safe_divide(numerator: int, denominator: int) -> float:
     if denominator <= 0:
-        return None
+        return 0.0
     return round(numerator / denominator, 3)
 
 
@@ -272,8 +272,19 @@ def _aggregate_into_buckets(
         elif is_out:
             bucket_data[b_idx]["batters_faced"] += 1
 
+    # 合併尾端 BF < 3 的 bucket 到前一個（只在 3+ bucket 時）
+    sorted_keys = sorted(bucket_data.keys())
+    if len(sorted_keys) >= 3:
+        last_key = sorted_keys[-1]
+        if bucket_data[last_key]["batters_faced"] < 3:
+            prev_key = sorted_keys[-2]
+            for field in ("hits", "walks", "strikeouts", "batters_faced"):
+                bucket_data[prev_key][field] += bucket_data[last_key][field]
+            del bucket_data[last_key]
+            sorted_keys = sorted(bucket_data.keys())
+
     buckets: list[FatigueBucket] = []
-    for b_idx in sorted(bucket_data.keys()):
+    for b_idx in sorted_keys:
         d = bucket_data[b_idx]
         bf = d["batters_faced"]
         hits = d["hits"]

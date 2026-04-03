@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>關鍵時刻表現 — CPBL Analytics</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
   <script>
     tailwind.config = {
@@ -24,15 +24,24 @@
 
   <!-- Nav -->
   <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
-      <a href="index.html" class="flex items-center gap-2 mr-4">
-        <span class="text-2xl">&#9898;</span>
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">⚾</span>
         <span class="font-bold text-lg text-white">CPBL Analytics</span>
       </a>
-      <a href="lob.html" class="text-sm text-gray-400 hover:text-white transition-colors">LOB%</a>
-      <a href="fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
-      <a href="clutch.html" class="text-sm text-green-400 font-semibold">關鍵時刻</a>
-      <a href="counts.html" class="text-sm text-gray-400 hover:text-white transition-colors">球數分析</a>
+      <div class="hidden sm:flex items-center gap-6">
+        <a href="lob.html" class="text-sm text-gray-400 hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="text-sm text-green-400 font-semibold">關鍵時刻</a>
+        <a href="counts.html" class="text-sm text-gray-400 hover:text-white transition-colors">球數分析</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 text-green-400 font-semibold">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
     </div>
   </nav>
 

@@ -6,6 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, ".")
 
+from sqlalchemy import text
+
 from src.db.engine import get_db, init_db
 from src.analysis.lob_pct import compute_lob_leaderboard
 from src.analysis.leverage import compute_clutch_leaderboard
@@ -40,17 +42,28 @@ def export_year(year: int) -> None:
     ]
     _write(OUT / f"analysis/lob_{year}.json", lob_data)
 
-    # 2. Clutch leaderboard
+    # 2. Clutch leaderboard — 補 team 欄位（從 batter_box 查）
     clutch = compute_clutch_leaderboard(db, year=year, min_pa=50)
+    team_map = {
+        row.player_id: row.team
+        for row in db.execute(text("""
+            SELECT bb.player_id, MAX(bb.team) AS team
+            FROM batter_box bb
+            JOIN games g ON bb.game_id = g.game_id
+            WHERE g.year = :year
+            GROUP BY bb.player_id
+        """), {"year": year}).fetchall()
+    }
     clutch_data = [
         {
             "player_id": r.player_id, "player_name": r.player_name,
+            "team": team_map.get(r.player_id, ""),
             "total_pa": r.total_pa, "high_leverage_pa": r.high_leverage_pa,
             "high_li_ba": r.high_li_ba, "overall_ba": r.overall_ba,
             "clutch_score": r.clutch_score, "sample_note": r.sample_note,
         }
         for r in clutch
-        if r.high_li_ba is not None  # 過濾無高壓打席的球員
+        if r.high_li_ba is not None
     ]
     _write(OUT / f"analysis/clutch_{year}.json", clutch_data)
 
@@ -102,7 +115,6 @@ def export_year(year: int) -> None:
         _write(OUT / f"analysis/fatigue/{year}/{safe_pid}.json", detail_data)
 
     # 4. Count splits — export for all batters with >= 50 PA
-    from sqlalchemy import text
     batter_rows = db.execute(text("""
         SELECT pa.batter_id, COUNT(*) AS pa_count
         FROM plate_appearances pa
