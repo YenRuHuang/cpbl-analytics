@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>關鍵時刻表現 — CPBL Analytics</title>
   <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -158,6 +158,22 @@
 
   <script>
     let allData = [];
+    let clutchChart = null;
+
+    function showPlayerDetail(d) {
+      const diff = (d.high_li_ba || 0) - (d.overall_ba || 0);
+      const isClutch = diff >= 0;
+      document.getElementById('detailName').textContent = d.player_name || '—';
+      document.getElementById('detailTeam').textContent = d.team || '—';
+      document.getElementById('detailBA').textContent = (d.overall_ba || 0).toFixed(3);
+      const hlEl = document.getElementById('detailHighLevBA');
+      hlEl.textContent = (d.high_li_ba || 0).toFixed(3);
+      hlEl.style.color = isClutch ? '#4ade80' : '#f87171';
+      const diffEl = document.getElementById('detailDiff');
+      diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(3);
+      diffEl.style.color = isClutch ? '#4ade80' : '#f87171';
+      document.getElementById('playerDetail').classList.remove('hidden');
+    }
 
     function buildDemoData() {
       const players = [
@@ -223,83 +239,97 @@
       const clutchPlayers = data.filter(d => d.high_li_ba >= d.overall_ba);
       const chokePlayers = data.filter(d => d.high_li_ba < d.overall_ba);
 
-      const makePlotData = (players, color, name) => ({
-        type: 'scatter',
-        mode: 'markers',
-        x: players.map(d => d.overall_ba),
-        y: players.map(d => d.high_li_ba),
-        text: players.map(d => d.player_name || '—'),
-        customdata: players,
-        name: name,
-        marker: { color: color, size: 9, opacity: 0.85, line: { color: '#141920', width: 1 } },
-        hovertemplate: '<b>%{text}</b><br>整體 BA: %{x:.3f}<br>高槓桿 BA: %{y:.3f}<extra></extra>',
+      const makeScatterData = players =>
+        players.map(d => ({ value: [d.overall_ba, d.high_li_ba], raw: d }));
+
+      if (clutchChart) clutchChart.dispose();
+      clutchChart = echarts.init(document.getElementById('clutchChart'));
+
+      clutchChart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 36, right: 30, bottom: 70, left: 70, containLabel: true },
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 13 },
+          formatter: p => {
+            if (!p.data || !p.data.raw) return '';
+            const d = p.data.raw;
+            const diff = (d.high_li_ba || 0) - (d.overall_ba || 0);
+            return `<b>${d.player_name}</b><br/>` +
+              `整體 BA: ${(d.overall_ba || 0).toFixed(3)}<br/>` +
+              `高槓桿 BA: ${(d.high_li_ba || 0).toFixed(3)}<br/>` +
+              `差異: <span style="color:${diff >= 0 ? '#4ade80' : '#f87171'}">${(diff >= 0 ? '+' : '') + diff.toFixed(3)}</span>`;
+          },
+        },
+        legend: {
+          data: ['關鍵時刻更強', '壓力下下滑'],
+          top: 0,
+          textStyle: { color: '#9ca3af', fontSize: 11 },
+        },
+        xAxis: {
+          type: 'value',
+          name: '整體打擊率',
+          nameLocation: 'middle',
+          nameGap: 40,
+          nameTextStyle: { color: '#9ca3af', fontSize: 12 },
+          min: minBA,
+          max: maxBA,
+          axisLabel: { formatter: v => v.toFixed(3), color: '#9ca3af' },
+          splitLine: { lineStyle: { color: '#2d3748' } },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+        },
+        yAxis: {
+          type: 'value',
+          name: '高槓桿打擊率',
+          nameLocation: 'middle',
+          nameGap: 50,
+          nameTextStyle: { color: '#9ca3af', fontSize: 12 },
+          min: minBA,
+          max: maxBA,
+          axisLabel: { formatter: v => v.toFixed(3), color: '#9ca3af' },
+          splitLine: { lineStyle: { color: '#2d3748' } },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+        },
+        series: [
+          {
+            name: '關鍵時刻更強',
+            type: 'scatter',
+            data: makeScatterData(clutchPlayers),
+            symbolSize: 11,
+            itemStyle: { color: '#4ade80', borderColor: '#141920', borderWidth: 1, opacity: 0.85 },
+            emphasis: { focus: 'self', itemStyle: { borderWidth: 2, borderColor: '#fff', shadowBlur: 8, shadowColor: '#4ade8066' } },
+            animationDuration: 600,
+          },
+          {
+            name: '壓力下下滑',
+            type: 'scatter',
+            data: makeScatterData(chokePlayers),
+            symbolSize: 11,
+            itemStyle: { color: '#f87171', borderColor: '#141920', borderWidth: 1, opacity: 0.85 },
+            emphasis: { focus: 'self', itemStyle: { borderWidth: 2, borderColor: '#fff', shadowBlur: 8, shadowColor: '#f8717166' } },
+            animationDuration: 600,
+          },
+          {
+            name: '中性對角線',
+            type: 'line',
+            data: [[minBA, minBA], [maxBA, maxBA]],
+            symbol: 'none',
+            lineStyle: { color: '#f59e0b', type: 'dashed', width: 1.5 },
+            tooltip: { show: false },
+            silent: true,
+          },
+        ],
       });
 
-      // Diagonal reference line
-      const diagLine = {
-        type: 'scatter',
-        mode: 'lines',
-        x: [minBA, maxBA],
-        y: [minBA, maxBA],
-        name: '中性對角線',
-        line: { color: '#f59e0b', dash: 'dash', width: 1.5 },
-        hoverinfo: 'skip',
-      };
-
-      const layout = {
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-        font: { color: '#9ca3af', family: 'sans-serif' },
-        margin: { t: 20, r: 30, b: 60, l: 60 },
-        xaxis: {
-          title: '整體打擊率（Overall BA）',
-          range: [minBA, maxBA],
-          gridcolor: '#2d3748',
-          linecolor: '#2d3748',
-          zeroline: false,
-          tickformat: '.3f',
-        },
-        yaxis: {
-          title: '高槓桿打擊率（High-Leverage BA）',
-          range: [minBA, maxBA],
-          gridcolor: '#2d3748',
-          linecolor: '#2d3748',
-          zeroline: false,
-          tickformat: '.3f',
-        },
-        legend: { orientation: 'h', x: 0, y: 1.06, font: { size: 11 } },
-      };
-
-      const traces = [
-        makePlotData(clutchPlayers, '#4ade80', '關鍵時刻更強'),
-        makePlotData(chokePlayers, '#f87171', '壓力下下滑'),
-        diagLine,
-      ];
-
-      Plotly.newPlot('clutchChart', traces, layout, { responsive: true, displayModeBar: false });
-
-      document.getElementById('clutchChart').on('plotly_click', evt => {
-        const pt = evt.points[0];
-        if (!pt || !pt.customdata) return;
-        const d = pt.customdata;
-        const diff = (d.high_li_ba - d.overall_ba);
-        const isClutch = diff >= 0;
-
-        document.getElementById('detailName').textContent = d.player_name || '—';
-        document.getElementById('detailTeam').textContent = d.team || '—';
-        document.getElementById('detailBA').textContent = (d.overall_ba || 0).toFixed(3);
-
-        const hlEl = document.getElementById('detailHighLevBA');
-        hlEl.textContent = (d.high_li_ba || 0).toFixed(3);
-        hlEl.style.color = isClutch ? '#4ade80' : '#f87171';
-
-        const diffEl = document.getElementById('detailDiff');
-        diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(3);
-        diffEl.style.color = isClutch ? '#4ade80' : '#f87171';
-
-        document.getElementById('playerDetail').classList.remove('hidden');
+      clutchChart.on('click', params => {
+        if (!params.data || !params.data.raw) return;
+        showPlayerDetail(params.data.raw);
       });
     }
+
+    window.addEventListener('resize', () => { if (clutchChart) clutchChart.resize(); });
 
     function renderTable(data) {
       const sorted = [...data].sort((a, b) => {
@@ -318,16 +348,7 @@
           ' border-b border-surface-border/50 hover:bg-white/[0.04] transition-colors cursor-pointer';
 
         tr.addEventListener('click', () => {
-          const hlEl = document.getElementById('detailHighLevBA');
-          const diffEl = document.getElementById('detailDiff');
-          document.getElementById('detailName').textContent = d.player_name || '—';
-          document.getElementById('detailTeam').textContent = d.team || '—';
-          document.getElementById('detailBA').textContent = (d.overall_ba || 0).toFixed(3);
-          hlEl.textContent = (d.high_li_ba || 0).toFixed(3);
-          hlEl.style.color = isClutch ? '#4ade80' : '#f87171';
-          diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(3);
-          diffEl.style.color = isClutch ? '#4ade80' : '#f87171';
-          document.getElementById('playerDetail').classList.remove('hidden');
+          showPlayerDetail(d);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 

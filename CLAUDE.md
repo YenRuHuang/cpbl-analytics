@@ -14,7 +14,7 @@
 | API | FastAPI + Uvicorn |
 | ORM | SQLAlchemy 2.0 |
 | 資料庫 | SQLite（WAL mode）|
-| 視覺化 | Plotly.js（靜態 HTML dashboard）|
+| 視覺化 | ECharts 5.4.3（靜態 HTML dashboard）|
 | 測試 | pytest + coverage |
 | 容器 | Docker + docker-compose |
 | CI | GitHub Actions（lint + test + build）|

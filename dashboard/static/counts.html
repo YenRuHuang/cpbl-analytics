@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>球數分布分析 — CPBL Analytics</title>
   <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -165,6 +165,7 @@
     let currentData = null;
     let selectedBatterId = null;
     let activeMetric = 'ba';
+    let countsChart = null;
 
     const COUNT_GROUPS = {
       ahead: { label: '打者領先', color: '#4ade80', counts: ['1-0', '2-0', '3-0', '3-1', '2-1'] },
@@ -235,87 +236,126 @@
     }
 
     function renderChart(data, metric) {
-      // Build situations from ahead/behind/even/two_strike
       const situations = [];
-      if (data.ahead) situations.push({ ...data.ahead, label: '打者有利 (Ahead)', situation: 'ahead' });
-      if (data.behind) situations.push({ ...data.behind, label: '投手有利 (Behind)', situation: 'behind' });
-      if (data.even) situations.push({ ...data.even, label: '平均 (Even)', situation: 'even' });
-      if (data.two_strike) situations.push({ ...data.two_strike, label: '兩好球 (Two-Strike)', situation: 'two_strike' });
+      if (data.ahead) situations.push({ ...data.ahead, label: '打者有利', situation: 'ahead' });
+      if (data.behind) situations.push({ ...data.behind, label: '投手有利', situation: 'behind' });
+      if (data.even) situations.push({ ...data.even, label: '平均', situation: 'even' });
+      if (data.two_strike) situations.push({ ...data.two_strike, label: '兩好球', situation: 'two_strike' });
       const labels = situations.map(s => s.label);
       const colors = situations.map(s => GROUP_COLORS[s.situation] || '#9ca3af');
 
+      if (countsChart) countsChart.dispose();
+      countsChart = echarts.init(document.getElementById('countsChart'));
+
+      const baseOpt = {
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 20, bottom: 50, left: 50, containLabel: true },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 13 },
+        },
+        xAxis: {
+          type: 'category',
+          data: labels,
+          axisLabel: { color: '#9ca3af', fontSize: 12 },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+          axisTick: { lineStyle: { color: '#2d3748' } },
+        },
+        animationDuration: 600,
+        animationEasing: 'cubicOut',
+      };
+
       if (metric === 'all') {
-        // Grouped bar: BA, K%, BB% per situation
-        const traces = [
-          {
-            type: 'bar',
-            name: '打擊率',
-            x: labels,
-            y: situations.map(s => s.ba || 0),
-            marker: { color: '#818cf8' },
-            hovertemplate: '%{x}<br>打擊率: %{y:.3f}<extra></extra>',
+        countsChart.setOption({
+          ...baseOpt,
+          tooltip: {
+            ...baseOpt.tooltip,
+            formatter: params => {
+              let s = `<b>${params[0].name}</b><br/>`;
+              params.forEach(p => {
+                const isBA = p.seriesName === '打擊率';
+                s += `${p.marker} ${p.seriesName}: ${isBA ? p.value.toFixed(3) : (p.value * 100).toFixed(1) + '%'}<br/>`;
+              });
+              return s;
+            },
           },
-          {
-            type: 'bar',
-            name: '三振率',
-            x: labels,
-            y: situations.map(s => s.k_pct || 0),
-            marker: { color: '#f87171' },
-            hovertemplate: '%{x}<br>三振率: %{y:.1%}<extra></extra>',
+          legend: { data: ['打擊率', '三振率', '保送率'], top: 0, textStyle: { color: '#9ca3af', fontSize: 11 } },
+          yAxis: {
+            type: 'value',
+            axisLabel: { formatter: v => v.toFixed(3), color: '#9ca3af' },
+            splitLine: { lineStyle: { color: '#2d3748' } },
+            axisLine: { show: false },
           },
-          {
-            type: 'bar',
-            name: '保送率',
-            x: labels,
-            y: situations.map(s => s.bb_pct || 0),
-            marker: { color: '#4ade80' },
-            hovertemplate: '%{x}<br>保送率: %{y:.1%}<extra></extra>',
-          },
-        ];
-        Plotly.newPlot('countsChart', traces, {
-          barmode: 'group',
-          paper_bgcolor: 'transparent',
-          plot_bgcolor: 'transparent',
-          font: { color: '#9ca3af', family: 'sans-serif' },
-          margin: { t: 20, r: 30, b: 60, l: 60 },
-          xaxis: { gridcolor: '#2d3748', linecolor: '#2d3748' },
-          yaxis: { gridcolor: '#2d3748', linecolor: '#2d3748', zeroline: false, tickformat: '.3f' },
-          legend: { orientation: 'h', x: 0, y: 1.08, font: { size: 11 } },
-          bargap: 0.2,
-          bargroupgap: 0.08,
-        }, { responsive: true, displayModeBar: false });
+          series: [
+            {
+              name: '打擊率', type: 'bar',
+              data: situations.map(s => s.ba || 0),
+              itemStyle: { color: '#818cf8', borderRadius: [3, 3, 0, 0] },
+              barGap: '15%',
+            },
+            {
+              name: '三振率', type: 'bar',
+              data: situations.map(s => s.k_pct || 0),
+              itemStyle: { color: '#f87171', borderRadius: [3, 3, 0, 0] },
+            },
+            {
+              name: '保送率', type: 'bar',
+              data: situations.map(s => s.bb_pct || 0),
+              itemStyle: { color: '#4ade80', borderRadius: [3, 3, 0, 0] },
+            },
+          ],
+        });
         return;
       }
 
       const metricLabels = { ba: '打擊率', k_pct: '三振率', bb_pct: '保送率' };
-      Plotly.newPlot('countsChart', [{
-        type: 'bar',
-        x: labels,
-        y: situations.map(s => s[metric] || 0),
-        marker: { color: colors, line: { color: 'transparent' } },
-        text: situations.map(s => {
-          const v = s[metric] || 0;
-          return metric === 'ba' ? v.toFixed(3) : (v * 100).toFixed(1) + '%';
-        }),
-        textposition: 'outside',
-        textfont: { size: 11, color: '#9ca3af' },
-        hovertemplate: '<b>%{x}</b><br>' + metricLabels[metric] + ': %{y:.3f}<extra></extra>',
-      }], {
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-        font: { color: '#9ca3af', family: 'sans-serif' },
-        margin: { t: 30, r: 30, b: 60, l: 60 },
-        xaxis: { gridcolor: '#2d3748', linecolor: '#2d3748' },
-        yaxis: {
-          title: metricLabels[metric],
-          gridcolor: '#2d3748',
-          linecolor: '#2d3748',
-          zeroline: false,
-          tickformat: metric === 'ba' ? '.3f' : '.0%',
+      const isPercent = metric !== 'ba';
+
+      countsChart.setOption({
+        ...baseOpt,
+        tooltip: {
+          ...baseOpt.tooltip,
+          formatter: params => {
+            const p = params[0];
+            return `<b>${p.name}</b><br/>${metricLabels[metric]}: ${isPercent ? (p.value * 100).toFixed(1) + '%' : p.value.toFixed(3)}`;
+          },
         },
-        bargap: 0.35,
-      }, { responsive: true, displayModeBar: false });
+        yAxis: {
+          type: 'value',
+          name: metricLabels[metric],
+          nameTextStyle: { color: '#9ca3af' },
+          axisLabel: { formatter: v => isPercent ? (v * 100).toFixed(0) + '%' : v.toFixed(3), color: '#9ca3af' },
+          splitLine: { lineStyle: { color: '#2d3748' } },
+          axisLine: { show: false },
+        },
+        series: [{
+          type: 'bar',
+          data: situations.map((s, i) => ({
+            value: s[metric] || 0,
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: colors[i] },
+                { offset: 1, color: colors[i] + '66' },
+              ]),
+              borderRadius: [3, 3, 0, 0],
+            },
+          })),
+          barMaxWidth: 60,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: p => isPercent ? (p.value * 100).toFixed(1) + '%' : p.value.toFixed(3),
+            fontSize: 12,
+            color: '#9ca3af',
+          },
+        }],
+      });
     }
+
+    window.addEventListener('resize', () => { if (countsChart) countsChart.resize(); });
 
     function renderTable(data) {
       const perCount = data.by_count || data.per_count || [];

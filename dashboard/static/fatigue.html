@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>投手疲勞分析 — CPBL Analytics</title>
   <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -150,6 +150,7 @@
 
   <script>
     let currentData = null;
+    let fatigueChart = null;
 
     // Load pitcher list from static fatigue leaderboard JSON
     async function loadPitchers() {
@@ -259,62 +260,110 @@
       const bas = data.map(d => d.ba_against || 0);
       const kpcts = data.map(d => d.k_pct || 0);
 
-      // 用後端的 is_fatigue_point 找疲勞起點
       const fatigueIdx = data.findIndex(d => d.is_fatigue_point);
+      const markAreaData = fatigueIdx >= 0
+        ? [[{ xAxis: buckets[fatigueIdx] }, { xAxis: buckets[buckets.length - 1] }]]
+        : [];
 
-      // Warning highlight shape
-      const shapes = [];
       if (fatigueIdx >= 0) {
-        shapes.push({
-          type: 'rect',
-          x0: fatigueIdx - 0.5,
-          x1: buckets.length - 0.5,
-          y0: 0,
-          y1: 1,
-          yref: 'paper',
-          fillcolor: 'rgba(239,68,68,0.08)',
-          line: { color: 'rgba(239,68,68,0.3)', width: 1 },
-        });
         document.getElementById('fatigueInfo').classList.remove('hidden');
         document.getElementById('fatigueText').textContent =
           `疲勞警戒區從「${buckets[fatigueIdx]}」球開始，被打擊率較初期上升超過 20%`;
       }
 
-      Plotly.newPlot('fatigueChart', [
-        {
-          type: 'scatter',
-          mode: 'lines+markers',
-          x: buckets,
-          y: bas,
-          name: '被打擊率',
-          yaxis: 'y',
-          line: { color: '#60a5fa', width: 2 },
-          marker: { size: 7, color: '#60a5fa' },
-          hovertemplate: '<b>%{x} 球</b><br>被打擊率: %{y:.3f}<extra></extra>',
+      if (fatigueChart) fatigueChart.dispose();
+      fatigueChart = echarts.init(document.getElementById('fatigueChart'));
+
+      fatigueChart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 36, right: 70, bottom: 60, left: 60, containLabel: true },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 13 },
+          formatter: params => {
+            let s = `<b>${params[0].name} 球</b><br/>`;
+            params.forEach(p => {
+              if (p.seriesName === '被打擊率') s += `${p.marker} 被打擊率: ${p.value.toFixed(3)}<br/>`;
+              else if (p.seriesName === '三振率') s += `${p.marker} 三振率: ${(p.value * 100).toFixed(1)}%<br/>`;
+            });
+            return s;
+          },
         },
-        {
-          type: 'scatter',
-          mode: 'lines+markers',
-          x: buckets,
-          y: kpcts,
-          name: '三振率',
-          yaxis: 'y2',
-          line: { color: '#4ade80', width: 2, dash: 'dot' },
-          marker: { size: 7, color: '#4ade80' },
-          hovertemplate: '<b>%{x} 球</b><br>三振率: %{y:.1%}<extra></extra>',
+        legend: {
+          data: ['被打擊率', '三振率'],
+          top: 0,
+          textStyle: { color: '#9ca3af', fontSize: 11 },
         },
-      ], {
-        paper_bgcolor: 'transparent',
-        plot_bgcolor: 'transparent',
-        font: { color: '#9ca3af', family: 'sans-serif' },
-        margin: { t: 10, r: 70, b: 60, l: 60 },
-        xaxis: { title: '投球數區間', gridcolor: '#2d3748', linecolor: '#2d3748' },
-        yaxis: { title: '被打擊率', tickformat: '.3f', gridcolor: '#2d3748', linecolor: '#2d3748', zeroline: false },
-        yaxis2: { title: '三振率', tickformat: '.0%', overlaying: 'y', side: 'right', gridcolor: 'transparent', zeroline: false },
-        legend: { orientation: 'h', x: 0, y: 1.08, font: { size: 11 } },
-        shapes: shapes,
-      }, { responsive: true, displayModeBar: false });
+        xAxis: {
+          type: 'category',
+          data: buckets,
+          name: '投球數區間',
+          nameLocation: 'middle',
+          nameGap: 35,
+          nameTextStyle: { color: '#9ca3af', fontSize: 12 },
+          axisLabel: { color: '#9ca3af' },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+          axisTick: { lineStyle: { color: '#2d3748' } },
+        },
+        yAxis: [
+          {
+            type: 'value',
+            name: '被打擊率',
+            nameTextStyle: { color: '#60a5fa', fontSize: 11 },
+            axisLabel: { formatter: v => v.toFixed(3), color: '#60a5fa' },
+            splitLine: { lineStyle: { color: '#2d3748' } },
+            axisLine: { show: false },
+          },
+          {
+            type: 'value',
+            name: '三振率',
+            nameTextStyle: { color: '#4ade80', fontSize: 11 },
+            axisLabel: { formatter: v => (v * 100).toFixed(0) + '%', color: '#4ade80' },
+            splitLine: { show: false },
+            axisLine: { show: false },
+          },
+        ],
+        series: [
+          {
+            name: '被打擊率',
+            type: 'line',
+            yAxisIndex: 0,
+            data: bas,
+            lineStyle: { color: '#60a5fa', width: 2.5 },
+            itemStyle: { color: '#60a5fa', borderWidth: 2, borderColor: '#141920' },
+            symbol: 'circle',
+            symbolSize: 8,
+            smooth: true,
+            areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(96,165,250,0.15)' },
+              { offset: 1, color: 'rgba(96,165,250,0)' },
+            ]) },
+            markArea: {
+              silent: true,
+              itemStyle: { color: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.3)', borderWidth: 1 },
+              data: markAreaData,
+            },
+            animationDuration: 800,
+          },
+          {
+            name: '三振率',
+            type: 'line',
+            yAxisIndex: 1,
+            data: kpcts,
+            lineStyle: { color: '#4ade80', width: 2.5, type: 'dotted' },
+            itemStyle: { color: '#4ade80', borderWidth: 2, borderColor: '#141920' },
+            symbol: 'circle',
+            symbolSize: 8,
+            smooth: true,
+            animationDuration: 800,
+          },
+        ],
+      });
     }
+
+    window.addEventListener('resize', () => { if (fatigueChart) fatigueChart.resize(); });
 
     function renderFatigueTable(data) {
       const tbody = document.getElementById('fatigueTableBody');
