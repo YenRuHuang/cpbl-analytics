@@ -61,7 +61,6 @@
             class="bg-surface border border-surface-border text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-brand">
             <option value="2026">2026</option>
             <option value="2025" selected>2025</option>
-            <option value="2024">2024</option>
           </select>
         </div>
         <button id="analyzeBtn"
@@ -149,6 +148,8 @@
       try {
         const res = await fetch(`api/analysis/fatigue_${year}.json`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('json')) throw new Error('此賽季尚無資料');
         const json = await res.json();
         const pitchers = json.data || json || [];
         const sel = document.getElementById('pitcherSelect');
@@ -209,6 +210,8 @@
       try {
         const res = await fetch(`api/analysis/fatigue/${year}/${encodeURIComponent(pitcherId)}.json`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('json')) throw new Error('此賽季尚無資料');
         const json = await res.json();
         currentData = json.buckets || json.data || (Array.isArray(json) ? json : []);
         document.getElementById('loadingState').classList.add('hidden');

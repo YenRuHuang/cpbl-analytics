@@ -31,7 +31,7 @@ def export_year(year: int) -> None:
         {
             "player_id": r.player_id, "player_name": r.player_name,
             "team": r.team, "games": r.games, "ip": r.ip,
-            "h": r.h, "bb": r.bb, "r": r.r, "hr": r.hr,
+            "h": r.h, "bb": r.bb, "hbp": r.hbp, "r": r.r, "hr": r.hr,
             "lob_pct": r.lob_pct, "league_avg": r.league_avg,
             "is_lucky": r.is_lucky, "is_unlucky": r.is_unlucky,
             "sample_note": r.sample_note,
@@ -58,7 +58,9 @@ def export_year(year: int) -> None:
     fatigue = compute_fatigue_leaderboard(db, year=year, min_ip=20.0)
     fatigue_data = [
         {
-            "pitcher_id": r.pitcher_id, "team": r.team, "year": r.year,
+            "pitcher_id": r.pitcher_id,
+            "player_name": r.pitcher_id.replace("cpbl_", ""),
+            "team": r.team, "year": r.year,
             "total_ip": r.total_ip, "games": r.games,
             "total_pitches": r.total_pitches,
             "fatigue_threshold_pitch": r.fatigue_threshold_pitch,

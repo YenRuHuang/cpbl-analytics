@@ -19,6 +19,7 @@ class LobResult:
     ip: float
     h: int
     bb: int
+    hbp: int
     r: int
     hr: int
     lob_pct: float | None       # 0.0 ~ 1.0
@@ -116,6 +117,7 @@ def compute_lob_leaderboard(
             ip=ip,
             h=row.total_h or 0,
             bb=row.total_bb or 0,
+            hbp=row.total_hbp or 0,
             r=row.total_r or 0,
             hr=row.total_hr or 0,
             lob_pct=lob,
