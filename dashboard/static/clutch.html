@@ -194,6 +194,12 @@
         // Filter out entries with no high-leverage data
         allData = raw.filter(d => d.high_li_ba != null);
         document.getElementById('loadingState').classList.add('hidden');
+        if (allData.length === 0) {
+          document.getElementById('errorState').classList.remove('hidden');
+          document.getElementById('errorMsg').textContent = '此賽季尚無足夠資料';
+          document.getElementById('playerCount').textContent = '0 名打者';
+          return;
+        }
         document.getElementById('playerCount').textContent = `共 ${allData.length} 名打者`;
       } catch (e) {
         allData = buildDemoData();

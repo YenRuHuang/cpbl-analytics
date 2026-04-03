@@ -150,6 +150,12 @@
         const json = await res.json();
         allData = (json.data || json || []).sort((a, b) => b.lob_pct - a.lob_pct);
         document.getElementById('loadingState').classList.add('hidden');
+        if (allData.length === 0) {
+          document.getElementById('errorState').classList.remove('hidden');
+          document.getElementById('errorMsg').textContent = '此賽季尚無足夠資料';
+          document.getElementById('playerCount').textContent = '0 名投手';
+          return;
+        }
         document.getElementById('playerCount').textContent = `共 ${allData.length} 名投手`;
       } catch (e) {
         allData = buildDemoData();
