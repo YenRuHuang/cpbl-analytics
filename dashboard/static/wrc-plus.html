@@ -64,9 +64,9 @@
         <a href="api-docs.html" class="hover:text-white transition-colors font-medium text-gray-300">API Docs</a>
         <span class="text-surface-border">|</span>
         <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
-        <a href="fatigue.html" class="hover:text-white transition-colors">Fatigue</a>
-        <a href="clutch.html" class="hover:text-white transition-colors">Clutch</a>
-        <a href="counts.html" class="hover:text-white transition-colors">Counts</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
         <a href="wrc-plus.html" class="text-orange-400 font-semibold">wRC+</a>
       </div>
       <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
@@ -78,9 +78,9 @@
       <a href="api-docs.html" class="block py-1 hover:text-white font-medium text-gray-300">API Docs</a>
       <div class="border-t border-surface-border my-1"></div>
       <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
-      <a href="fatigue.html" class="block py-1 hover:text-white">Fatigue</a>
-      <a href="clutch.html" class="block py-1 hover:text-white">Clutch</a>
-      <a href="counts.html" class="block py-1 hover:text-white">Counts</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
       <a href="wrc-plus.html" class="block py-1 text-orange-400 font-semibold">wRC+</a>
     </div>
   </nav>
@@ -242,7 +242,9 @@
     // --- Helpers ---
     function stripPrefix(name) {
       if (!name) return '';
-      return String(name).replace(/^cpbl_/, '');
+      const str = String(name);
+      // Strip 'cpbl_' prefix from the beginning if present
+      return str.replace(/^cpbl_/, '');
     }
 
     function fmt3(v) {
@@ -260,7 +262,7 @@
 
     function getField(row, col) {
       const aliases = {
-        player_name: ['player_name', 'name'],
+        player_name: ['name_zh', 'player_name', 'name'],
         pa:          ['pa', 'PA'],
         avg:         ['avg', 'AVG'],
         obp:         ['obp', 'OBP'],
@@ -281,7 +283,7 @@
 
     // --- Build one table row using safe DOM methods ---
     function buildTr(row, rank) {
-      const name   = stripPrefix(row.player_name || row.name || '');
+      const name   = stripPrefix(row.name_zh || row.player_name || row.name || '');
       const wrcRaw = row.wrc_plus ?? row.wrcPlus ?? row['wRC+'];
       const pa     = row.pa ?? row.PA;
       const avg    = row.avg ?? row.AVG;

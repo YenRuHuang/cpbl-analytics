@@ -377,7 +377,7 @@
       if (team) filtered = filtered.filter(d => d.team === team);
       if (minIp > 0) filtered = filtered.filter(d => (d.ip || 0) >= minIp);
       renderChart(filtered);
-      renderTable(team ? filtered : allData);
+      renderTable(filtered);
       document.getElementById('playerCount').textContent = `共 ${filtered.length} 名投手`;
     }
 
