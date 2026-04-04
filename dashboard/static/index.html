@@ -41,6 +41,9 @@
         <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
         <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
         <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
+        <a href="park-factors.html" class="hover:text-white transition-colors">Park Factor</a>
+        <a href="babip.html" class="hover:text-white transition-colors">BABIP</a>
+        <a href="splits.html" class="hover:text-white transition-colors">半季分割</a>
       </div>
       <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
         &#9776;
@@ -55,6 +58,9 @@
       <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
       <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
       <a href="wrc-plus.html" class="block py-1 hover:text-white">wRC+</a>
+      <a href="park-factors.html" class="block py-1 hover:text-white">Park Factor</a>
+      <a href="babip.html" class="block py-1 hover:text-white">BABIP</a>
+      <a href="splits.html" class="block py-1 hover:text-white">半季分割</a>
     </div>
   </nav>
 
@@ -114,19 +120,19 @@
             <span class="bg-orange-500/10 border border-orange-500/30 rounded-full px-3 py-0.5 text-orange-400 text-xs font-semibold">NEW</span>
             <h2 class="text-xl font-bold text-white">wRC+ 打者排行 — 2025 CPBL</h2>
           </div>
-          <p class="text-gray-400 text-sm leading-relaxed">加權得分創造指數，以 100 為聯盟平均。用我們 DB 的 2025 全季資料實算，86 位合格打者完整排名。</p>
+          <p class="text-gray-400 text-sm leading-relaxed">加權得分創造指數（含 Park Factor 球場修正），以 100 為聯盟平均。86 位合格打者完整排名。</p>
         </div>
         <div class="flex items-center gap-6 text-center shrink-0">
           <div>
-            <div class="text-2xl font-bold text-orange-400">139.8</div>
-            <div class="text-xs text-gray-500">林安可</div>
-          </div>
-          <div>
-            <div class="text-2xl font-bold text-orange-400">139.8</div>
+            <div class="text-2xl font-bold text-orange-400">151.7</div>
             <div class="text-xs text-gray-500">魔鷹</div>
           </div>
           <div>
-            <div class="text-2xl font-bold text-orange-400">133.2</div>
+            <div class="text-2xl font-bold text-orange-400">145.6</div>
+            <div class="text-xs text-gray-500">林安可</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-orange-400">142.2</div>
             <div class="text-xs text-gray-500">張育成</div>
           </div>
           <div class="text-orange-400 text-xs font-semibold">查看完整排行 &rarr;</div>
@@ -136,7 +142,7 @@
 
     <!-- Analytics Modules -->
     <h3 class="text-lg font-bold text-white mb-1">棒球知識：分析模組</h3>
-    <p class="text-gray-500 text-sm mb-4">5 個進階數據分析模組，展示對棒球賽伯計量學的理解與應用。</p>
+    <p class="text-gray-500 text-sm mb-4">8 個進階數據分析模組，展示對棒球賽伯計量學的理解與應用。</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
       <a href="lob.html"
@@ -165,6 +171,40 @@
         <h2 class="text-base font-bold text-white mb-1">球數分析</h2>
         <p class="text-gray-500 text-xs leading-relaxed">不同球數情境下的打者/投手表現差異：領先、落後、平球數、兩好球。</p>
         <div class="mt-2 text-purple-400 text-xs">查看 &rarr;</div>
+      </a>
+
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-5">
+
+      <a href="park-factors.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-emerald-500/50">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="bg-emerald-500/10 border border-emerald-500/30 rounded-full px-2 py-0.5 text-emerald-400 text-[10px] font-semibold">NEW</span>
+          <h2 class="text-base font-bold text-white">Park Factor</h2>
+        </div>
+        <p class="text-gray-500 text-xs leading-relaxed">球場因子分析：樂天桃園 PF=1.12 是打者天堂，大巨蛋 PF=0.86 是投手樂園。</p>
+        <div class="mt-2 text-emerald-400 text-xs">查看 &rarr;</div>
+      </a>
+
+      <a href="babip.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-purple-500/50">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="bg-purple-500/10 border border-purple-500/30 rounded-full px-2 py-0.5 text-purple-400 text-[10px] font-semibold">NEW</span>
+          <h2 class="text-base font-bold text-white">BABIP 回歸</h2>
+        </div>
+        <p class="text-gray-500 text-xs leading-relaxed">場內球打擊率的回歸均值分析。上半季 BABIP 極端者，下半季幾乎必然回歸。</p>
+        <div class="mt-2 text-purple-400 text-xs">查看 &rarr;</div>
+      </a>
+
+      <a href="splits.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-cyan-500/50">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="bg-cyan-500/10 border border-cyan-500/30 rounded-full px-2 py-0.5 text-cyan-400 text-[10px] font-semibold">NEW</span>
+          <h2 class="text-base font-bold text-white">半季分割</h2>
+        </div>
+        <p class="text-gray-500 text-xs leading-relaxed">上下半季 wOBA/OPS 差異比較。誰下半季爆發？誰下半季崩盤？</p>
+        <div class="mt-2 text-cyan-400 text-xs">查看 &rarr;</div>
       </a>
 
     </div>

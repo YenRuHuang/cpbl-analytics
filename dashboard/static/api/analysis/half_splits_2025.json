@@ -1,0 +1,2837 @@
+{
+  "meta": {
+    "year": 2025,
+    "split_date": "2025-07-01",
+    "min_pa_per_half": 50,
+    "qualified_batters": 74,
+    "woba_weights": {
+      "wBB": 0.69,
+      "wHBP": 0.72,
+      "w1B": 0.87,
+      "w2B": 1.22,
+      "w3B": 1.56,
+      "wHR": 1.95
+    },
+    "notes": [
+      "Split at 2025-07-01: first half = Mar-Jun, second half = Jul+",
+      "Min 50 PA per half to qualify",
+      "Positive delta = second-half improvement (breakout)",
+      "Negative delta = second-half decline (collapse)",
+      "wOBA weights same as wRC+ calculation (FanGraphs 2024 MLB)"
+    ]
+  },
+  "batters": [
+    {
+      "player_id": "cpbl_朱育賢",
+      "name_zh": "cpbl_朱育賢",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 180,
+        "ab": 169,
+        "h": 43,
+        "bb": 11,
+        "so": 38,
+        "hr": 5,
+        "avg": 0.254,
+        "obp": 0.3,
+        "slg": 0.373,
+        "ops": 0.673,
+        "woba": 0.2897,
+        "babip": 0.302
+      },
+      "second_half": {
+        "pa": 197,
+        "ab": 179,
+        "h": 56,
+        "bb": 18,
+        "so": 45,
+        "hr": 10,
+        "avg": 0.313,
+        "obp": 0.376,
+        "slg": 0.536,
+        "ops": 0.912,
+        "woba": 0.3828,
+        "babip": 0.371
+      },
+      "delta": {
+        "woba": 0.0931,
+        "ops": 0.239,
+        "avg": 0.059
+      }
+    },
+    {
+      "player_id": "cpbl_曾聖安",
+      "name_zh": "cpbl_曾聖安",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 96,
+        "ab": 86,
+        "h": 15,
+        "bb": 8,
+        "so": 22,
+        "hr": 1,
+        "avg": 0.174,
+        "obp": 0.245,
+        "slg": 0.221,
+        "ops": 0.466,
+        "woba": 0.2128,
+        "babip": 0.222
+      },
+      "second_half": {
+        "pa": 102,
+        "ab": 90,
+        "h": 21,
+        "bb": 11,
+        "so": 14,
+        "hr": 2,
+        "avg": 0.233,
+        "obp": 0.317,
+        "slg": 0.311,
+        "ops": 0.628,
+        "woba": 0.2809,
+        "babip": 0.257
+      },
+      "delta": {
+        "woba": 0.0681,
+        "ops": 0.162,
+        "avg": 0.059
+      }
+    },
+    {
+      "player_id": "cpbl_李勛傑",
+      "name_zh": "cpbl_李勛傑",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 110,
+        "ab": 102,
+        "h": 20,
+        "bb": 7,
+        "so": 25,
+        "hr": 0,
+        "avg": 0.196,
+        "obp": 0.255,
+        "slg": 0.255,
+        "ops": 0.509,
+        "woba": 0.2275,
+        "babip": 0.26
+      },
+      "second_half": {
+        "pa": 86,
+        "ab": 78,
+        "h": 20,
+        "bb": 8,
+        "so": 25,
+        "hr": 1,
+        "avg": 0.256,
+        "obp": 0.326,
+        "slg": 0.333,
+        "ops": 0.659,
+        "woba": 0.2913,
+        "babip": 0.365
+      },
+      "delta": {
+        "woba": 0.0638,
+        "ops": 0.15,
+        "avg": 0.06
+      }
+    },
+    {
+      "player_id": "cpbl_曾昱磬",
+      "name_zh": "cpbl_曾昱磬",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 87,
+        "ab": 78,
+        "h": 15,
+        "bb": 9,
+        "so": 12,
+        "hr": 2,
+        "avg": 0.192,
+        "obp": 0.276,
+        "slg": 0.269,
+        "ops": 0.545,
+        "woba": 0.2462,
+        "babip": 0.203
+      },
+      "second_half": {
+        "pa": 134,
+        "ab": 119,
+        "h": 30,
+        "bb": 15,
+        "so": 26,
+        "hr": 3,
+        "avg": 0.252,
+        "obp": 0.336,
+        "slg": 0.353,
+        "ops": 0.689,
+        "woba": 0.304,
+        "babip": 0.3
+      },
+      "delta": {
+        "woba": 0.0578,
+        "ops": 0.144,
+        "avg": 0.06
+      }
+    },
+    {
+      "player_id": "cpbl_蘇智傑",
+      "name_zh": "cpbl_蘇智傑",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 70,
+        "ab": 68,
+        "h": 16,
+        "bb": 2,
+        "so": 13,
+        "hr": 1,
+        "avg": 0.235,
+        "obp": 0.257,
+        "slg": 0.294,
+        "ops": 0.551,
+        "woba": 0.239,
+        "babip": 0.278
+      },
+      "second_half": {
+        "pa": 163,
+        "ab": 149,
+        "h": 38,
+        "bb": 13,
+        "so": 30,
+        "hr": 4,
+        "avg": 0.255,
+        "obp": 0.315,
+        "slg": 0.362,
+        "ops": 0.677,
+        "woba": 0.2948,
+        "babip": 0.296
+      },
+      "delta": {
+        "woba": 0.0558,
+        "ops": 0.126,
+        "avg": 0.02
+      }
+    },
+    {
+      "player_id": "cpbl_王政順",
+      "name_zh": "cpbl_王政順",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 64,
+        "ab": 56,
+        "h": 15,
+        "bb": 8,
+        "so": 14,
+        "hr": 1,
+        "avg": 0.268,
+        "obp": 0.359,
+        "slg": 0.321,
+        "ops": 0.681,
+        "woba": 0.307,
+        "babip": 0.341
+      },
+      "second_half": {
+        "pa": 86,
+        "ab": 75,
+        "h": 23,
+        "bb": 10,
+        "so": 16,
+        "hr": 2,
+        "avg": 0.307,
+        "obp": 0.395,
+        "slg": 0.44,
+        "ops": 0.835,
+        "woba": 0.3626,
+        "babip": 0.368
+      },
+      "delta": {
+        "woba": 0.0556,
+        "ops": 0.154,
+        "avg": 0.039
+      }
+    },
+    {
+      "player_id": "cpbl_曾子祐",
+      "name_zh": "cpbl_曾子祐",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 243,
+        "ab": 231,
+        "h": 60,
+        "bb": 10,
+        "so": 20,
+        "hr": 0,
+        "avg": 0.26,
+        "obp": 0.29,
+        "slg": 0.268,
+        "ops": 0.559,
+        "woba": 0.2481,
+        "babip": 0.284
+      },
+      "second_half": {
+        "pa": 262,
+        "ab": 237,
+        "h": 66,
+        "bb": 23,
+        "so": 14,
+        "hr": 0,
+        "avg": 0.278,
+        "obp": 0.342,
+        "slg": 0.329,
+        "ops": 0.671,
+        "woba": 0.2979,
+        "babip": 0.296
+      },
+      "delta": {
+        "woba": 0.0498,
+        "ops": 0.112,
+        "avg": 0.018
+      }
+    },
+    {
+      "player_id": "cpbl_江坤宇",
+      "name_zh": "cpbl_江坤宇",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 220,
+        "ab": 197,
+        "h": 44,
+        "bb": 19,
+        "so": 20,
+        "hr": 0,
+        "avg": 0.223,
+        "obp": 0.295,
+        "slg": 0.244,
+        "ops": 0.539,
+        "woba": 0.2466,
+        "babip": 0.249
+      },
+      "second_half": {
+        "pa": 237,
+        "ab": 217,
+        "h": 60,
+        "bb": 15,
+        "so": 31,
+        "hr": 1,
+        "avg": 0.276,
+        "obp": 0.332,
+        "slg": 0.323,
+        "ops": 0.654,
+        "woba": 0.2903,
+        "babip": 0.319
+      },
+      "delta": {
+        "woba": 0.0437,
+        "ops": 0.115,
+        "avg": 0.053
+      }
+    },
+    {
+      "player_id": "cpbl_李宗賢",
+      "name_zh": "cpbl_李宗賢",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 104,
+        "ab": 102,
+        "h": 20,
+        "bb": 2,
+        "so": 17,
+        "hr": 0,
+        "avg": 0.196,
+        "obp": 0.212,
+        "slg": 0.206,
+        "ops": 0.417,
+        "woba": 0.1839,
+        "babip": 0.235
+      },
+      "second_half": {
+        "pa": 56,
+        "ab": 55,
+        "h": 13,
+        "bb": 1,
+        "so": 6,
+        "hr": 0,
+        "avg": 0.236,
+        "obp": 0.25,
+        "slg": 0.273,
+        "ops": 0.523,
+        "woba": 0.2268,
+        "babip": 0.265
+      },
+      "delta": {
+        "woba": 0.0429,
+        "ops": 0.106,
+        "avg": 0.04
+      }
+    },
+    {
+      "player_id": "cpbl_林家鋐",
+      "name_zh": "cpbl_林家鋐",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 132,
+        "ab": 121,
+        "h": 30,
+        "bb": 10,
+        "so": 29,
+        "hr": 0,
+        "avg": 0.248,
+        "obp": 0.305,
+        "slg": 0.256,
+        "ops": 0.562,
+        "woba": 0.2546,
+        "babip": 0.326
+      },
+      "second_half": {
+        "pa": 167,
+        "ab": 150,
+        "h": 41,
+        "bb": 17,
+        "so": 26,
+        "hr": 1,
+        "avg": 0.273,
+        "obp": 0.347,
+        "slg": 0.307,
+        "ops": 0.654,
+        "woba": 0.2945,
+        "babip": 0.325
+      },
+      "delta": {
+        "woba": 0.0399,
+        "ops": 0.092,
+        "avg": 0.025
+      }
+    },
+    {
+      "player_id": "cpbl_周佳樂",
+      "name_zh": "cpbl_周佳樂",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 143,
+        "ab": 126,
+        "h": 27,
+        "bb": 14,
+        "so": 29,
+        "hr": 0,
+        "avg": 0.214,
+        "obp": 0.298,
+        "slg": 0.23,
+        "ops": 0.528,
+        "woba": 0.2452,
+        "babip": 0.278
+      },
+      "second_half": {
+        "pa": 80,
+        "ab": 70,
+        "h": 18,
+        "bb": 8,
+        "so": 22,
+        "hr": 0,
+        "avg": 0.257,
+        "obp": 0.333,
+        "slg": 0.3,
+        "ops": 0.633,
+        "woba": 0.285,
+        "babip": 0.375
+      },
+      "delta": {
+        "woba": 0.0398,
+        "ops": 0.105,
+        "avg": 0.043
+      }
+    },
+    {
+      "player_id": "cpbl_陳聖平",
+      "name_zh": "cpbl_陳聖平",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 171,
+        "ab": 158,
+        "h": 37,
+        "bb": 13,
+        "so": 30,
+        "hr": 0,
+        "avg": 0.234,
+        "obp": 0.292,
+        "slg": 0.266,
+        "ops": 0.558,
+        "woba": 0.2509,
+        "babip": 0.289
+      },
+      "second_half": {
+        "pa": 184,
+        "ab": 179,
+        "h": 53,
+        "bb": 5,
+        "so": 29,
+        "hr": 3,
+        "avg": 0.296,
+        "obp": 0.315,
+        "slg": 0.352,
+        "ops": 0.667,
+        "woba": 0.2889,
+        "babip": 0.34
+      },
+      "delta": {
+        "woba": 0.038,
+        "ops": 0.109,
+        "avg": 0.062
+      }
+    },
+    {
+      "player_id": "cpbl_林泓育",
+      "name_zh": "cpbl_林泓育",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 200,
+        "ab": 192,
+        "h": 54,
+        "bb": 8,
+        "so": 38,
+        "hr": 5,
+        "avg": 0.281,
+        "obp": 0.31,
+        "slg": 0.375,
+        "ops": 0.685,
+        "woba": 0.2948,
+        "babip": 0.329
+      },
+      "second_half": {
+        "pa": 221,
+        "ab": 206,
+        "h": 65,
+        "bb": 13,
+        "so": 26,
+        "hr": 4,
+        "avg": 0.316,
+        "obp": 0.359,
+        "slg": 0.408,
+        "ops": 0.767,
+        "woba": 0.3318,
+        "babip": 0.347
+      },
+      "delta": {
+        "woba": 0.037,
+        "ops": 0.082,
+        "avg": 0.035
+      }
+    },
+    {
+      "player_id": "cpbl_胡金龍",
+      "name_zh": "cpbl_胡金龍",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 78,
+        "ab": 71,
+        "h": 22,
+        "bb": 7,
+        "so": 13,
+        "hr": 0,
+        "avg": 0.31,
+        "obp": 0.372,
+        "slg": 0.324,
+        "ops": 0.696,
+        "woba": 0.3118,
+        "babip": 0.379
+      },
+      "second_half": {
+        "pa": 66,
+        "ab": 62,
+        "h": 20,
+        "bb": 4,
+        "so": 10,
+        "hr": 2,
+        "avg": 0.323,
+        "obp": 0.364,
+        "slg": 0.452,
+        "ops": 0.815,
+        "woba": 0.3488,
+        "babip": 0.36
+      },
+      "delta": {
+        "woba": 0.037,
+        "ops": 0.119,
+        "avg": 0.013
+      }
+    },
+    {
+      "player_id": "cpbl_曾頌恩",
+      "name_zh": "cpbl_曾頌恩",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 88,
+        "ab": 80,
+        "h": 17,
+        "bb": 8,
+        "so": 15,
+        "hr": 0,
+        "avg": 0.212,
+        "obp": 0.284,
+        "slg": 0.25,
+        "ops": 0.534,
+        "woba": 0.2426,
+        "babip": 0.262
+      },
+      "second_half": {
+        "pa": 128,
+        "ab": 113,
+        "h": 26,
+        "bb": 14,
+        "so": 18,
+        "hr": 1,
+        "avg": 0.23,
+        "obp": 0.315,
+        "slg": 0.301,
+        "ops": 0.616,
+        "woba": 0.2765,
+        "babip": 0.266
+      },
+      "delta": {
+        "woba": 0.0339,
+        "ops": 0.082,
+        "avg": 0.018
+      }
+    },
+    {
+      "player_id": "cpbl_梁家榮",
+      "name_zh": "cpbl_梁家榮",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 67,
+        "ab": 61,
+        "h": 13,
+        "bb": 6,
+        "so": 15,
+        "hr": 0,
+        "avg": 0.213,
+        "obp": 0.284,
+        "slg": 0.23,
+        "ops": 0.513,
+        "woba": 0.2358,
+        "babip": 0.283
+      },
+      "second_half": {
+        "pa": 99,
+        "ab": 92,
+        "h": 23,
+        "bb": 6,
+        "so": 16,
+        "hr": 1,
+        "avg": 0.25,
+        "obp": 0.296,
+        "slg": 0.304,
+        "ops": 0.6,
+        "woba": 0.2646,
+        "babip": 0.293
+      },
+      "delta": {
+        "woba": 0.0288,
+        "ops": 0.087,
+        "avg": 0.037
+      }
+    },
+    {
+      "player_id": "cpbl_張肇元",
+      "name_zh": "cpbl_張肇元",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 194,
+        "ab": 178,
+        "h": 46,
+        "bb": 15,
+        "so": 33,
+        "hr": 2,
+        "avg": 0.258,
+        "obp": 0.316,
+        "slg": 0.32,
+        "ops": 0.636,
+        "woba": 0.2812,
+        "babip": 0.308
+      },
+      "second_half": {
+        "pa": 190,
+        "ab": 173,
+        "h": 41,
+        "bb": 15,
+        "so": 27,
+        "hr": 8,
+        "avg": 0.237,
+        "obp": 0.305,
+        "slg": 0.422,
+        "ops": 0.727,
+        "woba": 0.3099,
+        "babip": 0.239
+      },
+      "delta": {
+        "woba": 0.0287,
+        "ops": 0.091,
+        "avg": -0.021
+      }
+    },
+    {
+      "player_id": "cpbl_宋嘉翔",
+      "name_zh": "cpbl_宋嘉翔",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 61,
+        "ab": 59,
+        "h": 17,
+        "bb": 1,
+        "so": 13,
+        "hr": 0,
+        "avg": 0.288,
+        "obp": 0.3,
+        "slg": 0.288,
+        "ops": 0.588,
+        "woba": 0.258,
+        "babip": 0.37
+      },
+      "second_half": {
+        "pa": 74,
+        "ab": 69,
+        "h": 20,
+        "bb": 4,
+        "so": 23,
+        "hr": 0,
+        "avg": 0.29,
+        "obp": 0.329,
+        "slg": 0.319,
+        "ops": 0.648,
+        "woba": 0.2858,
+        "babip": 0.435
+      },
+      "delta": {
+        "woba": 0.0278,
+        "ops": 0.06,
+        "avg": 0.002
+      }
+    },
+    {
+      "player_id": "cpbl_董子恩",
+      "name_zh": "cpbl_董子恩",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 161,
+        "ab": 152,
+        "h": 40,
+        "bb": 8,
+        "so": 7,
+        "hr": 0,
+        "avg": 0.263,
+        "obp": 0.304,
+        "slg": 0.283,
+        "ops": 0.587,
+        "woba": 0.2614,
+        "babip": 0.276
+      },
+      "second_half": {
+        "pa": 110,
+        "ab": 99,
+        "h": 27,
+        "bb": 9,
+        "so": 7,
+        "hr": 1,
+        "avg": 0.273,
+        "obp": 0.339,
+        "slg": 0.303,
+        "ops": 0.642,
+        "woba": 0.289,
+        "babip": 0.286
+      },
+      "delta": {
+        "woba": 0.0276,
+        "ops": 0.055,
+        "avg": 0.01
+      }
+    },
+    {
+      "player_id": "cpbl_林岳谷",
+      "name_zh": "cpbl_林岳谷",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 80,
+        "ab": 78,
+        "h": 17,
+        "bb": 2,
+        "so": 12,
+        "hr": 1,
+        "avg": 0.218,
+        "obp": 0.237,
+        "slg": 0.295,
+        "ops": 0.532,
+        "woba": 0.2286,
+        "babip": 0.246
+      },
+      "second_half": {
+        "pa": 198,
+        "ab": 187,
+        "h": 48,
+        "bb": 10,
+        "so": 23,
+        "hr": 0,
+        "avg": 0.257,
+        "obp": 0.294,
+        "slg": 0.283,
+        "ops": 0.578,
+        "woba": 0.2559,
+        "babip": 0.293
+      },
+      "delta": {
+        "woba": 0.0273,
+        "ops": 0.046,
+        "avg": 0.039
+      }
+    },
+    {
+      "player_id": "cpbl_劉基鴻",
+      "name_zh": "cpbl_劉基鴻",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 231,
+        "ab": 218,
+        "h": 49,
+        "bb": 11,
+        "so": 34,
+        "hr": 6,
+        "avg": 0.225,
+        "obp": 0.265,
+        "slg": 0.339,
+        "ops": 0.605,
+        "woba": 0.2603,
+        "babip": 0.242
+      },
+      "second_half": {
+        "pa": 217,
+        "ab": 205,
+        "h": 58,
+        "bb": 7,
+        "so": 19,
+        "hr": 4,
+        "avg": 0.283,
+        "obp": 0.313,
+        "slg": 0.346,
+        "ops": 0.659,
+        "woba": 0.2869,
+        "babip": 0.297
+      },
+      "delta": {
+        "woba": 0.0266,
+        "ops": 0.054,
+        "avg": 0.058
+      }
+    },
+    {
+      "player_id": "cpbl_邱智呈",
+      "name_zh": "cpbl_邱智呈",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 253,
+        "ab": 230,
+        "h": 57,
+        "bb": 21,
+        "so": 44,
+        "hr": 3,
+        "avg": 0.248,
+        "obp": 0.311,
+        "slg": 0.326,
+        "ops": 0.637,
+        "woba": 0.2807,
+        "babip": 0.295
+      },
+      "second_half": {
+        "pa": 141,
+        "ab": 126,
+        "h": 32,
+        "bb": 15,
+        "so": 19,
+        "hr": 3,
+        "avg": 0.254,
+        "obp": 0.333,
+        "slg": 0.365,
+        "ops": 0.698,
+        "woba": 0.3062,
+        "babip": 0.279
+      },
+      "delta": {
+        "woba": 0.0255,
+        "ops": 0.061,
+        "avg": 0.006
+      }
+    },
+    {
+      "player_id": "cpbl_李凱威",
+      "name_zh": "cpbl_李凱威",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 256,
+        "ab": 225,
+        "h": 62,
+        "bb": 30,
+        "so": 29,
+        "hr": 0,
+        "avg": 0.276,
+        "obp": 0.361,
+        "slg": 0.307,
+        "ops": 0.667,
+        "woba": 0.3023,
+        "babip": 0.316
+      },
+      "second_half": {
+        "pa": 266,
+        "ab": 235,
+        "h": 72,
+        "bb": 28,
+        "so": 19,
+        "hr": 0,
+        "avg": 0.306,
+        "obp": 0.38,
+        "slg": 0.349,
+        "ops": 0.729,
+        "woba": 0.3249,
+        "babip": 0.333
+      },
+      "delta": {
+        "woba": 0.0226,
+        "ops": 0.062,
+        "avg": 0.03
+      }
+    },
+    {
+      "player_id": "cpbl_陳子豪",
+      "name_zh": "cpbl_陳子豪",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 226,
+        "ab": 197,
+        "h": 42,
+        "bb": 28,
+        "so": 45,
+        "hr": 2,
+        "avg": 0.213,
+        "obp": 0.314,
+        "slg": 0.274,
+        "ops": 0.588,
+        "woba": 0.2692,
+        "babip": 0.267
+      },
+      "second_half": {
+        "pa": 185,
+        "ab": 160,
+        "h": 39,
+        "bb": 23,
+        "so": 27,
+        "hr": 2,
+        "avg": 0.244,
+        "obp": 0.342,
+        "slg": 0.287,
+        "ops": 0.63,
+        "woba": 0.2882,
+        "babip": 0.282
+      },
+      "delta": {
+        "woba": 0.019,
+        "ops": 0.042,
+        "avg": 0.031
+      }
+    },
+    {
+      "player_id": "cpbl_王威晨",
+      "name_zh": "cpbl_王威晨",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 212,
+        "ab": 198,
+        "h": 56,
+        "bb": 12,
+        "so": 30,
+        "hr": 1,
+        "avg": 0.283,
+        "obp": 0.324,
+        "slg": 0.328,
+        "ops": 0.652,
+        "woba": 0.2866,
+        "babip": 0.329
+      },
+      "second_half": {
+        "pa": 161,
+        "ab": 147,
+        "h": 44,
+        "bb": 14,
+        "so": 19,
+        "hr": 0,
+        "avg": 0.299,
+        "obp": 0.36,
+        "slg": 0.32,
+        "ops": 0.68,
+        "woba": 0.3043,
+        "babip": 0.344
+      },
+      "delta": {
+        "woba": 0.0177,
+        "ops": 0.028,
+        "avg": 0.016
+      }
+    },
+    {
+      "player_id": "cpbl_陳真",
+      "name_zh": "cpbl_陳真",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 130,
+        "ab": 112,
+        "h": 24,
+        "bb": 17,
+        "so": 31,
+        "hr": 2,
+        "avg": 0.214,
+        "obp": 0.323,
+        "slg": 0.277,
+        "ops": 0.6,
+        "woba": 0.2757,
+        "babip": 0.278
+      },
+      "second_half": {
+        "pa": 146,
+        "ab": 132,
+        "h": 34,
+        "bb": 14,
+        "so": 30,
+        "hr": 2,
+        "avg": 0.258,
+        "obp": 0.329,
+        "slg": 0.311,
+        "ops": 0.639,
+        "woba": 0.286,
+        "babip": 0.32
+      },
+      "delta": {
+        "woba": 0.0103,
+        "ops": 0.039,
+        "avg": 0.044
+      }
+    },
+    {
+      "player_id": "cpbl_紀慶然",
+      "name_zh": "cpbl_紀慶然",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 172,
+        "ab": 165,
+        "h": 41,
+        "bb": 4,
+        "so": 33,
+        "hr": 0,
+        "avg": 0.248,
+        "obp": 0.266,
+        "slg": 0.267,
+        "ops": 0.533,
+        "woba": 0.2336,
+        "babip": 0.311
+      },
+      "second_half": {
+        "pa": 88,
+        "ab": 75,
+        "h": 15,
+        "bb": 10,
+        "so": 17,
+        "hr": 0,
+        "avg": 0.2,
+        "obp": 0.294,
+        "slg": 0.227,
+        "ops": 0.521,
+        "woba": 0.2429,
+        "babip": 0.259
+      },
+      "delta": {
+        "woba": 0.0093,
+        "ops": -0.012,
+        "avg": -0.048
+      }
+    },
+    {
+      "player_id": "cpbl_馬傑森",
+      "name_zh": "cpbl_馬傑森",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 123,
+        "ab": 115,
+        "h": 19,
+        "bb": 5,
+        "so": 14,
+        "hr": 0,
+        "avg": 0.165,
+        "obp": 0.2,
+        "slg": 0.191,
+        "ops": 0.391,
+        "woba": 0.1753,
+        "babip": 0.188
+      },
+      "second_half": {
+        "pa": 70,
+        "ab": 67,
+        "h": 13,
+        "bb": 0,
+        "so": 6,
+        "hr": 0,
+        "avg": 0.194,
+        "obp": 0.206,
+        "slg": 0.209,
+        "ops": 0.415,
+        "woba": 0.1821,
+        "babip": 0.213
+      },
+      "delta": {
+        "woba": 0.0068,
+        "ops": 0.024,
+        "avg": 0.029
+      }
+    },
+    {
+      "player_id": "cpbl_郭天信",
+      "name_zh": "cpbl_郭天信",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 233,
+        "ab": 217,
+        "h": 58,
+        "bb": 14,
+        "so": 21,
+        "hr": 3,
+        "avg": 0.267,
+        "obp": 0.312,
+        "slg": 0.332,
+        "ops": 0.643,
+        "woba": 0.2819,
+        "babip": 0.285
+      },
+      "second_half": {
+        "pa": 255,
+        "ab": 234,
+        "h": 64,
+        "bb": 16,
+        "so": 22,
+        "hr": 1,
+        "avg": 0.274,
+        "obp": 0.323,
+        "slg": 0.329,
+        "ops": 0.652,
+        "woba": 0.2869,
+        "babip": 0.299
+      },
+      "delta": {
+        "woba": 0.005,
+        "ops": 0.009,
+        "avg": 0.007
+      }
+    },
+    {
+      "player_id": "cpbl_陳俊秀",
+      "name_zh": "cpbl_陳俊秀",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 131,
+        "ab": 113,
+        "h": 24,
+        "bb": 17,
+        "so": 24,
+        "hr": 3,
+        "avg": 0.212,
+        "obp": 0.321,
+        "slg": 0.319,
+        "ops": 0.639,
+        "woba": 0.2872,
+        "babip": 0.244
+      },
+      "second_half": {
+        "pa": 101,
+        "ab": 92,
+        "h": 23,
+        "bb": 9,
+        "so": 20,
+        "hr": 1,
+        "avg": 0.25,
+        "obp": 0.317,
+        "slg": 0.348,
+        "ops": 0.665,
+        "woba": 0.291,
+        "babip": 0.31
+      },
+      "delta": {
+        "woba": 0.0038,
+        "ops": 0.026,
+        "avg": 0.038
+      }
+    },
+    {
+      "player_id": "cpbl_吳念庭",
+      "name_zh": "cpbl_吳念庭",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 140,
+        "ab": 125,
+        "h": 43,
+        "bb": 13,
+        "so": 12,
+        "hr": 0,
+        "avg": 0.344,
+        "obp": 0.406,
+        "slg": 0.384,
+        "ops": 0.79,
+        "woba": 0.3487,
+        "babip": 0.381
+      },
+      "second_half": {
+        "pa": 242,
+        "ab": 212,
+        "h": 66,
+        "bb": 28,
+        "so": 33,
+        "hr": 2,
+        "avg": 0.311,
+        "obp": 0.392,
+        "slg": 0.396,
+        "ops": 0.788,
+        "woba": 0.3461,
+        "babip": 0.362
+      },
+      "delta": {
+        "woba": -0.0026,
+        "ops": -0.002,
+        "avg": -0.033
+      }
+    },
+    {
+      "player_id": "cpbl_成晉",
+      "name_zh": "cpbl_成晉",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 176,
+        "ab": 160,
+        "h": 41,
+        "bb": 12,
+        "so": 13,
+        "hr": 0,
+        "avg": 0.256,
+        "obp": 0.316,
+        "slg": 0.275,
+        "ops": 0.591,
+        "woba": 0.2669,
+        "babip": 0.279
+      },
+      "second_half": {
+        "pa": 197,
+        "ab": 187,
+        "h": 50,
+        "bb": 7,
+        "so": 23,
+        "hr": 1,
+        "avg": 0.267,
+        "obp": 0.301,
+        "slg": 0.289,
+        "ops": 0.59,
+        "woba": 0.2612,
+        "babip": 0.301
+      },
+      "delta": {
+        "woba": -0.0057,
+        "ops": -0.001,
+        "avg": 0.011
+      }
+    },
+    {
+      "player_id": "cpbl_黃韋盛",
+      "name_zh": "cpbl_黃韋盛",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 140,
+        "ab": 128,
+        "h": 34,
+        "bb": 10,
+        "so": 33,
+        "hr": 1,
+        "avg": 0.266,
+        "obp": 0.319,
+        "slg": 0.297,
+        "ops": 0.616,
+        "woba": 0.2747,
+        "babip": 0.351
+      },
+      "second_half": {
+        "pa": 208,
+        "ab": 194,
+        "h": 51,
+        "bb": 12,
+        "so": 35,
+        "hr": 2,
+        "avg": 0.263,
+        "obp": 0.306,
+        "slg": 0.299,
+        "ops": 0.605,
+        "woba": 0.2678,
+        "babip": 0.312
+      },
+      "delta": {
+        "woba": -0.0069,
+        "ops": -0.011,
+        "avg": -0.003
+      }
+    },
+    {
+      "player_id": "cpbl_陳鏞基",
+      "name_zh": "cpbl_陳鏞基",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 98,
+        "ab": 92,
+        "h": 27,
+        "bb": 6,
+        "so": 20,
+        "hr": 3,
+        "avg": 0.293,
+        "obp": 0.337,
+        "slg": 0.424,
+        "ops": 0.761,
+        "woba": 0.3257,
+        "babip": 0.348
+      },
+      "second_half": {
+        "pa": 95,
+        "ab": 82,
+        "h": 22,
+        "bb": 12,
+        "so": 17,
+        "hr": 2,
+        "avg": 0.268,
+        "obp": 0.362,
+        "slg": 0.354,
+        "ops": 0.715,
+        "woba": 0.3184,
+        "babip": 0.317
+      },
+      "delta": {
+        "woba": -0.0073,
+        "ops": -0.046,
+        "avg": -0.025
+      }
+    },
+    {
+      "player_id": "cpbl_陳重羽",
+      "name_zh": "cpbl_陳重羽",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 120,
+        "ab": 114,
+        "h": 24,
+        "bb": 2,
+        "so": 21,
+        "hr": 0,
+        "avg": 0.211,
+        "obp": 0.224,
+        "slg": 0.254,
+        "ops": 0.479,
+        "woba": 0.207,
+        "babip": 0.258
+      },
+      "second_half": {
+        "pa": 92,
+        "ab": 87,
+        "h": 14,
+        "bb": 5,
+        "so": 14,
+        "hr": 1,
+        "avg": 0.161,
+        "obp": 0.207,
+        "slg": 0.241,
+        "ops": 0.448,
+        "woba": 0.1967,
+        "babip": 0.181
+      },
+      "delta": {
+        "woba": -0.0103,
+        "ops": -0.031,
+        "avg": -0.05
+      }
+    },
+    {
+      "player_id": "cpbl_吉力吉撈．鞏冠",
+      "name_zh": "cpbl_吉力吉撈．鞏冠",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 247,
+        "ab": 227,
+        "h": 63,
+        "bb": 18,
+        "so": 38,
+        "hr": 12,
+        "avg": 0.278,
+        "obp": 0.333,
+        "slg": 0.485,
+        "ops": 0.818,
+        "woba": 0.3444,
+        "babip": 0.288
+      },
+      "second_half": {
+        "pa": 254,
+        "ab": 234,
+        "h": 61,
+        "bb": 17,
+        "so": 50,
+        "hr": 12,
+        "avg": 0.261,
+        "obp": 0.319,
+        "slg": 0.47,
+        "ops": 0.789,
+        "woba": 0.3326,
+        "babip": 0.285
+      },
+      "delta": {
+        "woba": -0.0118,
+        "ops": -0.029,
+        "avg": -0.017
+      }
+    },
+    {
+      "player_id": "cpbl_王念好",
+      "name_zh": "cpbl_王念好",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 64,
+        "ab": 58,
+        "h": 10,
+        "bb": 6,
+        "so": 23,
+        "hr": 0,
+        "avg": 0.172,
+        "obp": 0.25,
+        "slg": 0.224,
+        "ops": 0.474,
+        "woba": 0.2169,
+        "babip": 0.286
+      },
+      "second_half": {
+        "pa": 79,
+        "ab": 77,
+        "h": 14,
+        "bb": 2,
+        "so": 22,
+        "hr": 2,
+        "avg": 0.182,
+        "obp": 0.203,
+        "slg": 0.273,
+        "ops": 0.475,
+        "woba": 0.2034,
+        "babip": 0.226
+      },
+      "delta": {
+        "woba": -0.0135,
+        "ops": 0.001,
+        "avg": 0.01
+      }
+    },
+    {
+      "player_id": "cpbl_高捷",
+      "name_zh": "cpbl_高捷",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 108,
+        "ab": 98,
+        "h": 20,
+        "bb": 9,
+        "so": 27,
+        "hr": 1,
+        "avg": 0.204,
+        "obp": 0.271,
+        "slg": 0.255,
+        "ops": 0.526,
+        "woba": 0.2373,
+        "babip": 0.271
+      },
+      "second_half": {
+        "pa": 89,
+        "ab": 85,
+        "h": 19,
+        "bb": 3,
+        "so": 27,
+        "hr": 0,
+        "avg": 0.224,
+        "obp": 0.25,
+        "slg": 0.259,
+        "ops": 0.509,
+        "woba": 0.2233,
+        "babip": 0.328
+      },
+      "delta": {
+        "woba": -0.014,
+        "ops": -0.017,
+        "avg": 0.02
+      }
+    },
+    {
+      "player_id": "cpbl_林佳緯",
+      "name_zh": "cpbl_林佳緯",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 240,
+        "ab": 223,
+        "h": 63,
+        "bb": 16,
+        "so": 35,
+        "hr": 2,
+        "avg": 0.283,
+        "obp": 0.331,
+        "slg": 0.336,
+        "ops": 0.667,
+        "woba": 0.2933,
+        "babip": 0.328
+      },
+      "second_half": {
+        "pa": 261,
+        "ab": 248,
+        "h": 64,
+        "bb": 13,
+        "so": 42,
+        "hr": 4,
+        "avg": 0.258,
+        "obp": 0.295,
+        "slg": 0.343,
+        "ops": 0.638,
+        "woba": 0.2763,
+        "babip": 0.297
+      },
+      "delta": {
+        "woba": -0.017,
+        "ops": -0.029,
+        "avg": -0.025
+      }
+    },
+    {
+      "player_id": "cpbl_陳晨威",
+      "name_zh": "cpbl_陳晨威",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 255,
+        "ab": 233,
+        "h": 73,
+        "bb": 22,
+        "so": 26,
+        "hr": 4,
+        "avg": 0.313,
+        "obp": 0.373,
+        "slg": 0.378,
+        "ops": 0.75,
+        "woba": 0.3296,
+        "babip": 0.34
+      },
+      "second_half": {
+        "pa": 228,
+        "ab": 204,
+        "h": 60,
+        "bb": 21,
+        "so": 28,
+        "hr": 0,
+        "avg": 0.294,
+        "obp": 0.36,
+        "slg": 0.343,
+        "ops": 0.703,
+        "woba": 0.3119,
+        "babip": 0.341
+      },
+      "delta": {
+        "woba": -0.0177,
+        "ops": -0.047,
+        "avg": -0.019
+      }
+    },
+    {
+      "player_id": "cpbl_張政禹",
+      "name_zh": "cpbl_張政禹",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 174,
+        "ab": 167,
+        "h": 46,
+        "bb": 6,
+        "so": 23,
+        "hr": 1,
+        "avg": 0.275,
+        "obp": 0.301,
+        "slg": 0.311,
+        "ops": 0.612,
+        "woba": 0.2676,
+        "babip": 0.315
+      },
+      "second_half": {
+        "pa": 198,
+        "ab": 187,
+        "h": 47,
+        "bb": 8,
+        "so": 21,
+        "hr": 0,
+        "avg": 0.251,
+        "obp": 0.282,
+        "slg": 0.283,
+        "ops": 0.565,
+        "woba": 0.2488,
+        "babip": 0.283
+      },
+      "delta": {
+        "woba": -0.0188,
+        "ops": -0.047,
+        "avg": -0.024
+      }
+    },
+    {
+      "player_id": "cpbl_蔣少宏",
+      "name_zh": "cpbl_蔣少宏",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 150,
+        "ab": 137,
+        "h": 29,
+        "bb": 11,
+        "so": 28,
+        "hr": 3,
+        "avg": 0.212,
+        "obp": 0.27,
+        "slg": 0.307,
+        "ops": 0.577,
+        "woba": 0.253,
+        "babip": 0.245
+      },
+      "second_half": {
+        "pa": 144,
+        "ab": 130,
+        "h": 25,
+        "bb": 9,
+        "so": 32,
+        "hr": 2,
+        "avg": 0.192,
+        "obp": 0.255,
+        "slg": 0.269,
+        "ops": 0.525,
+        "woba": 0.2338,
+        "babip": 0.24
+      },
+      "delta": {
+        "woba": -0.0192,
+        "ops": -0.052,
+        "avg": -0.02
+      }
+    },
+    {
+      "player_id": "cpbl_范國宸",
+      "name_zh": "cpbl_范國宸",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 166,
+        "ab": 154,
+        "h": 44,
+        "bb": 9,
+        "so": 35,
+        "hr": 5,
+        "avg": 0.286,
+        "obp": 0.337,
+        "slg": 0.435,
+        "ops": 0.772,
+        "woba": 0.3304,
+        "babip": 0.342
+      },
+      "second_half": {
+        "pa": 204,
+        "ab": 185,
+        "h": 47,
+        "bb": 17,
+        "so": 38,
+        "hr": 8,
+        "avg": 0.254,
+        "obp": 0.32,
+        "slg": 0.395,
+        "ops": 0.715,
+        "woba": 0.3088,
+        "babip": 0.281
+      },
+      "delta": {
+        "woba": -0.0216,
+        "ops": -0.057,
+        "avg": -0.032
+      }
+    },
+    {
+      "player_id": "cpbl_杜家明",
+      "name_zh": "cpbl_杜家明",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 94,
+        "ab": 89,
+        "h": 20,
+        "bb": 4,
+        "so": 14,
+        "hr": 2,
+        "avg": 0.225,
+        "obp": 0.258,
+        "slg": 0.326,
+        "ops": 0.584,
+        "woba": 0.2513,
+        "babip": 0.247
+      },
+      "second_half": {
+        "pa": 83,
+        "ab": 77,
+        "h": 17,
+        "bb": 4,
+        "so": 17,
+        "hr": 0,
+        "avg": 0.221,
+        "obp": 0.277,
+        "slg": 0.221,
+        "ops": 0.498,
+        "woba": 0.2288,
+        "babip": 0.283
+      },
+      "delta": {
+        "woba": -0.0225,
+        "ops": -0.086,
+        "avg": -0.004
+      }
+    },
+    {
+      "player_id": "cpbl_宋晟睿",
+      "name_zh": "cpbl_宋晟睿",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 232,
+        "ab": 219,
+        "h": 61,
+        "bb": 11,
+        "so": 48,
+        "hr": 4,
+        "avg": 0.279,
+        "obp": 0.316,
+        "slg": 0.37,
+        "ops": 0.686,
+        "woba": 0.2965,
+        "babip": 0.341
+      },
+      "second_half": {
+        "pa": 219,
+        "ab": 203,
+        "h": 45,
+        "bb": 15,
+        "so": 43,
+        "hr": 8,
+        "avg": 0.222,
+        "obp": 0.279,
+        "slg": 0.35,
+        "ops": 0.628,
+        "woba": 0.272,
+        "babip": 0.243
+      },
+      "delta": {
+        "woba": -0.0245,
+        "ops": -0.058,
+        "avg": -0.057
+      }
+    },
+    {
+      "player_id": "cpbl_林澤彬",
+      "name_zh": "cpbl_林澤彬",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 148,
+        "ab": 137,
+        "h": 44,
+        "bb": 10,
+        "so": 17,
+        "hr": 0,
+        "avg": 0.321,
+        "obp": 0.367,
+        "slg": 0.336,
+        "ops": 0.703,
+        "woba": 0.3121,
+        "babip": 0.367
+      },
+      "second_half": {
+        "pa": 165,
+        "ab": 148,
+        "h": 39,
+        "bb": 15,
+        "so": 25,
+        "hr": 1,
+        "avg": 0.264,
+        "obp": 0.335,
+        "slg": 0.304,
+        "ops": 0.639,
+        "woba": 0.2873,
+        "babip": 0.311
+      },
+      "delta": {
+        "woba": -0.0248,
+        "ops": -0.064,
+        "avg": -0.057
+      }
+    },
+    {
+      "player_id": "cpbl_林子偉",
+      "name_zh": "cpbl_林子偉",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 199,
+        "ab": 179,
+        "h": 45,
+        "bb": 18,
+        "so": 41,
+        "hr": 1,
+        "avg": 0.251,
+        "obp": 0.323,
+        "slg": 0.268,
+        "ops": 0.591,
+        "woba": 0.2695,
+        "babip": 0.321
+      },
+      "second_half": {
+        "pa": 167,
+        "ab": 154,
+        "h": 33,
+        "bb": 11,
+        "so": 18,
+        "hr": 2,
+        "avg": 0.214,
+        "obp": 0.271,
+        "slg": 0.279,
+        "ops": 0.55,
+        "woba": 0.2445,
+        "babip": 0.231
+      },
+      "delta": {
+        "woba": -0.025,
+        "ops": -0.041,
+        "avg": -0.037
+      }
+    },
+    {
+      "player_id": "cpbl_岳政華",
+      "name_zh": "cpbl_岳政華",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 133,
+        "ab": 123,
+        "h": 33,
+        "bb": 9,
+        "so": 18,
+        "hr": 1,
+        "avg": 0.268,
+        "obp": 0.323,
+        "slg": 0.301,
+        "ops": 0.624,
+        "woba": 0.2787,
+        "babip": 0.308
+      },
+      "second_half": {
+        "pa": 218,
+        "ab": 191,
+        "h": 40,
+        "bb": 24,
+        "so": 24,
+        "hr": 1,
+        "avg": 0.209,
+        "obp": 0.298,
+        "slg": 0.246,
+        "ops": 0.544,
+        "woba": 0.2504,
+        "babip": 0.235
+      },
+      "delta": {
+        "woba": -0.0283,
+        "ops": -0.08,
+        "avg": -0.059
+      }
+    },
+    {
+      "player_id": "cpbl_張閔勛",
+      "name_zh": "cpbl_張閔勛",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 170,
+        "ab": 160,
+        "h": 49,
+        "bb": 6,
+        "so": 10,
+        "hr": 1,
+        "avg": 0.306,
+        "obp": 0.339,
+        "slg": 0.344,
+        "ops": 0.683,
+        "woba": 0.2996,
+        "babip": 0.322
+      },
+      "second_half": {
+        "pa": 156,
+        "ab": 152,
+        "h": 40,
+        "bb": 4,
+        "so": 15,
+        "hr": 3,
+        "avg": 0.263,
+        "obp": 0.282,
+        "slg": 0.336,
+        "ops": 0.618,
+        "woba": 0.266,
+        "babip": 0.276
+      },
+      "delta": {
+        "woba": -0.0336,
+        "ops": -0.065,
+        "avg": -0.043
+      }
+    },
+    {
+      "player_id": "cpbl_孔念恩",
+      "name_zh": "cpbl_孔念恩",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 118,
+        "ab": 107,
+        "h": 25,
+        "bb": 10,
+        "so": 32,
+        "hr": 0,
+        "avg": 0.234,
+        "obp": 0.305,
+        "slg": 0.262,
+        "ops": 0.567,
+        "woba": 0.2577,
+        "babip": 0.333
+      },
+      "second_half": {
+        "pa": 150,
+        "ab": 146,
+        "h": 33,
+        "bb": 4,
+        "so": 38,
+        "hr": 1,
+        "avg": 0.226,
+        "obp": 0.247,
+        "slg": 0.26,
+        "ops": 0.507,
+        "woba": 0.2217,
+        "babip": 0.299
+      },
+      "delta": {
+        "woba": -0.036,
+        "ops": -0.06,
+        "avg": -0.008
+      }
+    },
+    {
+      "player_id": "cpbl_高宇杰",
+      "name_zh": "cpbl_高宇杰",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 204,
+        "ab": 191,
+        "h": 51,
+        "bb": 11,
+        "so": 40,
+        "hr": 1,
+        "avg": 0.267,
+        "obp": 0.307,
+        "slg": 0.309,
+        "ops": 0.616,
+        "woba": 0.2712,
+        "babip": 0.333
+      },
+      "second_half": {
+        "pa": 141,
+        "ab": 132,
+        "h": 28,
+        "bb": 8,
+        "so": 31,
+        "hr": 0,
+        "avg": 0.212,
+        "obp": 0.257,
+        "slg": 0.273,
+        "ops": 0.53,
+        "woba": 0.2334,
+        "babip": 0.277
+      },
+      "delta": {
+        "woba": -0.0378,
+        "ops": -0.086,
+        "avg": -0.055
+      }
+    },
+    {
+      "player_id": "cpbl_林子豪",
+      "name_zh": "cpbl_林子豪",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 162,
+        "ab": 147,
+        "h": 35,
+        "bb": 15,
+        "so": 20,
+        "hr": 8,
+        "avg": 0.238,
+        "obp": 0.309,
+        "slg": 0.408,
+        "ops": 0.717,
+        "woba": 0.3073,
+        "babip": 0.227
+      },
+      "second_half": {
+        "pa": 124,
+        "ab": 112,
+        "h": 26,
+        "bb": 12,
+        "so": 21,
+        "hr": 2,
+        "avg": 0.232,
+        "obp": 0.306,
+        "slg": 0.295,
+        "ops": 0.601,
+        "woba": 0.2694,
+        "babip": 0.27
+      },
+      "delta": {
+        "woba": -0.0379,
+        "ops": -0.116,
+        "avg": -0.006
+      }
+    },
+    {
+      "player_id": "cpbl_林智平",
+      "name_zh": "cpbl_林智平",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 203,
+        "ab": 189,
+        "h": 59,
+        "bb": 14,
+        "so": 38,
+        "hr": 1,
+        "avg": 0.312,
+        "obp": 0.36,
+        "slg": 0.37,
+        "ops": 0.73,
+        "woba": 0.3196,
+        "babip": 0.387
+      },
+      "second_half": {
+        "pa": 191,
+        "ab": 176,
+        "h": 47,
+        "bb": 14,
+        "so": 27,
+        "hr": 1,
+        "avg": 0.267,
+        "obp": 0.321,
+        "slg": 0.312,
+        "ops": 0.634,
+        "woba": 0.2809,
+        "babip": 0.311
+      },
+      "delta": {
+        "woba": -0.0387,
+        "ops": -0.096,
+        "avg": -0.045
+      }
+    },
+    {
+      "player_id": "cpbl_王博玄",
+      "name_zh": "cpbl_王博玄",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 224,
+        "ab": 208,
+        "h": 62,
+        "bb": 16,
+        "so": 36,
+        "hr": 3,
+        "avg": 0.298,
+        "obp": 0.348,
+        "slg": 0.389,
+        "ops": 0.738,
+        "woba": 0.32,
+        "babip": 0.349
+      },
+      "second_half": {
+        "pa": 266,
+        "ab": 239,
+        "h": 62,
+        "bb": 25,
+        "so": 35,
+        "hr": 0,
+        "avg": 0.259,
+        "obp": 0.332,
+        "slg": 0.289,
+        "ops": 0.621,
+        "woba": 0.2805,
+        "babip": 0.304
+      },
+      "delta": {
+        "woba": -0.0395,
+        "ops": -0.117,
+        "avg": -0.039
+      }
+    },
+    {
+      "player_id": "cpbl_申皓瑋",
+      "name_zh": "cpbl_申皓瑋",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 196,
+        "ab": 179,
+        "h": 54,
+        "bb": 15,
+        "so": 37,
+        "hr": 5,
+        "avg": 0.302,
+        "obp": 0.356,
+        "slg": 0.413,
+        "ops": 0.769,
+        "woba": 0.3323,
+        "babip": 0.358
+      },
+      "second_half": {
+        "pa": 116,
+        "ab": 106,
+        "h": 26,
+        "bb": 9,
+        "so": 30,
+        "hr": 4,
+        "avg": 0.245,
+        "obp": 0.31,
+        "slg": 0.358,
+        "ops": 0.669,
+        "woba": 0.292,
+        "babip": 0.306
+      },
+      "delta": {
+        "woba": -0.0403,
+        "ops": -0.1,
+        "avg": -0.057
+      }
+    },
+    {
+      "player_id": "cpbl_岳東華",
+      "name_zh": "cpbl_岳東華",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 214,
+        "ab": 192,
+        "h": 49,
+        "bb": 19,
+        "so": 45,
+        "hr": 1,
+        "avg": 0.255,
+        "obp": 0.325,
+        "slg": 0.286,
+        "ops": 0.612,
+        "woba": 0.2764,
+        "babip": 0.329
+      },
+      "second_half": {
+        "pa": 193,
+        "ab": 173,
+        "h": 36,
+        "bb": 19,
+        "so": 37,
+        "hr": 0,
+        "avg": 0.208,
+        "obp": 0.286,
+        "slg": 0.22,
+        "ops": 0.506,
+        "woba": 0.2351,
+        "babip": 0.265
+      },
+      "delta": {
+        "woba": -0.0413,
+        "ops": -0.106,
+        "avg": -0.047
+      }
+    },
+    {
+      "player_id": "cpbl_劉俊緯",
+      "name_zh": "cpbl_劉俊緯",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 123,
+        "ab": 114,
+        "h": 31,
+        "bb": 7,
+        "so": 23,
+        "hr": 0,
+        "avg": 0.272,
+        "obp": 0.32,
+        "slg": 0.307,
+        "ops": 0.627,
+        "woba": 0.278,
+        "babip": 0.341
+      },
+      "second_half": {
+        "pa": 65,
+        "ab": 60,
+        "h": 13,
+        "bb": 4,
+        "so": 13,
+        "hr": 0,
+        "avg": 0.217,
+        "obp": 0.266,
+        "slg": 0.267,
+        "ops": 0.532,
+        "woba": 0.2361,
+        "babip": 0.277
+      },
+      "delta": {
+        "woba": -0.0419,
+        "ops": -0.095,
+        "avg": -0.055
+      }
+    },
+    {
+      "player_id": "cpbl_許基宏",
+      "name_zh": "cpbl_許基宏",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 224,
+        "ab": 196,
+        "h": 58,
+        "bb": 26,
+        "so": 45,
+        "hr": 12,
+        "avg": 0.296,
+        "obp": 0.384,
+        "slg": 0.495,
+        "ops": 0.879,
+        "woba": 0.3743,
+        "babip": 0.331
+      },
+      "second_half": {
+        "pa": 189,
+        "ab": 163,
+        "h": 42,
+        "bb": 24,
+        "so": 42,
+        "hr": 7,
+        "avg": 0.258,
+        "obp": 0.356,
+        "slg": 0.405,
+        "ops": 0.761,
+        "woba": 0.3321,
+        "babip": 0.307
+      },
+      "delta": {
+        "woba": -0.0422,
+        "ops": -0.118,
+        "avg": -0.038
+      }
+    },
+    {
+      "player_id": "cpbl_林政華",
+      "name_zh": "cpbl_林政華",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 188,
+        "ab": 169,
+        "h": 44,
+        "bb": 14,
+        "so": 28,
+        "hr": 5,
+        "avg": 0.26,
+        "obp": 0.324,
+        "slg": 0.367,
+        "ops": 0.691,
+        "woba": 0.3018,
+        "babip": 0.287
+      },
+      "second_half": {
+        "pa": 160,
+        "ab": 156,
+        "h": 39,
+        "bb": 3,
+        "so": 23,
+        "hr": 4,
+        "avg": 0.25,
+        "obp": 0.264,
+        "slg": 0.34,
+        "ops": 0.604,
+        "woba": 0.2579,
+        "babip": 0.271
+      },
+      "delta": {
+        "woba": -0.0439,
+        "ops": -0.087,
+        "avg": -0.01
+      }
+    },
+    {
+      "player_id": "cpbl_詹子賢",
+      "name_zh": "cpbl_詹子賢",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 216,
+        "ab": 198,
+        "h": 57,
+        "bb": 18,
+        "so": 35,
+        "hr": 7,
+        "avg": 0.288,
+        "obp": 0.347,
+        "slg": 0.414,
+        "ops": 0.761,
+        "woba": 0.3286,
+        "babip": 0.321
+      },
+      "second_half": {
+        "pa": 88,
+        "ab": 79,
+        "h": 18,
+        "bb": 8,
+        "so": 14,
+        "hr": 1,
+        "avg": 0.228,
+        "obp": 0.307,
+        "slg": 0.329,
+        "ops": 0.636,
+        "woba": 0.2809,
+        "babip": 0.266
+      },
+      "delta": {
+        "woba": -0.0477,
+        "ops": -0.125,
+        "avg": -0.06
+      }
+    },
+    {
+      "player_id": "cpbl_王柏融",
+      "name_zh": "cpbl_王柏融",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 225,
+        "ab": 205,
+        "h": 53,
+        "bb": 20,
+        "so": 26,
+        "hr": 2,
+        "avg": 0.259,
+        "obp": 0.324,
+        "slg": 0.341,
+        "ops": 0.666,
+        "woba": 0.2929,
+        "babip": 0.288
+      },
+      "second_half": {
+        "pa": 211,
+        "ab": 196,
+        "h": 40,
+        "bb": 15,
+        "so": 32,
+        "hr": 2,
+        "avg": 0.204,
+        "obp": 0.261,
+        "slg": 0.276,
+        "ops": 0.536,
+        "woba": 0.2374,
+        "babip": 0.235
+      },
+      "delta": {
+        "woba": -0.0555,
+        "ops": -0.13,
+        "avg": -0.055
+      }
+    },
+    {
+      "player_id": "cpbl_林安可",
+      "name_zh": "cpbl_林安可",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 123,
+        "ab": 116,
+        "h": 41,
+        "bb": 7,
+        "so": 24,
+        "hr": 11,
+        "avg": 0.353,
+        "obp": 0.39,
+        "slg": 0.647,
+        "ops": 1.037,
+        "woba": 0.4287,
+        "babip": 0.37
+      },
+      "second_half": {
+        "pa": 252,
+        "ab": 219,
+        "h": 64,
+        "bb": 30,
+        "so": 41,
+        "hr": 12,
+        "avg": 0.292,
+        "obp": 0.385,
+        "slg": 0.475,
+        "ops": 0.86,
+        "woba": 0.3686,
+        "babip": 0.313
+      },
+      "delta": {
+        "woba": -0.0601,
+        "ops": -0.177,
+        "avg": -0.061
+      }
+    },
+    {
+      "player_id": "cpbl_余德龍",
+      "name_zh": "cpbl_余德龍",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 119,
+        "ab": 110,
+        "h": 31,
+        "bb": 7,
+        "so": 19,
+        "hr": 0,
+        "avg": 0.282,
+        "obp": 0.325,
+        "slg": 0.309,
+        "ops": 0.634,
+        "woba": 0.2807,
+        "babip": 0.341
+      },
+      "second_half": {
+        "pa": 131,
+        "ab": 129,
+        "h": 31,
+        "bb": 1,
+        "so": 26,
+        "hr": 0,
+        "avg": 0.24,
+        "obp": 0.246,
+        "slg": 0.256,
+        "ops": 0.502,
+        "woba": 0.2182,
+        "babip": 0.301
+      },
+      "delta": {
+        "woba": -0.0625,
+        "ops": -0.132,
+        "avg": -0.042
+      }
+    },
+    {
+      "player_id": "cpbl_郭阜林",
+      "name_zh": "cpbl_郭阜林",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 151,
+        "ab": 140,
+        "h": 39,
+        "bb": 10,
+        "so": 34,
+        "hr": 2,
+        "avg": 0.279,
+        "obp": 0.331,
+        "slg": 0.357,
+        "ops": 0.688,
+        "woba": 0.301,
+        "babip": 0.356
+      },
+      "second_half": {
+        "pa": 97,
+        "ab": 90,
+        "h": 20,
+        "bb": 6,
+        "so": 24,
+        "hr": 0,
+        "avg": 0.222,
+        "obp": 0.278,
+        "slg": 0.244,
+        "ops": 0.523,
+        "woba": 0.2367,
+        "babip": 0.303
+      },
+      "delta": {
+        "woba": -0.0643,
+        "ops": -0.165,
+        "avg": -0.057
+      }
+    },
+    {
+      "player_id": "cpbl_魔鷹",
+      "name_zh": "cpbl_魔鷹",
+      "team": "台鋼雄鷹",
+      "first_half": {
+        "pa": 206,
+        "ab": 183,
+        "h": 56,
+        "bb": 23,
+        "so": 35,
+        "hr": 19,
+        "avg": 0.306,
+        "obp": 0.383,
+        "slg": 0.65,
+        "ops": 1.034,
+        "woba": 0.4233,
+        "babip": 0.287
+      },
+      "second_half": {
+        "pa": 179,
+        "ab": 155,
+        "h": 45,
+        "bb": 22,
+        "so": 25,
+        "hr": 6,
+        "avg": 0.29,
+        "obp": 0.379,
+        "slg": 0.419,
+        "ops": 0.798,
+        "woba": 0.3475,
+        "babip": 0.315
+      },
+      "delta": {
+        "woba": -0.0758,
+        "ops": -0.236,
+        "avg": -0.016
+      }
+    },
+    {
+      "player_id": "cpbl_林立",
+      "name_zh": "cpbl_林立",
+      "team": "樂天桃猿",
+      "first_half": {
+        "pa": 129,
+        "ab": 121,
+        "h": 43,
+        "bb": 8,
+        "so": 15,
+        "hr": 7,
+        "avg": 0.355,
+        "obp": 0.395,
+        "slg": 0.554,
+        "ops": 0.949,
+        "woba": 0.3995,
+        "babip": 0.364
+      },
+      "second_half": {
+        "pa": 165,
+        "ab": 153,
+        "h": 51,
+        "bb": 11,
+        "so": 17,
+        "hr": 0,
+        "avg": 0.333,
+        "obp": 0.378,
+        "slg": 0.346,
+        "ops": 0.724,
+        "woba": 0.3211,
+        "babip": 0.375
+      },
+      "delta": {
+        "woba": -0.0784,
+        "ops": -0.225,
+        "avg": -0.022
+      }
+    },
+    {
+      "player_id": "cpbl_王順和",
+      "name_zh": "cpbl_王順和",
+      "team": "味全龍",
+      "first_half": {
+        "pa": 113,
+        "ab": 105,
+        "h": 32,
+        "bb": 7,
+        "so": 34,
+        "hr": 2,
+        "avg": 0.305,
+        "obp": 0.348,
+        "slg": 0.371,
+        "ops": 0.72,
+        "woba": 0.3141,
+        "babip": 0.435
+      },
+      "second_half": {
+        "pa": 81,
+        "ab": 71,
+        "h": 12,
+        "bb": 10,
+        "so": 19,
+        "hr": 1,
+        "avg": 0.169,
+        "obp": 0.272,
+        "slg": 0.225,
+        "ops": 0.497,
+        "woba": 0.2317,
+        "babip": 0.216
+      },
+      "delta": {
+        "woba": -0.0824,
+        "ops": -0.223,
+        "avg": -0.136
+      }
+    },
+    {
+      "player_id": "cpbl_陳傑憲",
+      "name_zh": "cpbl_陳傑憲",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 239,
+        "ab": 208,
+        "h": 59,
+        "bb": 29,
+        "so": 18,
+        "hr": 4,
+        "avg": 0.284,
+        "obp": 0.371,
+        "slg": 0.385,
+        "ops": 0.756,
+        "woba": 0.3325,
+        "babip": 0.296
+      },
+      "second_half": {
+        "pa": 115,
+        "ab": 107,
+        "h": 26,
+        "bb": 7,
+        "so": 6,
+        "hr": 0,
+        "avg": 0.243,
+        "obp": 0.289,
+        "slg": 0.271,
+        "ops": 0.561,
+        "woba": 0.25,
+        "babip": 0.257
+      },
+      "delta": {
+        "woba": -0.0825,
+        "ops": -0.195,
+        "avg": -0.041
+      }
+    },
+    {
+      "player_id": "cpbl_潘傑楷",
+      "name_zh": "cpbl_潘傑楷",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 211,
+        "ab": 190,
+        "h": 55,
+        "bb": 20,
+        "so": 28,
+        "hr": 2,
+        "avg": 0.289,
+        "obp": 0.36,
+        "slg": 0.379,
+        "ops": 0.739,
+        "woba": 0.324,
+        "babip": 0.331
+      },
+      "second_half": {
+        "pa": 181,
+        "ab": 170,
+        "h": 39,
+        "bb": 9,
+        "so": 26,
+        "hr": 0,
+        "avg": 0.229,
+        "obp": 0.276,
+        "slg": 0.253,
+        "ops": 0.529,
+        "woba": 0.2375,
+        "babip": 0.271
+      },
+      "delta": {
+        "woba": -0.0865,
+        "ops": -0.21,
+        "avg": -0.06
+      }
+    },
+    {
+      "player_id": "cpbl_林岱安",
+      "name_zh": "cpbl_林岱安",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 115,
+        "ab": 106,
+        "h": 24,
+        "bb": 7,
+        "so": 19,
+        "hr": 4,
+        "avg": 0.226,
+        "obp": 0.274,
+        "slg": 0.387,
+        "ops": 0.661,
+        "woba": 0.2811,
+        "babip": 0.241
+      },
+      "second_half": {
+        "pa": 114,
+        "ab": 109,
+        "h": 19,
+        "bb": 5,
+        "so": 15,
+        "hr": 1,
+        "avg": 0.174,
+        "obp": 0.211,
+        "slg": 0.211,
+        "ops": 0.422,
+        "woba": 0.1878,
+        "babip": 0.194
+      },
+      "delta": {
+        "woba": -0.0933,
+        "ops": -0.239,
+        "avg": -0.052
+      }
+    },
+    {
+      "player_id": "cpbl_戴培峰",
+      "name_zh": "cpbl_戴培峰",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 180,
+        "ab": 159,
+        "h": 42,
+        "bb": 20,
+        "so": 28,
+        "hr": 3,
+        "avg": 0.264,
+        "obp": 0.35,
+        "slg": 0.358,
+        "ops": 0.708,
+        "woba": 0.3133,
+        "babip": 0.305
+      },
+      "second_half": {
+        "pa": 154,
+        "ab": 140,
+        "h": 26,
+        "bb": 11,
+        "so": 30,
+        "hr": 1,
+        "avg": 0.186,
+        "obp": 0.255,
+        "slg": 0.207,
+        "ops": 0.462,
+        "woba": 0.2139,
+        "babip": 0.229
+      },
+      "delta": {
+        "woba": -0.0994,
+        "ops": -0.246,
+        "avg": -0.078
+      }
+    },
+    {
+      "player_id": "cpbl_陳重廷",
+      "name_zh": "cpbl_陳重廷",
+      "team": "統一7-ELEVEn獅",
+      "first_half": {
+        "pa": 98,
+        "ab": 92,
+        "h": 23,
+        "bb": 4,
+        "so": 10,
+        "hr": 1,
+        "avg": 0.25,
+        "obp": 0.281,
+        "slg": 0.283,
+        "ops": 0.564,
+        "woba": 0.2484,
+        "babip": 0.272
+      },
+      "second_half": {
+        "pa": 68,
+        "ab": 66,
+        "h": 9,
+        "bb": 2,
+        "so": 12,
+        "hr": 0,
+        "avg": 0.136,
+        "obp": 0.162,
+        "slg": 0.136,
+        "ops": 0.298,
+        "woba": 0.1354,
+        "babip": 0.167
+      },
+      "delta": {
+        "woba": -0.113,
+        "ops": -0.266,
+        "avg": -0.114
+      }
+    },
+    {
+      "player_id": "cpbl_張仁瑋",
+      "name_zh": "cpbl_張仁瑋",
+      "team": "中信兄弟",
+      "first_half": {
+        "pa": 52,
+        "ab": 47,
+        "h": 14,
+        "bb": 5,
+        "so": 3,
+        "hr": 2,
+        "avg": 0.298,
+        "obp": 0.365,
+        "slg": 0.447,
+        "ops": 0.812,
+        "woba": 0.3488,
+        "babip": 0.286
+      },
+      "second_half": {
+        "pa": 86,
+        "ab": 81,
+        "h": 19,
+        "bb": 4,
+        "so": 13,
+        "hr": 0,
+        "avg": 0.235,
+        "obp": 0.271,
+        "slg": 0.259,
+        "ops": 0.53,
+        "woba": 0.2352,
+        "babip": 0.279
+      },
+      "delta": {
+        "woba": -0.1136,
+        "ops": -0.282,
+        "avg": -0.063
+      }
+    },
+    {
+      "player_id": "cpbl_豊暐",
+      "name_zh": "cpbl_豊暐",
+      "team": "富邦悍將",
+      "first_half": {
+        "pa": 80,
+        "ab": 72,
+        "h": 17,
+        "bb": 6,
+        "so": 18,
+        "hr": 1,
+        "avg": 0.236,
+        "obp": 0.295,
+        "slg": 0.292,
+        "ops": 0.587,
+        "woba": 0.261,
+        "babip": 0.302
+      },
+      "second_half": {
+        "pa": 73,
+        "ab": 70,
+        "h": 9,
+        "bb": 3,
+        "so": 16,
+        "hr": 0,
+        "avg": 0.129,
+        "obp": 0.164,
+        "slg": 0.143,
+        "ops": 0.307,
+        "woba": 0.1404,
+        "babip": 0.167
+      },
+      "delta": {
+        "woba": -0.1206,
+        "ops": -0.28,
+        "avg": -0.107
+      }
+    }
+  ]
+}

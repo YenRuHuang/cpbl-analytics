@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Park Factor 球場因子 — 2025 CPBL</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .stat-num { font-variant-numeric: tabular-nums; }
+    .pf-high   { color: #f87171; font-weight: 600; }
+    .pf-neutral { color: #f9fafb; }
+    .pf-low    { color: #60a5fa; font-weight: 600; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="architecture.html" class="hover:text-white transition-colors font-medium text-gray-300">Architecture</a>
+        <a href="api-docs.html" class="hover:text-white transition-colors font-medium text-gray-300">API Docs</a>
+        <span class="text-surface-border">|</span>
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
+        <a href="park-factors.html" class="text-emerald-400 font-semibold">Park Factor</a>
+        <a href="babip.html" class="hover:text-white transition-colors">BABIP</a>
+        <a href="splits.html" class="hover:text-white transition-colors">半季分割</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="architecture.html" class="block py-1 hover:text-white font-medium text-gray-300">Architecture</a>
+      <a href="api-docs.html" class="block py-1 hover:text-white font-medium text-gray-300">API Docs</a>
+      <div class="border-t border-surface-border my-1"></div>
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="wrc-plus.html" class="block py-1 hover:text-white">wRC+</a>
+      <a href="park-factors.html" class="block py-1 text-emerald-400 font-semibold">Park Factor</a>
+      <a href="babip.html" class="block py-1 hover:text-white">BABIP</a>
+      <a href="splits.html" class="block py-1 hover:text-white">半季分割</a>
+    </div>
+  </nav>
+
+  <header class="max-w-6xl mx-auto px-4 pt-12 pb-6">
+    <div class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-4 py-1 text-emerald-400 text-xs mb-5">
+      球場環境 · 2025 賽季
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-3">
+      Park Factor 球場因子 — 2025 CPBL
+    </h1>
+    <p class="text-gray-400 max-w-2xl text-sm leading-relaxed">
+      球場因子衡量每座球場對得分環境的影響。PF &gt; 1.0 = 打者球場（容易得分），PF &lt; 1.0 = 投手球場（不容易得分）。用於校正 wRC+ 等進階指標。
+    </p>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+
+    <!-- Chart -->
+    <div class="bg-surface-card border border-surface-border rounded-xl p-4 mb-8">
+      <div id="pfChart" style="width:100%;height:400px;"></div>
+    </div>
+
+    <!-- Two tables side by side -->
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+
+      <!-- Team-Based PF -->
+      <div>
+        <h2 class="text-lg font-bold text-white mb-1">球隊 Park Factor</h2>
+        <p class="text-gray-500 text-xs mb-4">主場得分 ÷ 客場得分（RPG 比率）</p>
+        <div class="overflow-x-auto rounded-xl border border-surface-border">
+          <table class="w-full text-sm">
+            <thead class="bg-surface text-gray-400 text-xs uppercase tracking-wider">
+              <tr>
+                <th class="px-4 py-3 text-left">球隊</th>
+                <th class="px-4 py-3 text-left">主場</th>
+                <th class="px-4 py-3 text-right">主場 RPG</th>
+                <th class="px-4 py-3 text-right">客場 RPG</th>
+                <th class="px-4 py-3 text-right">PF</th>
+              </tr>
+            </thead>
+            <tbody id="teamPfBody" class="divide-y divide-surface-border"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Venue-Based PF -->
+      <div>
+        <h2 class="text-lg font-bold text-white mb-1">球場 Park Factor</h2>
+        <p class="text-gray-500 text-xs mb-4">球場 RPG ÷ 聯盟 RPG（≥10 場）</p>
+        <div class="overflow-x-auto rounded-xl border border-surface-border">
+          <table class="w-full text-sm">
+            <thead class="bg-surface text-gray-400 text-xs uppercase tracking-wider">
+              <tr>
+                <th class="px-4 py-3 text-left">球場</th>
+                <th class="px-4 py-3 text-right">場次</th>
+                <th class="px-4 py-3 text-right">RPG</th>
+                <th class="px-4 py-3 text-right">PF</th>
+              </tr>
+            </thead>
+            <tbody id="venuePfBody" class="divide-y divide-surface-border"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Methodology -->
+    <div class="bg-surface-card border border-surface-border rounded-xl p-6 sm:p-8">
+      <h2 class="text-lg font-bold text-white mb-1">計算方法</h2>
+      <p class="text-gray-500 text-xs mb-6">Park Factor 的兩種計算方式與差異</p>
+      <div class="space-y-6">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">Team-Based（用於 wRC+ 調整）</h3>
+          <div class="bg-[#0d1117] border border-surface-border rounded-lg px-4 py-3 font-mono text-xs text-sky-300 overflow-x-auto whitespace-pre">PF = (homeRS + homeRA) / homeG  ÷  (roadRS + roadRA) / roadG</div>
+          <p class="text-gray-600 text-xs mt-2">比較同一球隊在主場和客場的總得分環境。消除了對手強度的影響。</p>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">Venue-Based（參考用）</h3>
+          <div class="bg-[#0d1117] border border-surface-border rounded-lg px-4 py-3 font-mono text-xs text-sky-300 overflow-x-auto whitespace-pre">PF = (該球場 RPG) ÷ (聯盟平均 RPG)</div>
+          <p class="text-gray-600 text-xs mt-2">直接用球場的每場得分對比聯盟平均。簡單直觀，但可能受使用該球場球隊的打線強度影響。</p>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">應用</h3>
+          <p class="text-gray-500 text-xs leading-relaxed">
+            wRC+ 公式中的 Park Factor 調整：在球場因子高的球場（如桃園、洲際）打球的球員，其 wRC+ 會略微下修；
+            反之在投手球場（大巨蛋）打球的球員則上修。這讓不同球場的打者可以公平比較。
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data (ODC-By License) + CPBL 官網公開資料 | Murs 開發
+  </footer>
+
+  <script>
+    'use strict';
+
+    function pfClass(v) {
+      if (v > 1.05) return 'pf-high';
+      if (v < 0.95) return 'pf-low';
+      return 'pf-neutral';
+    }
+
+    function makeTd(text, classes) {
+      var td = document.createElement('td');
+      td.className = 'px-4 py-3 ' + (classes || '');
+      td.textContent = text;
+      return td;
+    }
+
+    async function loadData() {
+      var res = await fetch('api/analysis/park_factors_2025.json');
+      var data = await res.json();
+
+      // Team PF table
+      var teamBody = document.getElementById('teamPfBody');
+      data.team_park_factors.forEach(function(r) {
+        var tr = document.createElement('tr');
+        tr.className = 'bg-surface-card';
+        tr.appendChild(makeTd(r.team_short || r.team, 'font-medium text-white'));
+        tr.appendChild(makeTd(r.stadium, 'text-gray-400'));
+        tr.appendChild(makeTd(r.home_rpg.toFixed(2), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(r.road_rpg.toFixed(2), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(r.park_factor.toFixed(3), 'text-right stat-num ' + pfClass(r.park_factor)));
+        teamBody.appendChild(tr);
+      });
+
+      // Venue PF table
+      var venueBody = document.getElementById('venuePfBody');
+      data.venue_park_factors.forEach(function(r) {
+        var tr = document.createElement('tr');
+        tr.className = 'bg-surface-card';
+        tr.appendChild(makeTd(r.venue, 'font-medium text-white'));
+        tr.appendChild(makeTd(String(r.games), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(r.rpg.toFixed(2), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(r.park_factor.toFixed(3), 'text-right stat-num ' + pfClass(r.park_factor)));
+        venueBody.appendChild(tr);
+      });
+
+      // ECharts bar chart — venue PF
+      var chart = echarts.init(document.getElementById('pfChart'));
+      var venues = data.venue_park_factors.map(function(v) { return v.venue; });
+      var pfs = data.venue_park_factors.map(function(v) { return v.park_factor; });
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        title: {
+          text: '球場 Park Factor（Venue-Based）',
+          left: 'center',
+          textStyle: { color: '#f9fafb', fontSize: 14, fontWeight: 600 }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#1e2530',
+          borderColor: '#2d3748',
+          textStyle: { color: '#e5e7eb' },
+          formatter: function(params) {
+            var p = params[0];
+            var v = data.venue_park_factors[p.dataIndex];
+            return p.name + '\nPF: ' + p.value.toFixed(3) + '\nRPG: ' + v.rpg.toFixed(2) + '\n場次: ' + v.games;
+          }
+        },
+        grid: { left: 60, right: 20, top: 50, bottom: 40 },
+        xAxis: {
+          type: 'category',
+          data: venues,
+          axisLabel: { color: '#9ca3af', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        yAxis: {
+          type: 'value',
+          min: 0.8,
+          max: 1.2,
+          axisLabel: { color: '#9ca3af', formatter: '{value}' },
+          splitLine: { lineStyle: { color: '#2d3748', type: 'dashed' } }
+        },
+        series: [{
+          type: 'bar',
+          data: pfs.map(function(v) {
+            return {
+              value: v,
+              itemStyle: {
+                color: v > 1.05 ? '#f87171' : (v < 0.95 ? '#60a5fa' : '#6b7280'),
+                borderRadius: [4, 4, 0, 0]
+              }
+            };
+          }),
+          barWidth: '50%',
+          markLine: {
+            silent: true,
+            symbol: 'none',
+            lineStyle: { color: '#fbbf24', type: 'dashed', width: 1.5 },
+            data: [{ yAxis: 1.0 }],
+            label: { formatter: 'PF = 1.0（中性）', color: '#fbbf24', fontSize: 10 }
+          }
+        }]
+      });
+
+      window.addEventListener('resize', function() { chart.resize(); });
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

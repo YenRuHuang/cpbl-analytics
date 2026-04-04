@@ -3,27 +3,18 @@ Calculate wRC+ for CPBL 2025 Season
 ====================================
 Uses plate_appearances table to reconstruct counting stats.
 
+Now includes Park Factor adjustment (v2):
+  wRC+ = [ (wOBA - lgwOBA) / wOBAscale + lgR_PA + (lgR_PA - PF*lgR_PA) / PF ]
+         / lgR_PA × 100
+
+Where PF = team-based park factor from calc_park_factors.py.
+
 Notes:
 - wOBA linear weights use FanGraphs-style MLB approximations
   (CPBL-specific weights not available)
 - SF (sacrifice fly) not in data → treated as 0 in denominator
-  (slight overestimate of PA denominator, minimal impact)
 - IBB not distinguished from BB → treated as regular BB
-  (standard practice; IBB should be excluded from wOBA numerator,
-   but CPBL IBB frequency is low)
-- Park factors not applied (single-park-factor adjustment would
-  require per-stadium run environment data)
-
-Formula:
-  wOBA = (wBB*BB + wHBP*HBP + w1B*1B + w2B*2B + w3B*3B + wHR*HR)
-         / (AB + BB + SF + HBP)
-  where AB = PA - BB - HBP - sac_bunt - sac_fly
-
-  lgwOBA = league-wide wOBA (same formula, all batters aggregated)
-  lgR_PA = total league runs / total league PA
-  wOBAscale = lgwOBA / lgR_PA
-
-  wRC+ = ((wOBA - lgwOBA) / wOBAscale + lgR_PA) / lgR_PA * 100
+- Park factor uses team-based home/road RPG ratio
 """
 
 import sqlite3
@@ -42,9 +33,27 @@ MIN_PA = 100  # minimum PA threshold for leaderboard
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'cpbl.db')
 OUT_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'wrc_plus_2025.json')
+PF_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'park_factors_2025.json')
+
+
+def load_park_factors():
+    """Load team-based park factors from JSON. Returns dict: team → PF."""
+    if not os.path.exists(PF_PATH):
+        print(f"⚠ Park factors file not found: {PF_PATH}")
+        print("  Run calc_park_factors.py first. Using PF=1.0 for all teams.")
+        return {}
+    with open(PF_PATH, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    return {
+        entry['team']: entry['park_factor']
+        for entry in data.get('team_park_factors', [])
+    }
 
 
 def calc_wrc_plus():
+    # ── 0. Load park factors ────────────────────────────────────────────────
+    park_factors = load_park_factors()
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
@@ -141,9 +150,28 @@ def calc_wrc_plus():
     lg_r_pa  = total_runs / lg_pa_total    if lg_pa_total > 0   else 0
     woba_scale = lg_woba / lg_r_pa         if lg_r_pa > 0       else 1
 
-    # ── 5. wRC+ per batter ───────────────────────────────────────────────────
+    # ── 4b. Get team from batter_box (more reliable) ─────────────────────────
+    conn2 = sqlite3.connect(DB_PATH)
+    cur2 = conn2.cursor()
     for b in batters:
-        wrc_plus = ((b['woba'] - lg_woba) / woba_scale + lg_r_pa) / lg_r_pa * 100
+        cur2.execute("""
+            SELECT team, COUNT(*) as cnt FROM batter_box
+            WHERE player_id = ? AND team IS NOT NULL AND team != ''
+            GROUP BY team ORDER BY cnt DESC LIMIT 1
+        """, (b['player_id'],))
+        row = cur2.fetchone()
+        if row and row[0]:
+            b['team'] = row[0]
+    conn2.close()
+
+    # ── 5. wRC+ per batter (with Park Factor) ──────────────────────────────
+    # FanGraphs formula: wRC+ = [(wOBA-lgwOBA)/wOBAscale + lgR_PA + (lgR_PA - PF*lgR_PA)/PF] / lgR_PA × 100
+    has_pf = bool(park_factors)
+    for b in batters:
+        pf = park_factors.get(b['team'], 1.0) if has_pf else 1.0
+        b['park_factor'] = pf
+        pf_adj = (lg_r_pa - pf * lg_r_pa) / pf if pf > 0 else 0
+        wrc_plus = ((b['woba'] - lg_woba) / woba_scale + lg_r_pa + pf_adj) / lg_r_pa * 100
         b['wrc_plus'] = round(wrc_plus, 1)
 
     # ── 6. Sort and annotate rank ────────────────────────────────────────────
@@ -164,11 +192,12 @@ def calc_wrc_plus():
                 'wBB': W_BB, 'wHBP': W_HBP,
                 'w1B': W_1B, 'w2B': W_2B, 'w3B': W_3B, 'wHR': W_HR,
             },
+            'park_factors': park_factors if has_pf else None,
             'notes': [
                 'wOBA weights are FanGraphs MLB approximations (2024)',
                 'SF not in source data, treated as 0',
                 'IBB not distinguished from BB',
-                'No park factor adjustment',
+                'Park Factor applied (team-based home/road RPG ratio)' if has_pf else 'No park factor adjustment',
             ]
         },
         'batters': batters,

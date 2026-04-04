@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上下半季分割 — 2025 CPBL</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .stat-num { font-variant-numeric: tabular-nums; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: #93c5fd; }
+    th.sort-asc::after { content: ' ▲'; font-size: 0.65rem; color: #3b82f6; }
+    th.sort-desc::after { content: ' ▼'; font-size: 0.65rem; color: #3b82f6; }
+    tbody tr:hover { background-color: rgba(59,130,246,0.06); }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="architecture.html" class="hover:text-white transition-colors font-medium text-gray-300">Architecture</a>
+        <a href="api-docs.html" class="hover:text-white transition-colors font-medium text-gray-300">API Docs</a>
+        <span class="text-surface-border">|</span>
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
+        <a href="park-factors.html" class="hover:text-white transition-colors">Park Factor</a>
+        <a href="babip.html" class="hover:text-white transition-colors">BABIP</a>
+        <a href="splits.html" class="text-cyan-400 font-semibold">半季分割</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="architecture.html" class="block py-1 hover:text-white font-medium text-gray-300">Architecture</a>
+      <a href="api-docs.html" class="block py-1 hover:text-white font-medium text-gray-300">API Docs</a>
+      <div class="border-t border-surface-border my-1"></div>
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="wrc-plus.html" class="block py-1 hover:text-white">wRC+</a>
+      <a href="park-factors.html" class="block py-1 hover:text-white">Park Factor</a>
+      <a href="babip.html" class="block py-1 hover:text-white">BABIP</a>
+      <a href="splits.html" class="block py-1 text-cyan-400 font-semibold">半季分割</a>
+    </div>
+  </nav>
+
+  <header class="max-w-6xl mx-auto px-4 pt-12 pb-6">
+    <div class="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full px-4 py-1 text-cyan-400 text-xs mb-5">
+      半季表現 · 2025 賽季
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-3">
+      上下半季分割分析 — 2025 CPBL
+    </h1>
+    <p class="text-gray-400 max-w-2xl text-sm leading-relaxed">
+      將 2025 賽季以 7 月為界分割，比較同一打者的上半季（3-6 月）與下半季（7 月以後）表現。找出誰下半季爆發、誰下半季崩盤。
+    </p>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+
+    <!-- Banner -->
+    <div id="statBanner" class="grid grid-cols-3 gap-4 mb-6 hidden">
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+        <div class="stat-num text-xl font-bold text-white" id="meta-total">—</div>
+        <div class="text-xs text-gray-500 mt-1">合格打者</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+        <div class="stat-num text-xl font-bold text-green-400" id="meta-breakout">—</div>
+        <div class="text-xs text-gray-500 mt-1">下半季爆發（ΔwOBA &gt; +0.03）</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+        <div class="stat-num text-xl font-bold text-red-400" id="meta-collapse">—</div>
+        <div class="text-xs text-gray-500 mt-1">下半季崩盤（ΔwOBA &lt; -0.03）</div>
+      </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="flex items-center gap-3 mb-6">
+      <label for="viewMode" class="text-xs text-gray-400 shrink-0">顯示模式：</label>
+      <select id="viewMode" class="bg-surface-card border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand">
+        <option value="all">全部打者</option>
+        <option value="breakout">下半季爆發 (ΔwOBA &gt; +0.03)</option>
+        <option value="collapse">下半季崩盤 (ΔwOBA &lt; -0.03)</option>
+      </select>
+      <label for="teamFilter" class="text-xs text-gray-400 shrink-0 ml-4">球隊：</label>
+      <select id="teamFilter" class="bg-surface-card border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand">
+        <option value="">全部球隊</option>
+      </select>
+    </div>
+
+    <!-- Diverging bar chart -->
+    <div class="bg-surface-card border border-surface-border rounded-xl p-4 mb-8">
+      <div id="splitsChart" style="width:100%;height:600px;"></div>
+    </div>
+
+    <!-- Data Table -->
+    <div id="tableContainer">
+      <div class="overflow-x-auto rounded-xl border border-surface-border">
+        <table class="w-full text-sm">
+          <thead class="bg-surface text-gray-400 text-xs uppercase tracking-wider">
+            <tr>
+              <th class="sortable px-3 py-3 text-left" data-col="name">球員</th>
+              <th class="sortable px-3 py-3 text-left" data-col="team">球隊</th>
+              <th class="px-3 py-3 text-right text-blue-400">1H wOBA</th>
+              <th class="px-3 py-3 text-right text-orange-400">2H wOBA</th>
+              <th class="sortable px-3 py-3 text-right sort-desc" data-col="dwoba">ΔwOBA</th>
+              <th class="px-3 py-3 text-right text-blue-400">1H OPS</th>
+              <th class="px-3 py-3 text-right text-orange-400">2H OPS</th>
+              <th class="sortable px-3 py-3 text-right" data-col="dops">ΔOPS</th>
+              <th class="px-3 py-3 text-right text-blue-400">1H AVG</th>
+              <th class="px-3 py-3 text-right text-orange-400">2H AVG</th>
+              <th class="sortable px-3 py-3 text-right" data-col="davg">ΔAVG</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-surface-border"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data (ODC-By License) + CPBL 官網公開資料 | Murs 開發
+  </footer>
+
+  <script>
+    'use strict';
+
+    var allData = [];
+    var sortCol = 'dwoba';
+    var sortDir = 'desc';
+    var viewMode = 'all';
+    var activeTeam = '';
+    var chart = null;
+
+    function stripPrefix(name) {
+      return name ? String(name).replace(/^cpbl_/, '') : '';
+    }
+
+    function makeTd(text, classes) {
+      var td = document.createElement('td');
+      td.className = 'px-3 py-3 ' + (classes || '');
+      td.textContent = text;
+      return td;
+    }
+
+    function deltaColor(v) {
+      if (v > 0.03) return 'text-green-400 font-semibold';
+      if (v < -0.03) return 'text-red-400 font-semibold';
+      return 'text-gray-400';
+    }
+
+    function fmt3(v) { return v != null ? v.toFixed(3) : '—'; }
+    function fmt4(v) { return v != null ? v.toFixed(4) : '—'; }
+    function fmtDelta(v) { return (v >= 0 ? '+' : '') + v.toFixed(4); }
+    function fmtDelta3(v) { return (v >= 0 ? '+' : '') + v.toFixed(3); }
+
+    function getFiltered() {
+      var data = allData;
+      if (viewMode === 'breakout') data = data.filter(function(d) { return d.delta.woba > 0.03; });
+      if (viewMode === 'collapse') data = data.filter(function(d) { return d.delta.woba < -0.03; });
+      if (activeTeam) data = data.filter(function(d) { return d.team === activeTeam; });
+      return data;
+    }
+
+    function getVal(d, col) {
+      switch (col) {
+        case 'name':  return stripPrefix(d.name_zh);
+        case 'team':  return d.team || '';
+        case 'dwoba': return d.delta.woba;
+        case 'dops':  return d.delta.ops;
+        case 'davg':  return d.delta.avg;
+        default:      return 0;
+      }
+    }
+
+    function renderTable(rows) {
+      var tbody = document.getElementById('tableBody');
+      while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+      var frag = document.createDocumentFragment();
+      rows.forEach(function(d) {
+        var tr = document.createElement('tr');
+        tr.className = 'bg-surface-card';
+        tr.appendChild(makeTd(stripPrefix(d.name_zh), 'font-medium text-white'));
+        tr.appendChild(makeTd(d.team || '—', 'text-gray-300'));
+        tr.appendChild(makeTd(fmt4(d.first_half.woba), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmt4(d.second_half.woba), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmtDelta(d.delta.woba), 'text-right stat-num ' + deltaColor(d.delta.woba)));
+        tr.appendChild(makeTd(fmt3(d.first_half.ops), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmt3(d.second_half.ops), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmtDelta3(d.delta.ops), 'text-right stat-num ' + deltaColor(d.delta.ops * 3)));
+        tr.appendChild(makeTd(fmt3(d.first_half.avg), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmt3(d.second_half.avg), 'text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmtDelta3(d.delta.avg), 'text-right stat-num ' + deltaColor(d.delta.avg * 3)));
+        frag.appendChild(tr);
+      });
+      tbody.appendChild(frag);
+    }
+
+    function sortAndRender() {
+      var filtered = getFiltered();
+      var sorted = filtered.slice().sort(function(a, b) {
+        var va = getVal(a, sortCol);
+        var vb = getVal(b, sortCol);
+        if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        return sortDir === 'asc' ? va - vb : vb - va;
+      });
+      renderTable(sorted);
+      updateChart(sorted);
+    }
+
+    function updateChart(rows) {
+      if (!chart) return;
+      var top = rows.slice(0, 25);
+      var names = top.map(function(d) { return stripPrefix(d.name_zh); });
+      var deltas = top.map(function(d) { return d.delta.woba; });
+
+      chart.setOption({
+        yAxis: { data: names },
+        series: [{
+          data: deltas.map(function(v) {
+            return {
+              value: v,
+              itemStyle: { color: v > 0.03 ? '#4ade80' : (v < -0.03 ? '#f87171' : '#6b7280') }
+            };
+          })
+        }]
+      });
+    }
+
+    document.querySelectorAll('th.sortable').forEach(function(th) {
+      th.addEventListener('click', function() {
+        var col = th.dataset.col;
+        if (sortCol === col) { sortDir = sortDir === 'desc' ? 'asc' : 'desc'; }
+        else { sortCol = col; sortDir = col === 'name' || col === 'team' ? 'asc' : 'desc'; }
+        document.querySelectorAll('th.sortable').forEach(function(t) { t.classList.remove('sort-asc', 'sort-desc'); });
+        th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        sortAndRender();
+      });
+    });
+
+    document.getElementById('viewMode').addEventListener('change', function() {
+      viewMode = this.value;
+      sortAndRender();
+    });
+
+    document.getElementById('teamFilter').addEventListener('change', function() {
+      activeTeam = this.value;
+      sortAndRender();
+    });
+
+    async function loadData() {
+      var res = await fetch('api/analysis/half_splits_2025.json');
+      var json = await res.json();
+      allData = json.batters;
+      var meta = json.meta;
+
+      // Banner
+      var breakout = allData.filter(function(d) { return d.delta.woba > 0.03; }).length;
+      var collapse = allData.filter(function(d) { return d.delta.woba < -0.03; }).length;
+      document.getElementById('meta-total').textContent = meta.qualified_batters;
+      document.getElementById('meta-breakout').textContent = breakout;
+      document.getElementById('meta-collapse').textContent = collapse;
+      document.getElementById('statBanner').classList.remove('hidden');
+
+      // Team filter
+      var teams = [];
+      var seen = {};
+      allData.forEach(function(d) {
+        if (d.team && !seen[d.team]) { teams.push(d.team); seen[d.team] = true; }
+      });
+      teams.sort(function(a, b) { return a.localeCompare(b, 'zh-TW'); });
+      var sel = document.getElementById('teamFilter');
+      teams.forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        sel.appendChild(opt);
+      });
+
+      // Chart init
+      chart = echarts.init(document.getElementById('splitsChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        title: {
+          text: '下半季 wOBA 變化（ΔwOBA）',
+          subtext: '綠 = 爆發，紅 = 崩盤',
+          left: 'center',
+          textStyle: { color: '#f9fafb', fontSize: 14, fontWeight: 600 },
+          subtextStyle: { color: '#9ca3af', fontSize: 11 }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#1e2530',
+          borderColor: '#2d3748',
+          textStyle: { color: '#e5e7eb' },
+          axisPointer: { type: 'shadow' }
+        },
+        grid: { left: 100, right: 30, top: 60, bottom: 20 },
+        xAxis: {
+          type: 'value',
+          axisLabel: { color: '#9ca3af', formatter: function(v) { return (v >= 0 ? '+' : '') + v.toFixed(3); } },
+          splitLine: { lineStyle: { color: '#2d3748', type: 'dashed' } }
+        },
+        yAxis: {
+          type: 'category',
+          data: [],
+          inverse: true,
+          axisLabel: { color: '#e5e7eb', fontSize: 11 },
+          axisLine: { show: false },
+          axisTick: { show: false }
+        },
+        series: [{
+          type: 'bar',
+          data: [],
+          barWidth: '60%',
+          label: {
+            show: true,
+            position: 'right',
+            color: '#9ca3af',
+            fontSize: 10,
+            formatter: function(p) { return (p.value >= 0 ? '+' : '') + p.value.toFixed(4); }
+          }
+        }]
+      });
+
+      window.addEventListener('resize', function() { chart.resize(); });
+
+      sortAndRender();
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
