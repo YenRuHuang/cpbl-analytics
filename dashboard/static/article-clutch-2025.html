@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>關鍵時刻誰最可靠？2025 CPBL Clutch 打者排行 — CPBL Analytics</title>
+  <meta name="description" content="用 Clutch Score 量化 62 位打者在高壓情境下的表現差異 — 林子豪是大場面先生，范國宸壓力下衰退最多。" />
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+        surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+      }}}
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .prose h2 { scroll-margin-top: 5rem; }
+    .highlight-green { background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-red { background: rgba(248, 113, 113, 0.1); border-left: 3px solid #f87171; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-yellow { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; border-bottom: 1px solid #2d3748; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 0.875rem; }
+    .data-table tr:hover { background: rgba(255,255,255,0.02); }
+    .td-r { text-align: right; font-family: ui-monospace, monospace; }
+    .toc a { transition: color 0.15s; }
+    .toc a:hover { color: #3b82f6; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+    </div>
+  </nav>
+
+  <article class="max-w-3xl mx-auto px-4 py-12">
+
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <span class="bg-green-500/10 border border-green-500/30 rounded-full px-3 py-0.5 text-green-400 font-semibold">數據分析</span>
+        <span>2026.04.04</span>
+        <span>&middot;</span>
+        <span>閱讀時間約 7 分鐘</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
+        關鍵時刻誰最可靠？<br class="hidden sm:block" />2025 CPBL Clutch 打者排行
+      </h1>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        用 Clutch Score 量化 62 位打者在高壓情境下的真實表現 — 以及為什麼你不應該太相信這個數字。
+      </p>
+    </header>
+
+    <div class="toc bg-surface-card border border-surface-border rounded-xl p-5 mb-10 text-sm">
+      <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">目錄</div>
+      <ol class="space-y-1.5 text-gray-400 list-decimal list-inside">
+        <li><a href="#what-is-clutch">什麼是 Clutch Score？</a></li>
+        <li><a href="#top-clutch">大場面先生：壓力下更強的打者</a></li>
+        <li><a href="#anti-clutch">壓力恐懼症：高壓下衰退的打者</a></li>
+        <li><a href="#case-study">林子豪 vs 范國宸</a></li>
+        <li><a href="#team-level">球隊層級：哪支球隊最會在關鍵時刻打擊？</a></li>
+        <li><a href="#skepticism">為什麼你不應該太相信 Clutch？</a></li>
+        <li><a href="#methodology">方法論與限制</a></li>
+      </ol>
+    </div>
+
+    <div class="prose space-y-8 text-gray-300 leading-relaxed">
+
+      <section id="what-is-clutch">
+        <h2 class="text-2xl font-bold text-white mb-4">1. 什麼是 Clutch Score？</h2>
+        <p>
+          「關鍵時刻」在棒球中有明確定義 — 我們用 <strong class="text-white">Leverage Index（槓桿指數）</strong>來量化每個打席的壓力程度。LI 考慮的因素包括：局數、出局數、壘上狀態、分差。
+        </p>
+        <p>
+          當 LI &gt; 1.5 時，代表這個打席對比賽勝負的影響遠高於平均。例如：九局下半、一分落後、滿壘、兩出局 — 這就是高壓打席。
+        </p>
+        <div class="bg-surface border border-surface-border rounded-lg p-4 font-mono text-sm text-center my-4">
+          Clutch Score = 高壓打席打擊率 &minus; 整體打擊率
+        </div>
+        <p>
+          正值代表打者在壓力下表現<strong class="text-green-400">更好</strong>，負值代表在壓力下<strong class="text-red-400">更差</strong>。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">注意：</strong>Clutch Score 的學術爭議很大。MLB 研究顯示，clutch ability 的年度間相關性很低 — 也就是說，今年的大場面先生明年未必還是。但它仍然是回顧一個賽季最好的工具之一。
+        </div>
+      </section>
+
+      <section id="top-clutch">
+        <h2 class="text-2xl font-bold text-white mb-4">2. 大場面先生：壓力下更強的打者</h2>
+        <p>以下是 2025 年高壓打席達 15 次以上（確保最低樣本量）的 Clutch 王者：</p>
+        <div class="highlight-green">
+          <strong class="text-green-400">Top 5 Clutch 打者</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th>球隊</th>
+                  <th class="td-r">高壓 BA</th>
+                  <th class="td-r">整體 BA</th>
+                  <th class="td-r">Clutch</th>
+                  <th class="td-r">高壓打席</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">林子豪</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-green-400">.375</td>
+                  <td class="td-r">.236</td>
+                  <td class="td-r text-green-400 font-semibold">+.139</td>
+                  <td class="td-r">26</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">郭阜林</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r text-green-400">.389</td>
+                  <td class="td-r">.257</td>
+                  <td class="td-r text-green-400 font-semibold">+.132</td>
+                  <td class="td-r">19</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">紀慶然</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r text-green-400">.353</td>
+                  <td class="td-r">.233</td>
+                  <td class="td-r text-green-400 font-semibold">+.120</td>
+                  <td class="td-r">18</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">李凱威</td>
+                  <td class="text-gray-400">味全龍</td>
+                  <td class="td-r text-green-400">.400</td>
+                  <td class="td-r">.291</td>
+                  <td class="td-r text-green-400 font-semibold">+.109</td>
+                  <td class="td-r">19</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">張肇元</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r text-green-400">.333</td>
+                  <td class="td-r">.248</td>
+                  <td class="td-r text-green-400 font-semibold">+.085</td>
+                  <td class="td-r">27</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          <strong class="text-white">林子豪</strong>在 26 個高壓打席中打出 .375 的打擊率，比他的整體 .236 高出 13.9 個百分點。這是一個巨大的差距 — 他在無壓力時是一個聯盟後段打者，在高壓時卻變成全聯盟頂級。
+        </p>
+        <p>
+          台鋼雄鷹在前五名中佔了<strong class="text-white">三席</strong>（郭阜林、紀慶然、張肇元），這不是巧合 — 整支球隊在關鍵時刻的表現都很出色。
+        </p>
+      </section>
+
+      <section id="anti-clutch">
+        <h2 class="text-2xl font-bold text-white mb-4">3. 壓力恐懼症：高壓下衰退的打者</h2>
+        <div class="highlight-red">
+          <strong class="text-red-400">Bottom 5 Anti-Clutch 打者</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th>球隊</th>
+                  <th class="td-r">高壓 BA</th>
+                  <th class="td-r">整體 BA</th>
+                  <th class="td-r">Clutch</th>
+                  <th class="td-r">高壓打席</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">范國宸</td>
+                  <td class="text-gray-400">富邦悍將</td>
+                  <td class="td-r text-red-400">.125</td>
+                  <td class="td-r">.268</td>
+                  <td class="td-r text-red-400 font-semibold">-.143</td>
+                  <td class="td-r">17</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">張閔勛</td>
+                  <td class="text-gray-400">樂天桃猿</td>
+                  <td class="td-r text-red-400">.143</td>
+                  <td class="td-r">.285</td>
+                  <td class="td-r text-red-400 font-semibold">-.142</td>
+                  <td class="td-r">22</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">潘傑楷</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-red-400">.125</td>
+                  <td class="td-r">.261</td>
+                  <td class="td-r text-red-400 font-semibold">-.136</td>
+                  <td class="td-r">18</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">蘇智傑</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-red-400">.118</td>
+                  <td class="td-r">.249</td>
+                  <td class="td-r text-red-400 font-semibold">-.131</td>
+                  <td class="td-r">19</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">林政華</td>
+                  <td class="text-gray-400">樂天桃猿</td>
+                  <td class="td-r text-red-400">.133</td>
+                  <td class="td-r">.255</td>
+                  <td class="td-r text-red-400 font-semibold">-.122</td>
+                  <td class="td-r">15</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          <strong class="text-white">范國宸</strong>在 17 個高壓打席中只打出 .125 — 8 打數只有 1 支安打。他的整體打擊率 .268 算是中上水準，但壓力一來就大幅下滑。
+        </p>
+        <p>
+          <strong class="text-white">張閔勛</strong>的 22 個高壓打席是五人中最多的，只有 .143 的打擊率。以一個整體 .285 的打者來說，這個落差令人意外。
+        </p>
+      </section>
+
+      <section id="case-study">
+        <h2 class="text-2xl font-bold text-white mb-4">4. 林子豪 vs 范國宸</h2>
+        <p>
+          兩人的 Clutch Score 差距 <strong class="text-white">0.282</strong> — 這意味著在高壓打席中，林子豪的打擊率比范國宸高出近 30 個百分點。
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="compChart" style="height:320px;"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-green-500"></span>
+              <span class="text-white font-bold">林子豪</span>
+              <span class="text-xs text-gray-500">統一獅</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">Clutch Score</span><span class="text-green-400 font-mono font-semibold">+.139</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">高壓 BA</span><span class="text-white font-mono">.375</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">整體 BA</span><span class="text-white font-mono">.236</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">高壓打席</span><span class="text-white font-mono">26</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">總打席</span><span class="text-white font-mono">286</span></div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-red-500"></span>
+              <span class="text-white font-bold">范國宸</span>
+              <span class="text-xs text-gray-500">富邦悍將</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">Clutch Score</span><span class="text-red-400 font-mono font-semibold">-.143</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">高壓 BA</span><span class="text-white font-mono">.125</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">整體 BA</span><span class="text-white font-mono">.268</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">高壓打席</span><span class="text-white font-mono">17</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">總打席</span><span class="text-white font-mono">370</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="team-level">
+        <h2 class="text-2xl font-bold text-white mb-4">5. 球隊層級：哪支球隊最會在關鍵時刻打擊？</h2>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="teamChart" style="height:280px;"></div>
+        </div>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>球隊</th>
+                <th class="td-r">平均 Clutch</th>
+                <th class="td-r">打者數</th>
+                <th>解讀</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">台鋼雄鷹</td>
+                <td class="td-r text-green-400 font-semibold">+.055</td>
+                <td class="td-r">11</td>
+                <td class="text-gray-400 text-sm">全隊在壓力下更強</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">統一獅</td>
+                <td class="td-r text-green-400 font-semibold">+.029</td>
+                <td class="td-r">10</td>
+                <td class="text-gray-400 text-sm">整體正向，有林子豪扛</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">中信兄弟</td>
+                <td class="td-r">-.002</td>
+                <td class="td-r">13</td>
+                <td class="text-gray-400 text-sm">中性，壓力下不變</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">樂天桃猿</td>
+                <td class="td-r text-red-400 font-semibold">-.027</td>
+                <td class="td-r">10</td>
+                <td class="text-gray-400 text-sm">壓力下略衰退</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">味全龍</td>
+                <td class="td-r text-red-400 font-semibold">-.035</td>
+                <td class="td-r">9</td>
+                <td class="text-gray-400 text-sm">高壓打擊偏弱</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">富邦悍將</td>
+                <td class="td-r text-red-400 font-semibold">-.053</td>
+                <td class="td-r">9</td>
+                <td class="text-gray-400 text-sm">全隊壓力下衰退最多</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong class="text-white">台鋼雄鷹</strong>不只是個人 clutch 表現突出（前五佔三席），整隊平均 +.055 也是全聯盟最高。他們在關鍵時刻的團隊打擊力是實打實的優勢。
+        </p>
+        <p>
+          <strong class="text-white">富邦悍將</strong>的 -.053 是全聯盟最差，加上范國宸 (-.143) 的拖累，他們在接近比賽的關鍵時刻打擊產出明顯不足。
+        </p>
+      </section>
+
+      <section id="skepticism">
+        <h2 class="text-2xl font-bold text-white mb-4">6. 為什麼你不應該太相信 Clutch？</h2>
+        <p>
+          在展示完這些精彩的數據之後，我必須誠實地說：<strong class="text-white">Clutch 是棒球數據分析中最有爭議的指標之一</strong>。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">三個你應該保持懷疑的原因：</strong>
+          <div class="space-y-3 mt-3">
+            <div>
+              <div class="text-white font-semibold text-sm">1. 樣本量太小</div>
+              <div class="text-gray-400 text-sm mt-1">即使是排行榜第一的林子豪，也只有 26 個高壓打席。在棒球中，26 個打席幾乎不能說明任何事。一個好打者在 26 打席中打出 .375 或 .200 都完全在正常波動範圍內。</div>
+            </div>
+            <div>
+              <div class="text-white font-semibold text-sm">2. 年度間不穩定</div>
+              <div class="text-gray-400 text-sm mt-1">MLB 的大量研究顯示，clutch 表現的年度相關性極低（r &lt; 0.1）。今年的大場面先生明年可能變成壓力恐懼症患者，反之亦然。</div>
+            </div>
+            <div>
+              <div class="text-white font-semibold text-sm">3. CPBL 更極端</div>
+              <div class="text-gray-400 text-sm mt-1">CPBL 一季只有 ~120 場，高壓打席數量更少。在 MLB 都不穩定的指標，在 CPBL 的可靠度只會更低。</div>
+            </div>
+          </div>
+        </div>
+        <p>
+          那為什麼還要看這個指標？因為它是<strong class="text-white">回顧性地描述一個賽季發生了什麼的好工具</strong>。2025 年的林子豪確實在關鍵時刻表現出色，范國宸確實在壓力下掙扎 — 這是事實。只是不要用這個來預測 2026 年。
+        </p>
+      </section>
+
+      <section id="methodology">
+        <h2 class="text-2xl font-bold text-white mb-4">7. 方法論與限制</h2>
+        <p>
+          <strong class="text-white">Leverage Index：</strong>基於 RE24 矩陣（目前使用 MLB Run Expectancy 作為 proxy），考慮局數、出局數、壘上狀態、分差四個維度。LI &gt; 1.5 定義為高壓情境。
+        </p>
+        <p>
+          <strong class="text-white">Clutch Score：</strong>高壓打席打擊率 &minus; 整體打擊率。篩選門檻為 10 個高壓打席（圖表），文章排行使用 15 個高壓打席。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">限制：</strong>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-400 mt-2">
+            <li>RE24 矩陣使用 MLB 數據（CPBL 版本待累積足夠場次後校正）</li>
+            <li>只看打擊率，不含保送、長打率等進階指標</li>
+            <li>15 個高壓打席的門檻仍然偏低</li>
+            <li>不區分壓力的來源（季後賽 vs 例行賽、開幕戰 vs 一般比賽）</li>
+          </ul>
+        </div>
+        <p>
+          完整數據和互動式圖表請見 <a href="clutch.html" class="text-brand hover:underline">關鍵時刻分析頁面</a>。
+        </p>
+      </section>
+
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-surface-border">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <div class="text-white font-bold">CPBL Analytics</div>
+          <div class="text-sm text-gray-500">以賽伯計量學方法解讀中華職棒數據</div>
+        </div>
+        <div class="flex gap-3">
+          <a href="clutch.html" class="bg-green-500 hover:bg-green-600 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-colors">互動式 Clutch 圖表</a>
+          <a href="index.html" class="bg-surface-card border border-surface-border hover:border-gray-600 text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">所有分析模組</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    function renderCompChart() {
+      const chart = echarts.init(document.getElementById('compChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 30, bottom: 30, left: 50 },
+        legend: { top: 5, textStyle: { color: '#9ca3af', fontSize: 11 } },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' } },
+        xAxis: { type: 'category', data: ['高壓 BA', '整體 BA', 'Clutch Score'],
+          axisLabel: { color: '#9ca3af', fontSize: 11 }, axisLine: { lineStyle: { color: '#2d3748' } } },
+        yAxis: { type: 'value', axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } } },
+        series: [
+          { name: '林子豪', type: 'bar', data: [0.375, 0.236, 0.139], barWidth: 40,
+            itemStyle: { color: '#4ade80', borderRadius: [4,4,0,0] },
+            label: { show: true, position: 'top', formatter: p => p.value >= 0.2 ? p.value.toFixed(3) : (p.value >= 0 ? '+' : '') + p.value.toFixed(3), color: '#4ade80', fontSize: 10 } },
+          { name: '范國宸', type: 'bar', data: [0.125, 0.268, -0.143], barWidth: 40,
+            itemStyle: { color: '#f87171', borderRadius: [4,4,0,0] },
+            label: { show: true, position: p => p.value >= 0 ? 'top' : 'bottom', formatter: p => p.value >= 0.2 ? p.value.toFixed(3) : (p.value >= 0 ? '+' : '') + p.value.toFixed(3), color: '#f87171', fontSize: 10 } },
+        ],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderTeamChart() {
+      const teams = ['台鋼雄鷹', '統一獅', '中信兄弟', '樂天桃猿', '味全龍', '富邦悍將'];
+      const values = [0.055, 0.029, -0.002, -0.027, -0.035, -0.053];
+      const colors = values.map(v => v > 0.01 ? '#4ade80' : v < -0.01 ? '#f87171' : '#6b7280');
+      const chart = echarts.init(document.getElementById('teamChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 10, right: 50, bottom: 30, left: 90 },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' },
+          formatter: p => `${p[0].name}<br/>平均 Clutch: ${p[0].value >= 0 ? '+' : ''}${p[0].value.toFixed(3)}` },
+        xAxis: { type: 'value',
+          axisLabel: { formatter: v => (v >= 0 ? '+' : '') + v.toFixed(3), color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } } },
+        yAxis: { type: 'category', data: [...teams].reverse(),
+          axisLabel: { color: '#d1d5db', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false } },
+        series: [{ type: 'bar', data: [...values].reverse().map((v,i) => ({
+          value: v, itemStyle: { color: [...colors].reverse()[i], borderRadius: v >= 0 ? [0,4,4,0] : [4,0,0,4] }
+        })), barWidth: 22,
+          label: { show: true, position: 'right',
+            formatter: p => (p.value >= 0 ? '+' : '') + p.value.toFixed(3),
+            color: '#d1d5db', fontSize: 10 },
+          markLine: { silent: true, symbol: 'none',
+            lineStyle: { color: '#4b5563', type: 'solid', width: 1 },
+            label: { show: false },
+            data: [{ xAxis: 0 }] },
+        }],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    renderCompChart();
+    renderTeamChart();
+  </script>
+</body>
+</html>

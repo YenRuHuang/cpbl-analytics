@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>投手第幾球開始崩盤？2025 CPBL 疲勞曲線分析 — CPBL Analytics</title>
+  <meta name="description" content="分析 38 位先發投手的疲勞閾值，從 16 球到 106 球 — 數據告訴你最佳換投時機。" />
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+        surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+      }}}
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .prose h2 { scroll-margin-top: 5rem; }
+    .highlight-yellow { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-red { background: rgba(248, 113, 113, 0.1); border-left: 3px solid #f87171; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-green { background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; border-bottom: 1px solid #2d3748; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 0.875rem; }
+    .data-table tr:hover { background: rgba(255,255,255,0.02); }
+    .td-r { text-align: right; font-family: ui-monospace, monospace; }
+    .badge-early { background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-mid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-late { background: rgba(74, 222, 128, 0.15); color: #4ade80; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .toc a { transition: color 0.15s; }
+    .toc a:hover { color: #3b82f6; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+    </div>
+  </nav>
+
+  <article class="max-w-3xl mx-auto px-4 py-12">
+
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <span class="bg-yellow-500/10 border border-yellow-500/30 rounded-full px-3 py-0.5 text-yellow-400 font-semibold">數據分析</span>
+        <span>2026.04.04</span>
+        <span>&middot;</span>
+        <span>閱讀時間約 7 分鐘</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
+        投手第幾球開始崩盤？<br class="hidden sm:block" />2025 CPBL 疲勞曲線分析
+      </h1>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        從 38 位先發投手的逐球數據中，找出疲勞閾值 — 魔神樂 31 球就衰退，後勁撐到 106 球。
+      </p>
+    </header>
+
+    <!-- TOC -->
+    <div class="toc bg-surface-card border border-surface-border rounded-xl p-5 mb-10 text-sm">
+      <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">目錄</div>
+      <ol class="space-y-1.5 text-gray-400 list-decimal list-inside">
+        <li><a href="#what-is-fatigue">什麼是投手疲勞曲線？</a></li>
+        <li><a href="#threshold-dist">閾值分布：大多數人在 31-46 球開始衰退</a></li>
+        <li><a href="#ace-analysis">王牌投手的疲勞時間表</a></li>
+        <li><a href="#case-study">深度對比：魔神樂 vs 後勁</a></li>
+        <li><a href="#team-level">球隊牛棚策略啟示</a></li>
+        <li><a href="#implications">教練決策：數據怎麼用？</a></li>
+        <li><a href="#methodology">方法論與限制</a></li>
+      </ol>
+    </div>
+
+    <div class="prose space-y-8 text-gray-300 leading-relaxed">
+
+      <section id="what-is-fatigue">
+        <h2 class="text-2xl font-bold text-white mb-4">1. 什麼是投手疲勞曲線？</h2>
+        <p>
+          每位投手都有一個「隱形的牆」— 投到某個球數之後，表現開始明顯下滑。被打擊率上升、三振率下降、控球變差。這個轉折點就是<strong class="text-white">疲勞閾值（Fatigue Threshold）</strong>。
+        </p>
+        <p>我們的計算方式：</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-400">
+          <li>將每位投手的投球按 <strong class="text-white">15 球一個區間</strong> 分組（1-15、16-30、31-45...）</li>
+          <li>追蹤每個區間的被打擊率（BA）和三振率（K%）</li>
+          <li>當 BA 上升超過 20% 或 K% 下降超過 20%（相對於整體平均），標記為疲勞起點</li>
+        </ul>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">白話翻譯：</strong>疲勞閾值越高，代表投手越耐操。閾值 31 表示「投了 30 球就開始變差」，閾值 106 表示「投了 105 球還維持水準」。
+        </div>
+      </section>
+
+      <section id="threshold-dist">
+        <h2 class="text-2xl font-bold text-white mb-4">2. 閾值分布：大多數人在 31-46 球開始衰退</h2>
+        <p>在 38 位投出 50 局以上的投手中，疲勞閾值分布如下：</p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="distChart" style="height:300px;"></div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-red-400">17</div>
+            <div class="text-xs text-gray-500 mt-1">早期衰退 (&le;45 球)</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-yellow-400">19</div>
+            <div class="text-xs text-gray-500 mt-1">中期衰退 (46-90 球)</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-400">2</div>
+            <div class="text-xs text-gray-500 mt-1">鐵人等級 (&gt;90 球)</div>
+          </div>
+        </div>
+        <p>
+          <strong class="text-white">79% 的投手在 46 球以內就開始出現疲勞跡象</strong>。這在 CPBL 是重要的發現 — 考慮到先發投手通常被期望投 80-100 球，這意味著多數先發投手在比賽中後段是帶著衰退狀態在投球。
+        </p>
+        <p>
+          只有 <strong class="text-white">2 位投手</strong>的疲勞閾值超過 90 球 — 後勁和魔力藍，兩人都是 106 球。他們是真正的耐久型投手。
+        </p>
+      </section>
+
+      <section id="ace-analysis">
+        <h2 class="text-2xl font-bold text-white mb-4">3. 王牌投手的疲勞時間表</h2>
+        <p>100 局以上的主力先發們，疲勞閾值差異極大：</p>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>投手</th>
+                <th>球隊</th>
+                <th class="td-r">局數</th>
+                <th class="td-r">閾值</th>
+                <th class="td-r">被打率</th>
+                <th class="td-r">K%</th>
+                <th>類型</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">後勁</td>
+                <td class="text-gray-400">台鋼雄鷹</td>
+                <td class="td-r">152.3</td>
+                <td class="td-r text-green-400 font-semibold">106</td>
+                <td class="td-r">.238</td>
+                <td class="td-r">17.9%</td>
+                <td><span class="badge-late">鐵人</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">魔力藍</td>
+                <td class="text-gray-400">富邦悍將</td>
+                <td class="td-r">139.1</td>
+                <td class="td-r text-green-400 font-semibold">106</td>
+                <td class="td-r">.241</td>
+                <td class="td-r">18.9%</td>
+                <td><span class="badge-late">鐵人</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">黃子鵬</td>
+                <td class="text-gray-400">樂天桃猿</td>
+                <td class="td-r">117.4</td>
+                <td class="td-r text-yellow-400 font-semibold">76</td>
+                <td class="td-r">.291</td>
+                <td class="td-r">13.0%</td>
+                <td><span class="badge-mid">中期</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">威能帝</td>
+                <td class="text-gray-400">樂天桃猿</td>
+                <td class="td-r">170.0</td>
+                <td class="td-r text-yellow-400 font-semibold">46</td>
+                <td class="td-r">.194</td>
+                <td class="td-r">25.3%</td>
+                <td><span class="badge-mid">中期</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">羅戈</td>
+                <td class="text-gray-400">中信兄弟</td>
+                <td class="td-r">156.3</td>
+                <td class="td-r text-yellow-400 font-semibold">46</td>
+                <td class="td-r">.218</td>
+                <td class="td-r">22.8%</td>
+                <td><span class="badge-mid">中期</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">徐若熙</td>
+                <td class="text-gray-400">味全龍</td>
+                <td class="td-r">114.1</td>
+                <td class="td-r text-yellow-400 font-semibold">46</td>
+                <td class="td-r">.186</td>
+                <td class="td-r">27.6%</td>
+                <td><span class="badge-mid">中期</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">魔神樂</td>
+                <td class="text-gray-400">樂天桃猿</td>
+                <td class="td-r">158.0</td>
+                <td class="td-r text-red-400 font-semibold">31</td>
+                <td class="td-r">.229</td>
+                <td class="td-r">15.2%</td>
+                <td><span class="badge-early">早期</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">鋼龍</td>
+                <td class="text-gray-400">味全龍</td>
+                <td class="td-r">146.0</td>
+                <td class="td-r text-red-400 font-semibold">31</td>
+                <td class="td-r">.235</td>
+                <td class="td-r">19.9%</td>
+                <td><span class="badge-early">早期</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">飛力獅</td>
+                <td class="text-gray-400">統一獅</td>
+                <td class="td-r">127.4</td>
+                <td class="td-r text-red-400 font-semibold">31</td>
+                <td class="td-r">.214</td>
+                <td class="td-r">18.7%</td>
+                <td><span class="badge-early">早期</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="highlight-red">
+          <strong class="text-red-400">驚人發現：</strong>魔神樂、鋼龍、飛力獅三位 120+ 局的主力先發，疲勞閾值都只有 31 球。他們在每場比賽的大部分時間裡，其實已經處於衰退狀態。他們的高投球局數更多是因為「教練信任」而非「身體狀態良好」。
+        </div>
+        <p>
+          相比之下，<strong class="text-white">威能帝</strong>雖然閾值是 46 球（不算頂級），但他的被打擊率只有 .194、K% 高達 25.3%。即使進入疲勞區間，他的「衰退後表現」可能還是比其他投手的巔峰好 — 這才是投了聯盟最多 170 局的真正原因。
+        </p>
+      </section>
+
+      <section id="case-study">
+        <h2 class="text-2xl font-bold text-white mb-4">4. 深度對比：魔神樂 vs 後勁</h2>
+        <p>
+          這是最極端的一組對比 — 兩位都投了 150+ 局，但疲勞閾值差距 <strong class="text-white">75 球</strong>。
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="compChart" style="height:320px;"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-red-500"></span>
+              <span class="text-white font-bold">魔神樂</span>
+              <span class="text-xs text-gray-500">樂天桃猿</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">疲勞閾值</span><span class="text-red-400 font-mono font-semibold">31 球</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">局數</span><span class="text-white font-mono">158.0 IP</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">被打率</span><span class="text-white font-mono">.229</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">K%</span><span class="text-white font-mono">15.2%</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">含義</span><span class="text-yellow-400">大部分時間帶傷投球</span></div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-green-500"></span>
+              <span class="text-white font-bold">後勁</span>
+              <span class="text-xs text-gray-500">台鋼雄鷹</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">疲勞閾值</span><span class="text-green-400 font-mono font-semibold">106 球</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">局數</span><span class="text-white font-mono">152.3 IP</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">被打率</span><span class="text-white font-mono">.238</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">K%</span><span class="text-white font-mono">17.9%</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">含義</span><span class="text-green-400">幾乎全程維持水準</span></div>
+            </div>
+          </div>
+        </div>
+        <p>
+          魔神樂投了 158 局，但有 <strong class="text-white">超過 80% 的投球是在疲勞狀態下完成的</strong>（每場平均投約 80 球，31 球後即衰退）。他能吃下這麼多局數，靠的是投球效率和經驗 — 用少球數解決打者。
+        </p>
+        <p>
+          後勁則是到 106 球才開始衰退。在 CPBL 先發通常 90-100 球左右被換下的情境下，他幾乎可以 <strong class="text-white">整場比賽都維持在巔峰狀態</strong>。
+        </p>
+      </section>
+
+      <section id="team-level">
+        <h2 class="text-2xl font-bold text-white mb-4">5. 球隊牛棚策略啟示</h2>
+        <p>將投手疲勞閾值聚合到球隊層級：</p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="teamChart" style="height:280px;"></div>
+        </div>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>球隊</th>
+                <th class="td-r">平均閾值</th>
+                <th class="td-r">投手數</th>
+                <th>策略含義</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">台鋼雄鷹</td>
+                <td class="td-r text-green-400 font-semibold">58 球</td>
+                <td class="td-r">6</td>
+                <td class="text-gray-400 text-sm">先發耐久度最高，牛棚壓力最小</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">富邦悍將</td>
+                <td class="td-r text-yellow-400 font-semibold">50 球</td>
+                <td class="td-r">7</td>
+                <td class="text-gray-400 text-sm">中上水準，魔力藍是關鍵</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">樂天桃猿</td>
+                <td class="td-r text-yellow-400 font-semibold">43 球</td>
+                <td class="td-r">5</td>
+                <td class="text-gray-400 text-sm">威能帝扛，其他人早衰</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">統一獅</td>
+                <td class="td-r text-yellow-400 font-semibold">42 球</td>
+                <td class="td-r">7</td>
+                <td class="text-gray-400 text-sm">牛棚需要早介入</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">中信兄弟</td>
+                <td class="td-r text-red-400 font-semibold">40 球</td>
+                <td class="td-r">7</td>
+                <td class="text-gray-400 text-sm">整體偏早衰退</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">味全龍</td>
+                <td class="td-r text-red-400 font-semibold">38 球</td>
+                <td class="td-r">6</td>
+                <td class="text-gray-400 text-sm">先發衰退最快，牛棚壓力最大</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong class="text-white">味全龍</strong>和<strong class="text-white">中信兄弟</strong>的先發投手平均在 38-40 球就開始衰退 — 這代表每場比賽第三局左右，牛棚就需要開始準備了。這兩支球隊對中繼投手的依賴度最高。
+        </p>
+        <p>
+          <strong class="text-white">台鋼雄鷹</strong>的平均閾值 58 球是六隊最高，主要受惠於後勁（106 球）拉高平均。但即使排除後勁，台鋼的先發群耐久度仍然領先。
+        </p>
+      </section>
+
+      <section id="implications">
+        <h2 class="text-2xl font-bold text-white mb-4">6. 教練決策：數據怎麼用？</h2>
+        <div class="space-y-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-yellow-400 text-lg leading-none mt-0.5">1</span>
+            <div>
+              <div class="text-white font-semibold text-sm">個人化投球限制</div>
+              <div class="text-gray-400 text-sm mt-1">不應該用統一的 100 球限制。魔神樂在 31 球後就衰退，但後勁可以投到 106 球。每位投手應該有自己的「最佳區間」。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-yellow-400 text-lg leading-none mt-0.5">2</span>
+            <div>
+              <div class="text-white font-semibold text-sm">牛棚熱身時機</div>
+              <div class="text-gray-400 text-sm mt-1">知道先發投手的疲勞閾值後，牛棚可以在閾值前 10 球開始熱身，而不是等到場上出狀況。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-yellow-400 text-lg leading-none mt-0.5">3</span>
+            <div>
+              <div class="text-white font-semibold text-sm">打者策略</div>
+              <div class="text-gray-400 text-sm mt-1">面對閾值低的投手（如魔神樂），打者可以採取更多纏鬥策略 — 增加球數、等待疲勞後更好打的球。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="methodology">
+        <h2 class="text-2xl font-bold text-white mb-4">7. 方法論與限制</h2>
+        <p>
+          <strong class="text-white">計算方式：</strong>每 15 球一個區間。比較每個區間的被打擊率和三振率與投手整體平均。當 BA 上升 &gt;20% 或 K% 下降 &gt;20% 時，標記為疲勞起點。最低門檻 50 IP。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">重要限制：</strong>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-400 mt-2">
+            <li>15 球的區間粒度可能不夠細，真實閾值可能在兩個區間之間。</li>
+            <li>中繼投手通常只投 15-30 球，閾值的意義與先發不同。</li>
+            <li>疲勞受天氣、休息天數、當日狀態等因素影響，非固定不變。</li>
+            <li>30 位投手因樣本不足被排除（IP &lt; 50 或數據不完整）。</li>
+          </ul>
+        </div>
+        <p>
+          完整數據和互動式圖表請見 <a href="fatigue.html" class="text-brand hover:underline">投手疲勞分析頁面</a>。
+        </p>
+      </section>
+
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-surface-border">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <div class="text-white font-bold">CPBL Analytics</div>
+          <div class="text-sm text-gray-500">以賽伯計量學方法解讀中華職棒數據</div>
+        </div>
+        <div class="flex gap-3">
+          <a href="fatigue.html" class="bg-yellow-500 hover:bg-yellow-600 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-colors">互動式疲勞圖表</a>
+          <a href="index.html" class="bg-surface-card border border-surface-border hover:border-gray-600 text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">所有分析模組</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    function renderDistChart() {
+      const chart = echarts.init(document.getElementById('distChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 20, right: 20, bottom: 40, left: 50 },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' } },
+        xAxis: { type: 'category', data: ['16球', '31球', '46球', '61球', '76球', '106球'],
+          axisLabel: { color: '#9ca3af', fontSize: 11 }, axisLine: { lineStyle: { color: '#2d3748' } } },
+        yAxis: { type: 'value', name: '投手數', axisLabel: { color: '#6b7280' }, splitLine: { lineStyle: { color: '#1e2530' } } },
+        series: [{
+          type: 'bar', data: [
+            { value: 1, itemStyle: { color: '#f87171' } },
+            { value: 16, itemStyle: { color: '#f87171' } },
+            { value: 14, itemStyle: { color: '#f59e0b' } },
+            { value: 2, itemStyle: { color: '#f59e0b' } },
+            { value: 3, itemStyle: { color: '#f59e0b' } },
+            { value: 2, itemStyle: { color: '#4ade80' } },
+          ],
+          barWidth: 40, label: { show: true, position: 'top', color: '#d1d5db', fontSize: 11 },
+          itemStyle: { borderRadius: [4,4,0,0] },
+        }],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderCompChart() {
+      const chart = echarts.init(document.getElementById('compChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 30, bottom: 30, left: 50 },
+        legend: { top: 5, textStyle: { color: '#9ca3af', fontSize: 11 } },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' } },
+        xAxis: { type: 'category', data: ['疲勞閾值', '局數', 'K%', '被打率'],
+          axisLabel: { color: '#9ca3af', fontSize: 11 }, axisLine: { lineStyle: { color: '#2d3748' } } },
+        yAxis: { type: 'value', axisLabel: { color: '#6b7280', fontSize: 10 }, splitLine: { lineStyle: { color: '#1e2530' } } },
+        series: [
+          { name: '魔神樂', type: 'bar', data: [31, 158, 15.2, 22.9], barWidth: 36,
+            itemStyle: { color: '#f87171', borderRadius: [4,4,0,0] },
+            label: { show: true, position: 'top', color: '#f87171', fontSize: 10 } },
+          { name: '後勁', type: 'bar', data: [106, 152.3, 17.9, 23.8], barWidth: 36,
+            itemStyle: { color: '#4ade80', borderRadius: [4,4,0,0] },
+            label: { show: true, position: 'top', color: '#4ade80', fontSize: 10 } },
+        ],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderTeamChart() {
+      const teams = ['台鋼雄鷹', '富邦悍將', '樂天桃猿', '統一獅', '中信兄弟', '味全龍'];
+      const values = [58, 50, 43, 42, 40, 38];
+      const colors = values.map(v => v >= 50 ? '#4ade80' : v >= 42 ? '#f59e0b' : '#f87171');
+      const chart = echarts.init(document.getElementById('teamChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 10, right: 40, bottom: 30, left: 90 },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' },
+          formatter: p => `${p[0].name}<br/>平均疲勞閾值: ${p[0].value} 球` },
+        xAxis: { type: 'value', name: '平均閾值（球數）', nameLocation: 'middle', nameGap: 25,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { color: '#6b7280', fontSize: 10 }, splitLine: { lineStyle: { color: '#1e2530' } } },
+        yAxis: { type: 'category', data: [...teams].reverse(),
+          axisLabel: { color: '#d1d5db', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false } },
+        series: [{ type: 'bar', data: [...values].reverse().map((v,i) => ({
+          value: v, itemStyle: { color: [...colors].reverse()[i], borderRadius: [0,4,4,0] }
+        })), barWidth: 22,
+          label: { show: true, position: 'right', formatter: '{c} 球', color: '#d1d5db', fontSize: 10 },
+        }],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    renderDistChart();
+    renderCompChart();
+    renderTeamChart();
+  </script>
+</body>
+</html>
