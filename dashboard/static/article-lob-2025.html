@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>誰是 2025 CPBL 最幸運的投手？LOB% 解密 — CPBL Analytics</title>
+  <meta name="description" content="用 LOB%（殘壘率）分析 2025 中華職棒 77 位投手的運氣成分，預測 2026 年 ERA 回歸方向。" />
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .prose h2 { scroll-margin-top: 5rem; }
+    .highlight-green { background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-red { background: rgba(248, 113, 113, 0.1); border-left: 3px solid #f87171; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-yellow { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; border-bottom: 1px solid #2d3748; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 0.875rem; }
+    .data-table tr:hover { background: rgba(255,255,255,0.02); }
+    .td-r { text-align: right; font-family: ui-monospace, monospace; }
+    .badge-lucky { background: rgba(74, 222, 128, 0.15); color: #4ade80; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-unlucky { background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-normal { background: rgba(107, 114, 128, 0.15); color: #9ca3af; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .toc a { transition: color 0.15s; }
+    .toc a:hover { color: #3b82f6; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+    </div>
+  </nav>
+
+  <!-- Article -->
+  <article class="max-w-3xl mx-auto px-4 py-12">
+
+    <!-- Header -->
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <span class="bg-brand/10 border border-brand/30 rounded-full px-3 py-0.5 text-brand font-semibold">數據分析</span>
+        <span>2026.04.04</span>
+        <span>&middot;</span>
+        <span>閱讀時間約 8 分鐘</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
+        誰是 2025 CPBL 最幸運的投手？<br class="hidden sm:block" />LOB% 解密
+      </h1>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        用殘壘率拆解 77 位投手的運氣成分 — 後勁的低 ERA 能持續嗎？力亞士其實被低估了？
+      </p>
+    </header>
+
+    <!-- TOC -->
+    <div class="toc bg-surface-card border border-surface-border rounded-xl p-5 mb-10 text-sm">
+      <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">目錄</div>
+      <ol class="space-y-1.5 text-gray-400 list-decimal list-inside">
+        <li><a href="#what-is-lob">什麼是 LOB%？為什麼它比 ERA 更誠實</a></li>
+        <li><a href="#league-overview">2025 CPBL 聯盟總覽</a></li>
+        <li><a href="#lucky-pitchers">幸運組：ERA 可能回升的投手</a></li>
+        <li><a href="#unlucky-pitchers">不幸組：被低估的投手</a></li>
+        <li><a href="#case-study">深度對比：後勁 vs 力亞士</a></li>
+        <li><a href="#team-level">球隊層級分析</a></li>
+        <li><a href="#predictions">2026 預測</a></li>
+        <li><a href="#methodology">方法論與限制</a></li>
+      </ol>
+    </div>
+
+    <!-- Body -->
+    <div class="prose space-y-8 text-gray-300 leading-relaxed">
+
+      <!-- Section 1 -->
+      <section id="what-is-lob">
+        <h2 class="text-2xl font-bold text-white mb-4">1. 什麼是 LOB%？為什麼它比 ERA 更誠實</h2>
+        <p>
+          LOB%（Left-On-Base Percentage，殘壘率）衡量的是：<strong class="text-white">投手讓壘上跑者無法回來得分的比率</strong>。
+        </p>
+        <p>公式很直覺：</p>
+        <div class="bg-surface border border-surface-border rounded-lg p-4 font-mono text-sm text-center my-4">
+          LOB% = (H + BB + HBP &minus; R) &divide; (H + BB + HBP &minus; 1.4 &times; HR)
+        </div>
+        <p>
+          分子是「上壘但沒得分的人數」，分母是「上壘者中扣除全壘打直接得分的調整值」。
+        </p>
+        <p>
+          為什麼說它比 ERA 更誠實？因為 <strong class="text-white">LOB% 會回歸均值</strong>。一個投手短期內可以因為「壘上有人時剛好被守備美技救回」或「飛球剛好被風吹成界外」而維持高 LOB%，但長期來看，除了極少數的頂級終結者，所有投手的 LOB% 都會向聯盟平均 70% 靠攏。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">核心邏輯：</strong>如果一個投手的 LOB% 遠高於 70%，代表他這季有運氣加持，ERA 偏低；反之，LOB% 遠低於 70% 的投手可能被低估，未來 ERA 有下降空間。
+        </div>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="league-overview">
+        <h2 class="text-2xl font-bold text-white mb-4">2. 2025 CPBL 聯盟總覽</h2>
+        <p>
+          我們分析了 2025 賽季 <strong class="text-white">77 位投出 30 局以上</strong>的投手（排除極小樣本），得到以下分布：
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-white">70.8%</div>
+            <div class="text-xs text-gray-500 mt-1">聯盟平均</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-white">7.9%</div>
+            <div class="text-xs text-gray-500 mt-1">標準差</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-400">14</div>
+            <div class="text-xs text-gray-500 mt-1">偏高 (&gt;78%)</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-red-400">18</div>
+            <div class="text-xs text-gray-500 mt-1">偏低 (&lt;65%)</div>
+          </div>
+        </div>
+        <p>
+          CPBL 2025 的聯盟平均 LOB% 為 <strong class="text-white">70.8%</strong>，與 MLB 歷年的 ~72% 接近。這代表 CPBL 的整體投手環境在殘壘效率上與大聯盟的統計規律相符。
+        </p>
+        <!-- Chart -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="overviewChart" style="height:400px;"></div>
+        </div>
+        <p class="text-xs text-gray-500 text-center -mt-2 mb-4">
+          散佈圖 — X 軸為投球局數，Y 軸為 LOB%。綠色為偏高（&gt;78%），紅色為偏低（&lt;65%）。
+          <a href="lob.html" class="text-brand hover:underline">互動版 &rarr;</a>
+        </p>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="lucky-pitchers">
+        <h2 class="text-2xl font-bold text-white mb-4">3. 幸運組：ERA 可能回升的投手</h2>
+        <p>
+          以下是 <strong class="text-white">100 局以上且 LOB% 超過 78%</strong> 的王牌投手 — 他們的 ERA 可能包含了不少運氣成分：
+        </p>
+        <div class="highlight-green">
+          <strong class="text-green-400">幸運三人組</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>投手</th>
+                  <th>球隊</th>
+                  <th class="td-r">LOB%</th>
+                  <th class="td-r">局數</th>
+                  <th class="td-r">偏離均值</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">後勁</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r text-green-400 font-semibold">81.4%</td>
+                  <td class="td-r">152.3</td>
+                  <td class="td-r text-green-400">+10.6%</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">飛力獅</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-green-400 font-semibold">81.3%</td>
+                  <td class="td-r">127.4</td>
+                  <td class="td-r text-green-400">+10.5%</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">艾速特</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r text-green-400 font-semibold">80.3%</td>
+                  <td class="td-r">141.3</td>
+                  <td class="td-r text-green-400">+9.5%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          <strong class="text-white">後勁</strong>是 2025 年台鋼雄鷹的王牌先發，投了 152.3 局，LOB% 高達 81.4%。這意味著他讓壘上跑者得分的機率極低 — 但這個數字高於聯盟平均超過 10 個百分點，歷史告訴我們這很難持續。
+        </p>
+        <p>
+          值得注意的是，台鋼雄鷹有<strong class="text-white">兩位王牌都在幸運區間</strong>（後勁 + 艾速特）。如果兩人的 LOB% 同時回歸，台鋼 2026 年的團隊 ERA 可能會有明顯上升。
+        </p>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="unlucky-pitchers">
+        <h2 class="text-2xl font-bold text-white mb-4">4. 不幸組：被低估的投手</h2>
+        <p>
+          另一端的故事更有趣 — 這些投手的 ERA 可能被「壞運氣」灌水了：
+        </p>
+        <div class="highlight-red">
+          <strong class="text-red-400">最不幸的王牌</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>投手</th>
+                  <th>球隊</th>
+                  <th class="td-r">LOB%</th>
+                  <th class="td-r">局數</th>
+                  <th class="td-r">偏離均值</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">力亞士</td>
+                  <td class="text-gray-400">富邦悍將</td>
+                  <td class="td-r text-red-400 font-semibold">63.0%</td>
+                  <td class="td-r">144.2</td>
+                  <td class="td-r text-red-400">-7.8%</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">布雷克</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-red-400 font-semibold">65.4%</td>
+                  <td class="td-r">122.1</td>
+                  <td class="td-r text-red-400">-5.4%</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">江承諺</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r text-yellow-400 font-semibold">65.6%</td>
+                  <td class="td-r">110.2</td>
+                  <td class="td-r text-yellow-400">-5.2%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          <strong class="text-white">力亞士</strong>是全聯盟 100 局以上投手中 LOB% 最低的 — 只有 63.0%。他投了 144.2 局，樣本量完全足夠。這代表什麼？他壘上有人時，跑者回來得分的比率異常地高。
+        </p>
+        <p>
+          但如果力亞士的投球品質（K%、BB%、HR rate）沒有大幅惡化，那他 2026 年的 ERA 很可能會自然下降 — 不是因為他進步了，而是因為運氣回到正常水準。
+        </p>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="case-study">
+        <h2 class="text-2xl font-bold text-white mb-4">5. 深度對比：後勁 vs 力亞士</h2>
+        <p>
+          這是 2025 CPBL 最有故事性的一組對比 — 兩位都是 140+ 局的主力先發，但 LOB% 差距高達 <strong class="text-white">18.4 個百分點</strong>。
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden my-6">
+          <div id="comparisonChart" style="height:320px;"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-green-500"></span>
+              <span class="text-white font-bold">後勁</span>
+              <span class="text-xs text-gray-500">台鋼雄鷹</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">LOB%</span><span class="text-green-400 font-mono font-semibold">81.4%</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">局數</span><span class="text-white font-mono">152.3 IP</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">被打擊率</span><span class="text-white font-mono">.238</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">K%</span><span class="text-white font-mono">17.9%</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">預測方向</span><span class="text-yellow-400">ERA 可能上升</span></div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-red-500"></span>
+              <span class="text-white font-bold">力亞士</span>
+              <span class="text-xs text-gray-500">富邦悍將</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">LOB%</span><span class="text-red-400 font-mono font-semibold">63.0%</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">局數</span><span class="text-white font-mono">144.2 IP</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">被打擊率</span><span class="text-white font-mono">.253</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">K%</span><span class="text-white font-mono">18.2%</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">預測方向</span><span class="text-green-400">ERA 可能下降</span></div>
+            </div>
+          </div>
+        </div>
+        <p>
+          有趣的是，兩人的 <strong class="text-white">K% 幾乎相同</strong>（後勁 17.9% vs 力亞士 18.2%），三振能力相當。但後勁的 LOB% 比力亞士高出 18.4%，這巨大的差距幾乎不可能完全歸因於投球品質，更可能是情境運氣（壘上有人時的打球落點、守備支援等不可控因素）。
+        </p>
+        <p>
+          如果兩人的 LOB% 在 2026 年各自回歸到 70% 左右，我們可以預期：
+        </p>
+        <ul class="list-disc list-inside space-y-1 text-gray-400">
+          <li><strong class="text-white">後勁</strong>的 ERA 將上升（壘上跑者更容易得分）</li>
+          <li><strong class="text-white">力亞士</strong>的 ERA 將下降（運氣正常化後失分減少）</li>
+        </ul>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="team-level">
+        <h2 class="text-2xl font-bold text-white mb-4">6. 球隊層級分析</h2>
+        <p>
+          把個人 LOB% 聚合到球隊層級，可以看出哪支球隊的投手群整體偏幸運或不幸運：
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden my-6">
+          <div id="teamChart" style="height:300px;"></div>
+        </div>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>球隊</th>
+                <th class="td-r">平均 LOB%</th>
+                <th class="td-r">投手數</th>
+                <th class="td-r">偏離均值</th>
+                <th>解讀</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">統一獅</td>
+                <td class="td-r text-green-400 font-semibold">73.8%</td>
+                <td class="td-r">12</td>
+                <td class="td-r text-green-400">+3.0%</td>
+                <td><span class="badge-lucky">偏幸運</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">味全龍</td>
+                <td class="td-r text-green-400 font-semibold">73.3%</td>
+                <td class="td-r">12</td>
+                <td class="td-r text-green-400">+2.5%</td>
+                <td><span class="badge-lucky">偏幸運</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">中信兄弟</td>
+                <td class="td-r">71.6%</td>
+                <td class="td-r">14</td>
+                <td class="td-r text-gray-500">+0.8%</td>
+                <td><span class="badge-normal">正常</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">富邦悍將</td>
+                <td class="td-r">69.2%</td>
+                <td class="td-r">12</td>
+                <td class="td-r text-gray-500">-1.6%</td>
+                <td><span class="badge-normal">正常</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">樂天桃猿</td>
+                <td class="td-r">69.1%</td>
+                <td class="td-r">14</td>
+                <td class="td-r text-gray-500">-1.7%</td>
+                <td><span class="badge-normal">正常</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">台鋼雄鷹</td>
+                <td class="td-r text-red-400 font-semibold">68.6%</td>
+                <td class="td-r">13</td>
+                <td class="td-r text-red-400">-2.2%</td>
+                <td><span class="badge-unlucky">偏不幸運</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong class="text-white">統一獅</strong>和<strong class="text-white">味全龍</strong>的投手群平均 LOB% 偏高 3 個百分點左右。這不代表他們的投手不好，但代表 2025 年的團隊防禦率可能有些「灌水」。
+        </p>
+        <p>
+          有趣的反差：<strong class="text-white">台鋼雄鷹</strong>團隊 LOB% 最低（68.6%），但他們同時擁有兩位個人 LOB% 最高的先發（後勁 81.4%、艾速特 80.3%）。這代表台鋼的中繼和後援投手群 LOB% 可能相當低 — 他們在壘上有人時丟分偏多。
+        </p>
+      </section>
+
+      <!-- Section 7 -->
+      <section id="predictions">
+        <h2 class="text-2xl font-bold text-white mb-4">7. 2026 預測</h2>
+        <p>
+          基於 LOB% 回歸理論，以下是我對 2026 賽季的五個預測：
+        </p>
+        <div class="space-y-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-green-400 text-lg leading-none mt-0.5">1</span>
+            <div>
+              <div class="text-white font-semibold text-sm">力亞士的 ERA 將顯著下降</div>
+              <div class="text-gray-400 text-sm mt-1">63.0% 的 LOB% 是極端偏低值。如果他的 K% 和 BB% 維持 2025 水準，ERA 有機會降低 0.5 到 1.0 分。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-yellow-400 text-lg leading-none mt-0.5">2</span>
+            <div>
+              <div class="text-white font-semibold text-sm">後勁的 ERA 將回升</div>
+              <div class="text-gray-400 text-sm mt-1">81.4% 的 LOB% 很難維持。即使投球品質不變，ERA 也會因為正常化的殘壘率而上升。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-blue-400 text-lg leading-none mt-0.5">3</span>
+            <div>
+              <div class="text-white font-semibold text-sm">台鋼的團隊 ERA 將呈現矛盾走勢</div>
+              <div class="text-gray-400 text-sm mt-1">先發投手 LOB% 回歸（上升方向），但中繼投手 LOB% 也可能回歸（下降方向），兩者部分抵消。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-purple-400 text-lg leading-none mt-0.5">4</span>
+            <div>
+              <div class="text-white font-semibold text-sm">統一獅的防禦率將小幅上升</div>
+              <div class="text-gray-400 text-sm mt-1">團隊 LOB% 73.8% 偏高，加上飛力獅個人 81.3% 也在極端區間，預計有回歸壓力。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-gray-400 text-lg leading-none mt-0.5">5</span>
+            <div>
+              <div class="text-white font-semibold text-sm">威能帝是真正的 No.1</div>
+              <div class="text-gray-400 text-sm mt-1">170 局的聯盟最高工作量，LOB% 74.5% 完全在正常區間。他的 ERA 幾乎沒有運氣灌水 — 所見即所得。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 8 -->
+      <section id="methodology">
+        <h2 class="text-2xl font-bold text-white mb-4">8. 方法論與限制</h2>
+        <p>
+          <strong class="text-white">資料來源：</strong>Rebas Open Data（ODC-By License）+ CPBL 官網公開統計。分析基於 360 場 2025 年一軍例行賽，共 27,974 打席、109,897 逐球事件。
+        </p>
+        <p>
+          <strong class="text-white">計算方式：</strong>LOB% = (H + BB + HBP - R) / (H + BB + HBP - 1.4 &times; HR)。分母 &le; 0 時排除。最低門檻為 30 IP。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">重要限制：</strong>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-400 mt-2">
+            <li>CPBL 每季約 120 場，樣本量遠小於 MLB 的 2,430 場。投手的個人 LOB% 波動會更大。</li>
+            <li>LOB% 回歸是統計趨勢，不是物理定律。個別投手可能因為投球機制改變（如新增卡特球）而合理維持偏高或偏低的 LOB%。</li>
+            <li>本分析僅使用 LOB% 單一指標。更完整的 ERA 預測應結合 FIP、xFIP、SIERA 等多維度指標，以及球場因素和守備品質。</li>
+            <li>聯盟均值 70% 基於 MLB 歷史數據。CPBL 的真實均值可能因投打環境差異而略有不同（我們的計算為 70.8%）。</li>
+          </ul>
+        </div>
+        <p>
+          完整數據和互動式圖表請見 <a href="lob.html" class="text-brand hover:underline">LOB% 分析頁面</a>，可依球隊篩選、調整最低局數門檻。
+        </p>
+      </section>
+
+    </div>
+
+    <!-- Footer CTA -->
+    <div class="mt-16 pt-8 border-t border-surface-border">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <div class="text-white font-bold">CPBL Analytics</div>
+          <div class="text-sm text-gray-500">以賽伯計量學方法解讀中華職棒數據</div>
+        </div>
+        <div class="flex gap-3">
+          <a href="lob.html" class="bg-brand hover:bg-brand-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+            互動式 LOB% 圖表
+          </a>
+          <a href="index.html" class="bg-surface-card border border-surface-border hover:border-gray-600 text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+            所有分析模組
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </article>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    // === Data (embedded from static JSON) ===
+    const lobData = [];
+
+    async function init() {
+      try {
+        const res = await fetch('api/analysis/lob_2025.json');
+        const json = await res.json();
+        const data = (json.data || json || []).filter(d => (d.ip || 0) >= 30);
+        data.sort((a, b) => b.lob_pct - a.lob_pct);
+        lobData.push(...data);
+      } catch (e) {
+        console.warn('Failed to load LOB data:', e);
+      }
+      renderOverviewChart();
+      renderComparisonChart();
+      renderTeamChart();
+    }
+
+    function renderOverviewChart() {
+      const chart = echarts.init(document.getElementById('overviewChart'));
+      const high = lobData.filter(d => d.lob_pct > 0.78);
+      const normal = lobData.filter(d => d.lob_pct >= 0.65 && d.lob_pct <= 0.78);
+      const low = lobData.filter(d => d.lob_pct < 0.65);
+
+      const toScatter = (arr, showLabel) => arr.map(d => {
+        const isAce = d.ip >= 100;
+        return {
+          value: [d.ip, d.lob_pct],
+          raw: d,
+          label: { show: isAce && showLabel, formatter: d.player_name, position: 'right', fontSize: 10, color: '#d1d5db' },
+        };
+      });
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 30, right: 80, bottom: 50, left: 55 },
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 12 },
+          formatter: p => {
+            if (!p.data?.raw) return '';
+            const d = p.data.raw;
+            const status = d.lob_pct > 0.78 ? '偏高' : d.lob_pct < 0.65 ? '偏低' : '正常';
+            return `<b>${d.player_name}</b> ${d.team}<br/>LOB%: ${(d.lob_pct*100).toFixed(1)}%<br/>IP: ${d.ip.toFixed(1)}<br/>${status}`;
+          }
+        },
+        xAxis: { type: 'value', name: '局數 (IP)', nameLocation: 'middle', nameGap: 30,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } } },
+        yAxis: { type: 'value', name: 'LOB%', nameLocation: 'middle', nameGap: 40,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { formatter: v => (v*100).toFixed(0)+'%', color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } } },
+        series: [
+          { name: '>78%', type: 'scatter', data: toScatter(high, true), symbolSize: d => d[0] >= 100 ? 12 : 8,
+            itemStyle: { color: '#4ade80', opacity: 0.85 } },
+          { name: '65-78%', type: 'scatter', data: toScatter(normal, false), symbolSize: d => d[0] >= 100 ? 10 : 7,
+            itemStyle: { color: '#4b5563', opacity: 0.6 } },
+          { name: '<65%', type: 'scatter', data: toScatter(low, true), symbolSize: d => d[0] >= 100 ? 12 : 8,
+            itemStyle: { color: '#f87171', opacity: 0.85 } },
+          { name: '聯盟均值', type: 'line', data: [], markLine: { silent: true, symbol: 'none',
+            lineStyle: { color: '#f59e0b', type: 'dashed', width: 1 },
+            label: { formatter: '70.8%', position: 'insideEndTop', color: '#f59e0b', fontSize: 10 },
+            data: [{ yAxis: 0.708 }] }, tooltip: { show: false } },
+        ],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderComparisonChart() {
+      const chart = echarts.init(document.getElementById('comparisonChart'));
+      const categories = ['LOB%', 'K%', '被打擊率'];
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 30, bottom: 30, left: 50 },
+        legend: { top: 5, textStyle: { color: '#9ca3af', fontSize: 11 } },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6' },
+          axisPointer: { type: 'shadow' } },
+        xAxis: { type: 'category', data: categories, axisLabel: { color: '#9ca3af', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#2d3748' } } },
+        yAxis: { type: 'value', axisLabel: { formatter: v => (v*100).toFixed(0)+'%', color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } } },
+        series: [
+          { name: '後勁', type: 'bar', data: [0.814, 0.179, 0.238], barWidth: 36,
+            itemStyle: { color: '#4ade80', borderRadius: [4,4,0,0] },
+            label: { show: true, position: 'top', formatter: p => (p.value*100).toFixed(1)+'%', color: '#4ade80', fontSize: 10 } },
+          { name: '力亞士', type: 'bar', data: [0.630, 0.182, 0.253], barWidth: 36,
+            itemStyle: { color: '#f87171', borderRadius: [4,4,0,0] },
+            label: { show: true, position: 'top', formatter: p => (p.value*100).toFixed(1)+'%', color: '#f87171', fontSize: 10 } },
+        ],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderTeamChart() {
+      const teams = ['統一獅', '味全龍', '中信兄弟', '富邦悍將', '樂天桃猿', '台鋼雄鷹'];
+      const values = [0.738, 0.733, 0.716, 0.692, 0.691, 0.686];
+      const colors = values.map(v => v > 0.72 ? '#4ade80' : v < 0.69 ? '#f87171' : '#6b7280');
+
+      const chart = echarts.init(document.getElementById('teamChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 20, right: 30, bottom: 30, left: 90 },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6' },
+          formatter: p => `${p[0].name}<br/>平均 LOB%: ${(p[0].value*100).toFixed(1)}%` },
+        xAxis: { type: 'value',
+          axisLabel: { formatter: v => (v*100).toFixed(0)+'%', color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          min: 0.65, max: 0.76 },
+        yAxis: { type: 'category', data: [...teams].reverse(),
+          axisLabel: { color: '#d1d5db', fontSize: 11 },
+          axisLine: { show: false }, axisTick: { show: false } },
+        series: [{
+          type: 'bar', data: [...values].reverse().map((v,i) => ({
+            value: v, itemStyle: { color: [...colors].reverse()[i], borderRadius: [0,4,4,0] }
+          })),
+          barWidth: 24,
+          label: { show: true, position: 'right', formatter: p => (p.value*100).toFixed(1)+'%',
+            color: '#d1d5db', fontSize: 10 },
+          markLine: { silent: true, symbol: 'none',
+            lineStyle: { color: '#f59e0b', type: 'dashed', width: 1 },
+            label: { formatter: '70.8%', position: 'start', color: '#f59e0b', fontSize: 9 },
+            data: [{ xAxis: 0.708 }] },
+        }],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    init();
+  </script>
+
+</body>
+</html>
