@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rebas 產品觀察與改善建議</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+            red: { rebas: '#c0392b' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .severity-high { color: #f87171; border-color: #f8717140; background: #f8717110; }
+    .severity-med { color: #fbbf24; border-color: #fbbf2440; background: #fbbf2410; }
+    .severity-low { color: #34d399; border-color: #34d39940; background: #34d39910; }
+    .tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; border-width: 1px; font-weight: 600; display: inline-block; }
+    .ref-tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: #3b82f610; border: 1px solid #3b82f640; color: #60a5fa; font-weight: 600; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Header -->
+  <header class="max-w-4xl mx-auto px-6 pt-16 pb-10">
+    <div class="inline-flex items-center gap-2 bg-red-rebas/10 border border-red-rebas/30 rounded-full px-4 py-1 text-red-rebas text-xs mb-6 font-semibold">
+      產品觀察報告
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-3">
+      Rebas 野球革命<br/>改善建議
+    </h1>
+    <p class="text-gray-400 max-w-2xl text-sm leading-relaxed mb-4">
+      以訂閱會員 + 每天使用 Baseball Savant / FanGraphs 的角度，<br class="hidden sm:block" />
+      針對效能、SEO、手機體驗、功能、無障礙提出具體可行的建議。
+    </p>
+    <div class="flex flex-wrap gap-3 text-xs text-gray-500">
+      <span>分析者：Murs</span>
+      <span>|</span>
+      <span>身份：Rebas 訂閱會員</span>
+      <span>|</span>
+      <span>日期：2026-04-05</span>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 pb-20 space-y-16">
+
+    <!-- ==================== 效能 ==================== -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+        <span class="text-2xl">&#9889;</span> 效能優化
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">這些改動不需要動業務邏輯，純工程面優化，可以很快看到效果。</p>
+
+      <div class="space-y-5">
+        <!-- 1 -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">圖片沒有 Lazy Loading</h3>
+            <span class="tag severity-high">影響大</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            首頁有 <strong class="text-white">166 張圖片</strong>，但沒有任何一張設定 <code class="text-gray-300 bg-surface px-1.5 rounded text-xs">loading="lazy"</code>。使用者一進頁面就同時下載所有圖片，包括在畫面外看不到的。
+          </p>
+          <div class="bg-surface rounded-lg p-4 text-sm">
+            <div class="text-gray-500 text-xs mb-2">建議做法</div>
+            <p class="text-gray-300">在首屏以下的 <code class="bg-surface-card px-1 rounded">&lt;img&gt;</code> 標籤加上 <code class="bg-surface-card px-1 rounded">loading="lazy"</code>。瀏覽器會自動延遲載入看不到的圖片。改動量很小，效果很明顯 — 初始載入的請求數可以減少一半以上。</p>
+          </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">中文字體分片過多</h3>
+            <span class="tag severity-high">影響大</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            使用 Google Fonts 的 Noto Sans TC，單一頁面載入了 <strong class="text-white">18 個 woff2 分片</strong>。中文字體因為字元量大被切成很多 chunk，每個 chunk 都是一個 HTTP 請求。
+          </p>
+          <div class="bg-surface rounded-lg p-4 text-sm">
+            <div class="text-gray-500 text-xs mb-2">建議做法</div>
+            <p class="text-gray-300">自己 subset 常用的 3000-4000 個漢字（涵蓋球員姓名 + 常用介面文字），打成 1-2 個 woff2 檔 self-host。搭配 <code class="bg-surface-card px-1 rounded">font-display: swap</code>，文字不會因為字體載入而閃爍。</p>
+          </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">圖片格式沒有用 WebP</h3>
+            <span class="tag severity-med">中等影響</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            全站圖片以 PNG（52 張）和 JPG（22 張）為主，沒有使用 WebP 或 AVIF。WebP 在同樣品質下體積比 PNG 小 25-35%。
+          </p>
+          <div class="bg-surface rounded-lg p-4 text-sm">
+            <div class="text-gray-500 text-xs mb-2">建議做法</div>
+            <p class="text-gray-300">用 <code class="bg-surface-card px-1 rounded">&lt;picture&gt;</code> 標籤搭配 WebP 和原圖 fallback。如果用 CDN（如 Cloudflare），很多可以自動做圖片格式轉換。</p>
+          </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">缺少 Resource Hints</h3>
+            <span class="tag severity-med">中等影響</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            沒有 <code class="text-gray-300 bg-surface px-1.5 rounded text-xs">preconnect</code> 或 <code class="text-gray-300 bg-surface px-1.5 rounded text-xs">preload</code> 標籤。每次載入 Google Fonts 或第三方資源都要重新做 DNS lookup + TLS handshake。
+          </p>
+          <div class="bg-surface rounded-lg p-4 text-sm">
+            <div class="text-gray-500 text-xs mb-2">建議做法</div>
+            <p class="text-gray-300">在 <code class="bg-surface-card px-1 rounded">&lt;head&gt;</code> 加入：<br/>
+            <code class="bg-surface-card px-1 rounded text-xs">&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;</code><br/>
+            可以省下 100-200ms。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SEO ==================== -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+        <span class="text-2xl">&#128270;</span> SEO 改善
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">球員頁面和排行榜是最有搜尋價值的內容，但目前可能沒被好好索引。</p>
+
+      <div class="space-y-5">
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">SPA 架構不利搜尋引擎</h3>
+            <span class="tag severity-high">影響大</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            整站是 Create React App 的 CSR（Client-Side Rendering），HTML 只有一個空的 <code class="text-gray-300 bg-surface px-1.5 rounded text-xs">&lt;div id="root"&gt;</code>，所有內容都靠 JavaScript 在瀏覽器端 render。Google 爬蟲雖然可以跑 JS，但索引效果遠不如 SSR，而且爬蟲的 rendering budget 有限。
+          </p>
+          <div class="bg-surface rounded-lg p-4 text-sm">
+            <div class="text-gray-500 text-xs mb-2">建議做法</div>
+            <p class="text-gray-300">長期：考慮遷移到 Next.js 做 SSR / ISR（Incremental Static Regeneration）。排行榜和球員頁面特別適合 ISR — 資料每天更新一次，不需要即時 SSR。<br/><br/>短期：至少做 pre-rendering，把 Google 容易爬到的靜態 HTML 先生出來。</p>
+          </div>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">缺少 Canonical 和結構化資料</h3>
+            <span class="tag severity-high">影響大</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            沒有 <code class="text-gray-300 bg-surface px-1.5 rounded text-xs">&lt;link rel="canonical"&gt;</code>（可能有重複內容問題，尤其 www / stats / blog 多個子網域），也沒有 JSON-LD 結構化資料。
+          </p>
+          <div class="bg-surface rounded-lg p-4 text-sm">
+            <div class="text-gray-500 text-xs mb-2">建議做法</div>
+            <p class="text-gray-300">
+              每頁加上 canonical 標籤。球員頁面加 <code class="bg-surface-card px-1 rounded text-xs">schema.org/Person</code> JSON-LD，比賽頁面加 <code class="bg-surface-card px-1 rounded text-xs">schema.org/SportsEvent</code>。這些能讓 Google 搜尋結果出現 rich snippet — 搜「張育成 數據」就有機會直接看到你們的卡片。
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">子網域分散 SEO 權重</h3>
+            <span class="tag severity-med">中等影響</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            目前有 <code class="text-gray-300 bg-surface px-1 rounded text-xs">www.rebas.tw</code>、<code class="text-gray-300 bg-surface px-1 rounded text-xs">stats.rebas.tw</code>、<code class="text-gray-300 bg-surface px-1 rounded text-xs">blog.rebas.tw</code>、<code class="text-gray-300 bg-surface px-1 rounded text-xs">account.rebas.tw</code> 四個子網域。搜尋引擎會把子網域當成不同網站，SEO 權重分散。考慮整合為路徑（<code class="text-gray-300 bg-surface px-1 rounded text-xs">/stats</code>、<code class="text-gray-300 bg-surface px-1 rounded text-xs">/blog</code>），讓所有 backlink 都累積在同一個 domain 上。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 手機版 ==================== -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+        <span class="text-2xl">&#128241;</span> 手機版體驗
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">棒球迷很多是在手機上看數據的，手機體驗直接影響留存。</p>
+
+      <div class="space-y-5">
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">排行榜表格在手機上不可讀</h3>
+            <span class="tag severity-high">影響大</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            進階數據排行榜有 17+ 個欄位，在 390px 寬的手機上全部壓縮在一起，數字幾乎看不清楚。
+          </p>
+          <div class="bg-surface rounded-lg p-4 text-sm">
+            <div class="text-gray-500 text-xs mb-2">建議做法</div>
+            <p class="text-gray-300">固定左邊的排名和球員名欄位（sticky column），其他欄位水平滾動。FanGraphs 就是這樣處理的。<br/><br/>或者提供「精簡模式」，手機版預設只顯示 5-6 個最重要的欄位（OPS+、wOBA、K%、BB%、AVG），要看完整的再展開。</p>
+          </div>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">球員頁上半部過於擁擠</h3>
+            <span class="tag severity-med">中等影響</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            PR 表、落點圖、近三年成績在手機上全部擠在同一區。改成垂直堆疊 + 可收合面板（accordion）會好很多，讓使用者自己選要看什麼。
+          </p>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">導航列沒有 Hamburger Menu</h3>
+            <span class="tag severity-med">中等影響</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            在窄螢幕上，導航列的文字只是縮小而不是收合成漢堡選單。「分析工具」和「新數據」的下拉式子選單在手機上很難點到。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 功能 ==================== -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+        <span class="text-2xl">&#128161;</span> 功能建議
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">參考 MLB 生態系的做法，這些功能可以提升用戶黏著度。</p>
+
+      <div class="space-y-5">
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">球員比較功能</h3>
+            <span class="ref-tag">參考 FanGraphs</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            FanGraphs 有比較工具可以把兩個球員的數據疊在一起看。你們目前只能看單一球員頁面。如果可以做 side-by-side 的 PR 表和 Rzone 比較，球迷在討論「張育成跟林安可誰比較強」的時候就會直接貼你們的連結。<br/><br/>
+            這對社群分享和自然流量都很有幫助。
+          </p>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">篩選條件 Deep Link</h3>
+            <span class="ref-tag">參考 Savant</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            Baseball Savant 的搜尋器做得很好 — 篩選條件都會寫進 URL，可以直接把一個複雜的查詢結果分享給朋友。<br/><br/>
+            你們 Rzone 的篩選功能很強（對手、球數、壘包、打擊結果都有），但篩完之後 URL 不會變。沒辦法把「張育成面對獅隊兩好球之後的熱區圖」分享出去。把篩選狀態 sync 到 URL query params 就可以解決。
+          </p>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">Statcast 風格搜尋器</h3>
+            <span class="ref-tag">參考 Savant</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            長期可以考慮做一個類似 Savant Statcast Search 的多條件交叉查詢工具。讓進階用戶可以自訂查詢條件（球種 + 球數 + 進壘區域 + 打擊結果 + …），你們的逐球資料粒度已經夠了，只是缺一個前端介面。<br/><br/>
+            這會是「新手專區」的反面 — 給重度數據迷用的進階工具，也是訂閱制的賣點。
+          </p>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">排行榜欄位可排序</h3>
+            <span class="ref-tag">參考 FanGraphs</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            FanGraphs 的排行榜每個欄位都可以點擊排序。你們目前似乎是固定排序。讓用戶自己決定要按 wOBA、K% 還是 Whiff% 排，基本功能但使用頻率很高。
+          </p>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-white font-bold">人工標記 ML 輔助</h3>
+            <span class="tag severity-low">長期方向</span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            從「專屬功能」頁可以看到每場比賽的逐球球種 / 進壘點都需要人工標記。2026 球季已完成 13 場，同時也在徵 4 名影像紀錄員。<br/><br/>
+            如果用歷史已標記的資料訓練分類器（投手慣用球種配比 + 球速區間 → 球種預測），就可以做 ML 預標記，標記人員只需要校正模型判斷錯的部分。特別是球種辨識這種有明確 pattern 的任務，準確率應該可以到 85%+，等於省掉大部分的重複工作。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 無障礙 ==================== -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+        <span class="text-2xl">&#9855;</span> 無障礙
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">修起來不難，但對 Lighthouse 分數和使用者體驗有明顯幫助。</p>
+
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+          <div>
+            <div class="text-3xl font-bold text-red-400 mb-1">50</div>
+            <div class="text-gray-400">張圖片缺少 alt text</div>
+            <div class="text-gray-500 text-xs mt-1">螢幕閱讀器無法描述這些圖片</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-yellow-400 mb-1">5</div>
+            <div class="text-gray-400">按鈕沒有可讀文字</div>
+            <div class="text-gray-500 text-xs mt-1">缺少 textContent 或 aria-label</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-yellow-400 mb-1">11</div>
+            <div class="text-gray-400">空連結</div>
+            <div class="text-gray-500 text-xs mt-1">&lt;a&gt; 標籤無文字也無 aria-label</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 技術架構 ==================== -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+        <span class="text-2xl">&#128736;</span> 技術架構觀察
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">從前端 bundle 和 network requests 觀察到的技術棧現況。</p>
+
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 space-y-4 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <span class="text-gray-500 text-xs block mb-1">前端框架</span>
+            <span class="text-gray-300">Create React App（Webpack bundle，CSR）</span>
+          </div>
+          <div>
+            <span class="text-gray-500 text-xs block mb-1">SSR / SSG</span>
+            <span class="text-red-400">無</span><span class="text-gray-500"> — 純 Client-Side Rendering</span>
+          </div>
+          <div>
+            <span class="text-gray-500 text-xs block mb-1">Service Worker</span>
+            <span class="text-red-400">無</span><span class="text-gray-500"> — 沒有離線快取或推播能力</span>
+          </div>
+          <div>
+            <span class="text-gray-500 text-xs block mb-1">API 格式</span>
+            <span class="text-gray-300">RESTful GET（如 <code class="bg-surface px-1 rounded text-xs">/api/seasons/{id}/leaders</code>）</span>
+          </div>
+          <div>
+            <span class="text-gray-500 text-xs block mb-1">第三方服務</span>
+            <span class="text-gray-300">Google Tag Manager、Facebook Pixel、Cloudflare Insights</span>
+          </div>
+          <div>
+            <span class="text-gray-500 text-xs block mb-1">已知 API 小問題</span>
+            <span class="text-gray-300">排行榜請求帶 <code class="bg-surface px-1 rounded text-xs">pa=undefined</code> 參數</span>
+          </div>
+        </div>
+
+        <div class="border-t border-surface-border pt-4 mt-4">
+          <span class="text-gray-500 text-xs block mb-2">架構升級建議</span>
+          <ul class="text-gray-400 space-y-2">
+            <li>&#8226; 考慮遷移到 <strong class="text-gray-300">Next.js</strong>（SSR / ISR），一次解決 SEO、首屏速度、code splitting</li>
+            <li>&#8226; 加入 <strong class="text-gray-300">Service Worker</strong>，支援離線快取和推播通知（新數據更新完成時通知訂閱用戶）</li>
+            <li>&#8226; API 層加 <strong class="text-gray-300">Cache-Control</strong> header，排行榜等不常變動的資料不需要每次都打 DB</li>
+            <li>&#8226; 子網域整合為路徑，集中 SEO 權重</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 即將推出 ==================== -->
+    <section>
+      <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+        <span class="text-2xl">&#128640;</span> 即將推出功能的想法
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">你們方案頁提到的 roadmap，我有一些實作上的想法。</p>
+
+      <div class="space-y-5">
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <h3 class="text-white font-bold mb-2">打者 wRC+</h3>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            你們已經有 wOBA 了，wRC+ 的公式本身不難。比較麻煩的是 <strong class="text-white">Park Factor</strong> — CPBL 五個主場的打擊環境差蠻多的，洲際跟大巨蛋的得分環境完全不同。
+          </p>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            要考慮的問題：Park Factor 用幾年的資料算？球場整修後資料怎麼處理？客場比賽只佔一半，樣本量夠不夠穩定？我有用自己 DB 裡的 2025 全季資料試算過一版，踩過一些坑可以分享。
+          </p>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <h3 class="text-white font-bold mb-2">聯盟平均本壘板紀律</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            你們球員 Rzone 已經有核心區 / 邊線區 / 追打區 / 無效區的分區，也有標示聯盟平均的欄位。做聯盟平均要注意不能只算一個「大平均」— <strong class="text-white">左打右打要分開、球數情境也要分開</strong>。打者領先時的追打率跟打者落後時差很多，混在一起就沒有參考意義了。
+          </p>
+        </div>
+
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <h3 class="text-white font-bold mb-2">打者 WAR</h3>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            你們目前只有投手 WAR（tRA-based），打者 WAR 更複雜：Batting Runs + Baserunning Runs + Fielding Runs + 守位調整 + 聯盟調整 + 替補水準。
+          </p>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            最難的是守備評價 — 沒有 Statcast 的情況下，可以用 RF/9 + 你們已有的守備指標做近似。FanGraphs 早期也是用比較粗的守備模型在算 fWAR，CPBL 用類似的方法也完全合理。重點是把方法論說清楚，讓使用者知道這個 WAR 的侷限。
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-surface-border text-center py-8 text-xs text-gray-600 space-y-1">
+    <div>Murs — Rebas 訂閱會員 / CPBL 現場攝影師 / Fantasy Baseball 重度玩家</div>
+    <div>2026-04-05</div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>系統架構 — CPBL Analytics</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .stat-num { font-variant-numeric: tabular-nums; }
+
+    /* Flow diagram */
+    .flow-box {
+      background: #252e3e;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+    .flow-box.source  { border-color: #4ade80; color: #4ade80; }
+    .flow-box.etl     { border-color: #facc15; color: #facc15; }
+    .flow-box.db      { border-color: #a78bfa; color: #a78bfa; }
+    .flow-box.api     { border-color: #38bdf8; color: #38bdf8; }
+    .flow-box.static  { border-color: #fb923c; color: #fb923c; }
+    .flow-box.deploy  { border-color: #f472b6; color: #f472b6; }
+    .flow-box.ci      { border-color: #34d399; color: #34d399; }
+
+    .arrow {
+      color: #4b5563;
+      font-size: 18px;
+      line-height: 1;
+      user-select: none;
+    }
+    .arrow-down {
+      color: #4b5563;
+      font-size: 16px;
+      text-align: center;
+      line-height: 1;
+      user-select: none;
+    }
+
+    /* DB schema table */
+    .schema-table { width: 100%; border-collapse: collapse; }
+    .schema-table th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      padding: 6px 12px;
+      border-bottom: 1px solid #2d3748;
+    }
+    .schema-table td {
+      font-size: 13px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #1e2530;
+      color: #d1d5db;
+    }
+    .schema-table tr:last-child td { border-bottom: none; }
+    .schema-table tr:hover td { background: #1e2530; }
+    .tname { color: #a78bfa; font-family: monospace; font-weight: 600; }
+    .trows { color: #facc15; font-family: monospace; }
+    .tcols { color: #94a3b8; font-size: 12px; font-family: monospace; }
+
+    /* CI pipeline */
+    .pipe-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .pipe-icon {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .pipe-label {
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: center;
+      max-width: 72px;
+    }
+    .pipe-connector {
+      flex: 1;
+      height: 2px;
+      background: #2d3748;
+      align-self: center;
+      min-width: 16px;
+      max-width: 40px;
+      margin-top: -20px;
+    }
+
+    /* ADR cards */
+    .adr-card {
+      background: #252e3e;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .adr-card:hover { border-color: #3b82f6; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="architecture.html" class="text-brand font-semibold">Architecture</a>
+        <a href="api-docs.html" class="hover:text-white transition-colors font-medium text-gray-300">API Docs</a>
+        <span class="text-surface-border">|</span>
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">Fatigue</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">Clutch</a>
+        <a href="counts.html" class="hover:text-white transition-colors">Counts</a>
+      </div>
+      <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+        &#9776;
+      </button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="architecture.html" class="block py-1 text-brand font-semibold">Architecture</a>
+      <a href="api-docs.html" class="block py-1 hover:text-white font-medium text-gray-300">API Docs</a>
+      <div class="border-t border-surface-border my-1"></div>
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">Fatigue</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">Clutch</a>
+      <a href="counts.html" class="block py-1 hover:text-white">Counts</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="max-w-6xl mx-auto px-4 py-14 text-center">
+    <div class="inline-flex items-center gap-2 bg-brand/10 border border-brand/30 rounded-full px-4 py-1 text-brand text-xs mb-6">
+      系統架構
+    </div>
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-4">
+      系統如何構建
+    </h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm leading-relaxed">
+      雙來源 ETL 資料管線、SQLite WAL 模式、17 個端點的 FastAPI，
+      以及部署到 Cloudflare Pages 的完全自動化 CI/CD 系統。
+    </p>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-20 space-y-16">
+
+    <!-- ═══ Section 1: 系統架構 ═══ -->
+    <section>
+      <h2 class="text-xl font-bold text-white mb-2">系統架構</h2>
+      <p class="text-gray-500 text-sm mb-6">從原始資料來源到即時儀表板的端對端資料流。</p>
+
+      <div class="bg-surface-card border border-surface-border rounded-xl p-6 overflow-x-auto">
+
+        <!-- Row 1: sources → ETL → DB → API → Static Export → CF Pages -->
+        <div class="flex items-center gap-2 flex-nowrap min-w-max mb-1">
+          <!-- Sources column -->
+          <div class="flex flex-col gap-2">
+            <div class="flow-box source">Rebas Open Data<br/><span class="text-xs opacity-70">JSON / GitHub</span></div>
+            <div class="flow-box source">CPBL Public API<br/><span class="text-xs opacity-70">POST /box/getlive</span></div>
+          </div>
+
+          <!-- Merge arrow -->
+          <div class="flex flex-col items-center gap-1 mx-1">
+            <span class="arrow" style="font-size:22px; color:#4ade80;">&#8594;</span>
+            <span class="arrow" style="font-size:22px; color:#4ade80;">&#8594;</span>
+          </div>
+
+          <!-- ETL -->
+          <div class="flow-box etl text-center">
+            ETL Pipeline<br/>
+            <span class="text-xs opacity-70">Python / scripts/</span>
+          </div>
+
+          <span class="arrow mx-1">&#8594;</span>
+
+          <!-- DB -->
+          <div class="flow-box db text-center">
+            SQLite DB<br/>
+            <span class="text-xs opacity-70">8 tables, WAL</span>
+          </div>
+
+          <span class="arrow mx-1">&#8594;</span>
+
+          <!-- API -->
+          <div class="flow-box api text-center">
+            FastAPI<br/>
+            <span class="text-xs opacity-70">17 endpoints</span>
+          </div>
+
+          <span class="arrow mx-1">&#8594;</span>
+
+          <!-- Static export -->
+          <div class="flow-box static text-center">
+            Static JSON Export<br/>
+            <span class="text-xs opacity-70">dashboard/data/*.json</span>
+          </div>
+
+          <span class="arrow mx-1">&#8594;</span>
+
+          <!-- CF Pages -->
+          <div class="flow-box deploy text-center">
+            Cloudflare Pages<br/>
+            <span class="text-xs opacity-70">Global CDN</span>
+          </div>
+        </div>
+
+        <!-- Row 2: GitHub Actions feeding into Static JSON Export -->
+        <div class="flex items-end gap-2 flex-nowrap min-w-max mt-4 pl-4">
+          <div style="width: 488px; flex-shrink:0;"></div>
+          <div class="flex flex-col items-center">
+            <div class="flow-box ci text-center">
+              GitHub Actions<br/>
+              <span class="text-xs opacity-70">daily cron + CI/CD</span>
+            </div>
+            <div class="arrow-down mt-1" style="color:#34d399; font-size:20px;">&#8593;</div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex flex-wrap gap-4 mt-6 pt-4 border-t border-surface-border">
+          <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 rounded-sm bg-green-400/20 border border-green-400 inline-block"></span><span class="text-gray-500">Data Source</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 rounded-sm bg-yellow-400/20 border border-yellow-400 inline-block"></span><span class="text-gray-500">Processing</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 rounded-sm bg-violet-400/20 border border-violet-400 inline-block"></span><span class="text-gray-500">Storage</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 rounded-sm bg-sky-400/20 border border-sky-400 inline-block"></span><span class="text-gray-500">API Layer</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 rounded-sm bg-orange-400/20 border border-orange-400 inline-block"></span><span class="text-gray-500">Build Artifact</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 rounded-sm bg-pink-400/20 border border-pink-400 inline-block"></span><span class="text-gray-500">Hosting</span></div>
+          <div class="flex items-center gap-2 text-xs"><span class="w-3 h-3 rounded-sm bg-emerald-400/20 border border-emerald-400 inline-block"></span><span class="text-gray-500">Automation</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ Section 2: ETL Pipeline ═══ -->
+    <section id="etl">
+      <h2 class="text-xl font-bold text-white mb-2">ETL 資料管線詳解</h2>
+      <p class="text-gray-500 text-sm mb-6">說明如何從兩個來源提取、協調和載入 SQLite 的原始資料。</p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- 雙來源資料擷取 -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
+            雙來源資料擷取
+          </h3>
+          <div class="space-y-3 text-sm">
+            <div class="flex gap-3">
+              <span class="text-green-400 font-semibold min-w-[100px]">Rebas（主要來源）</span>
+              <span class="text-gray-400">完整打席 + 投球序列 JSON。結構化 6 個表的 Schema。2024–2025 賽季歷史資料。</span>
+            </div>
+            <div class="border-t border-surface-border pt-3 flex gap-3">
+              <span class="text-green-400 font-semibold min-w-[100px]">CPBL（補充來源）</span>
+              <span class="text-gray-400">新增 Rebas 缺少的 <code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">Lobs</code> / <code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">LeftBehindLobs</code> 欄位。用於 LOB% 交叉驗證。</span>
+            </div>
+            <div class="border-t border-surface-border pt-3 flex gap-3">
+              <span class="text-sky-400 font-semibold min-w-[100px]">連接鍵</span>
+              <span class="text-gray-400"><code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">(game_date, home_team, away_team)</code> — no shared ID across sources.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Quality -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>
+            資料品質與對應
+          </h3>
+          <div class="space-y-3 text-sm">
+            <div class="flex gap-3">
+              <span class="text-yellow-400 font-semibold min-w-[100px]">模糊匹配</span>
+              <span class="text-gray-400">CPBL 只提供中文名稱。<code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">player_mapping</code> 表連接到 Rebas <code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">player_id</code>。未解析名稱的編輯距離後備方案。</span>
+            </div>
+            <div class="border-t border-surface-border pt-3 flex gap-3">
+              <span class="text-yellow-400 font-semibold min-w-[100px]">冪等</span>
+              <span class="text-gray-400">已存在 DB 的比賽被跳過。重新執行是安全的。使用 <code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">INSERT OR IGNORE</code> 和比賽複合鍵。</span>
+            </div>
+            <div class="border-t border-surface-border pt-3 flex gap-3">
+              <span class="text-sky-400 font-semibold min-w-[100px]">磁碟快取</span>
+              <span class="text-gray-400">原始 JSON 回應快取在 <code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">data/cpbl_raw/</code> 下，以避免重試時的冗餘 API 呼叫。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rate Limiting -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span>
+            速率限制（CPBL API）
+          </h3>
+          <div class="grid grid-cols-2 gap-4 text-center">
+            <div class="bg-black/20 rounded-lg p-4">
+              <div class="text-2xl font-bold text-sky-400 stat-num">2s</div>
+              <div class="text-xs text-gray-500 mt-1">請求間隔</div>
+            </div>
+            <div class="bg-black/20 rounded-lg p-4">
+              <div class="text-2xl font-bold text-sky-400 stat-num">30/min</div>
+              <div class="text-xs text-gray-500 mt-1">硬限制上限</div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-4">
+            在 <code class="text-yellow-300 bg-black/30 px-1 rounded">cpbl_client.py</code> 中實施為令牌桶樣式的延遲。尊重每個請求和每分鐘的限制，以避免公開端點的 IP 禁用。
+          </p>
+        </div>
+
+        <!-- Pipeline Steps -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-violet-400 inline-block"></span>
+            管線執行順序
+          </h3>
+          <ol class="space-y-2 text-sm">
+            <li class="flex gap-3">
+              <span class="text-violet-400 font-bold min-w-[20px]">1</span>
+              <span class="text-gray-400"><code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">seed_rebas.py</code> — 將 Rebas JSON 展平為標準化表</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-violet-400 font-bold min-w-[20px]">2</span>
+              <span class="text-gray-400"><code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">seed_cpbl.py</code> — 提取 + 快取 CPBL API，合併 LOB 欄位</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-violet-400 font-bold min-w-[20px]">3</span>
+              <span class="text-gray-400"><code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">build_re_matrix.py</code> — 從累積的 PA 資料計算 RE24</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-violet-400 font-bold min-w-[20px]">4</span>
+              <span class="text-gray-400">分析快取被無效化；FastAPI 提供新鮮計算的指標</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-violet-400 font-bold min-w-[20px]">5</span>
+              <span class="text-gray-400">靜態 JSON 匯出將 <code class="text-yellow-300 bg-black/30 px-1 rounded text-xs">dashboard/data/*.json</code> 寫入 Cloudflare Pages</span>
+            </li>
+          </ol>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ Section 3: 資料庫結構 ═══ -->
+    <section id="database">
+      <h2 class="text-xl font-bold text-white mb-2">資料庫結構</h2>
+      <p class="text-gray-500 text-sm mb-6">SQLite WAL 模式。8 個表、15+ 個索引、分析快取層。</p>
+
+      <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden">
+        <table class="schema-table">
+          <thead>
+            <tr>
+              <th>表</th>
+              <th>列數</th>
+              <th>關鍵欄位</th>
+              <th>說明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tname">games</span></td>
+              <td><span class="trows">370</span></td>
+              <td><span class="tcols">game_id, game_date, home_team, away_team, season, kind_code</span></td>
+              <td class="text-gray-500 text-xs">所有表的主連接鍵。日期、主隊、客隊的複合唯一約束。</td>
+            </tr>
+            <tr>
+              <td><span class="tname">plate_appearances</span></td>
+              <td><span class="trows">27,974</span></td>
+              <td><span class="tcols">pa_id, game_id, batter_id, pitcher_id, inning, outs, bases, result</span></td>
+              <td class="text-gray-500 text-xs">核心事件表。包含 RE24 的槓桿背景（局數、出局數、壘包狀態）。</td>
+            </tr>
+            <tr>
+              <td><span class="tname">pitch_events</span></td>
+              <td><span class="trows">109,897</span></td>
+              <td><span class="tcols">event_id, pa_id, pitch_seq, pitch_type, result, balls, strikes</span></td>
+              <td class="text-gray-500 text-xs">最大的表。用於計數拆分和疲勞曲線分析。</td>
+            </tr>
+            <tr>
+              <td><span class="tname">batter_box</span></td>
+              <td><span class="trows">8,400</span></td>
+              <td><span class="tcols">game_id, player_id, ab, h, bb, hbp, hr, rbi, lob</span></td>
+              <td class="text-gray-500 text-xs">每位打者每場比賽的成績單。LOB 欄位來自 CPBL API 補充。</td>
+            </tr>
+            <tr>
+              <td><span class="tname">pitcher_box</span></td>
+              <td><span class="trows">3,217</span></td>
+              <td><span class="tcols">game_id, player_id, ip, h, bb, k, er, pitch_count, lob, left_behind_lob</span></td>
+              <td class="text-gray-500 text-xs">LOB% 分子/分母來自此處。left_behind_lob 來自 CPBL API。</td>
+            </tr>
+            <tr>
+              <td><span class="tname">analysis_cache</span></td>
+              <td><span class="trows">—</span></td>
+              <td><span class="tcols">cache_key, value_json, computed_at, ttl_seconds</span></td>
+              <td class="text-gray-500 text-xs">鍵值存儲。昂貴的彙總在 ETL 後快取，新資料載入時無效化。</td>
+            </tr>
+            <tr>
+              <td><span class="tname">player_mapping</span></td>
+              <td><span class="trows">—</span></td>
+              <td><span class="tcols">rebas_player_id, cpbl_name_zh, team_code, season</span></td>
+              <td class="text-gray-500 text-xs">將 CPBL 中文名稱與 Rebas 球員 ID 連接。手動維護邊界情況（交易、改名）。</td>
+            </tr>
+            <tr>
+              <td><span class="tname">run_expectancy_matrix</span></td>
+              <td><span class="trows">24</span></td>
+              <td><span class="tcols">outs, bases_state, expected_runs, season, sample_size</span></td>
+              <td class="text-gray-500 text-xs">24 個壘包出局狀態。透過 build_re_matrix.py 從 CPBL PA 資料建立。用於 RE24 + 槓桿指數。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Relationships -->
+      <div class="mt-5 bg-surface-card border border-surface-border rounded-xl p-6">
+        <h3 class="text-sm font-bold text-gray-300 mb-4">關鍵關係</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <div class="flex items-start gap-3">
+            <span class="text-violet-400 text-lg mt-0.5">&#9655;</span>
+            <div>
+              <span class="text-white font-medium">games &#8594; plate_appearances</span>
+              <p class="text-gray-500 text-xs mt-1">一場比賽有多個打席。外鍵：<code class="text-yellow-300 bg-black/30 px-1 rounded">game_id</code></p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-violet-400 text-lg mt-0.5">&#9655;</span>
+            <div>
+              <span class="text-white font-medium">plate_appearances &#8594; pitch_events</span>
+              <p class="text-gray-500 text-xs mt-1">一個打席有多個投球。外鍵：<code class="text-yellow-300 bg-black/30 px-1 rounded">pa_id</code></p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-violet-400 text-lg mt-0.5">&#9655;</span>
+            <div>
+              <span class="text-white font-medium">games &#8594; batter_box / pitcher_box</span>
+              <p class="text-gray-500 text-xs mt-1">每位球員每場比賽的成績單列。外鍵：<code class="text-yellow-300 bg-black/30 px-1 rounded">game_id</code></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ Section 4: CI/CD 流程 ═══ -->
+    <section id="cicd">
+      <h2 class="text-xl font-bold text-white mb-2">CI/CD 流程</h2>
+      <p class="text-gray-500 text-sm mb-6">兩個 GitHub Actions 工作流：推送觸發品質閘道 + 每日自動資料更新。</p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Push Pipeline -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="bg-brand/10 border border-brand/30 rounded-full px-3 py-0.5 text-brand text-xs font-semibold">推送觸發</span>
+            <span class="text-gray-500 text-xs">觸發：推送、拉取請求</span>
+          </div>
+
+          <div class="flex items-start gap-0">
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-sky-500/10 border border-sky-500/30 text-sky-400">&#9654;</div>
+              <div class="pipe-label">推送 /<br/>拉取請求</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-yellow-500/10 border border-yellow-500/30 text-yellow-400">&#9998;</div>
+              <div class="pipe-label">檢查<br/>(ruff)</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-violet-500/10 border border-violet-500/30 text-violet-400">&#10003;</div>
+              <div class="pipe-label">測試<br/>(pytest)</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">&#128202;</div>
+              <div class="pipe-label">涵蓋<br/>報告</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-pink-500/10 border border-pink-500/30 text-pink-400">&#128640;</div>
+              <div class="pipe-label">部署<br/>到 CF</div>
+            </div>
+          </div>
+
+          <div class="mt-5 space-y-2 text-xs text-gray-500">
+            <div class="flex gap-2"><span class="text-yellow-400">ruff</span> — 檢查匯入、風格、未使用的變數（取代 flake8 + isort）</div>
+            <div class="flex gap-2"><span class="text-violet-400">pytest</span> — 跨單元 + 整合層的 129 個測試</div>
+            <div class="flex gap-2"><span class="text-emerald-400">coverage</span> — 如果低於 80% 則失敗，報告作為成品上傳</div>
+            <div class="flex gap-2"><span class="text-pink-400">deploy</span> — 只在所有檢查通過後在主分支推送上執行</div>
+          </div>
+        </div>
+
+        <!-- Daily Cron Pipeline -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-6">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3 py-0.5 text-emerald-400 text-xs font-semibold">每日 Cron</span>
+            <span class="text-gray-500 text-xs">排程：0 22 * * * (UTC)</span>
+          </div>
+
+          <div class="flex items-start gap-0 flex-wrap gap-y-4">
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">&#128336;</div>
+              <div class="pipe-label">UTC<br/>22:00</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-green-500/10 border border-green-500/30 text-green-400">&#128190;</div>
+              <div class="pipe-label">植入<br/>資料</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-orange-500/10 border border-orange-500/30 text-orange-400">&#128462;</div>
+              <div class="pipe-label">匯出<br/>JSON</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-sky-500/10 border border-sky-500/30 text-sky-400">&#128260;</div>
+              <div class="pipe-label">Git<br/>推送</div>
+            </div>
+            <div class="pipe-connector mt-1.5" style="margin-left:8px; margin-right:8px;"></div>
+
+            <div class="pipe-step">
+              <div class="pipe-icon bg-pink-500/10 border border-pink-500/30 text-pink-400">&#9889;</div>
+              <div class="pipe-label">自動<br/>部署</div>
+            </div>
+          </div>
+
+          <div class="mt-5 space-y-2 text-xs text-gray-500">
+            <div class="flex gap-2"><span class="text-green-400">seed</span> — 執行 seed_rebas.py + seed_cpbl.py 獲取最新比賽</div>
+            <div class="flex gap-2"><span class="text-orange-400">export</span> — FastAPI 為所有 4 個模組產生靜態 JSON 快照</div>
+            <div class="flex gap-2"><span class="text-sky-400">git push</span> — 提交更新的 data/ 檔案並帶有時間戳記訊息</div>
+            <div class="flex gap-2"><span class="text-pink-400">deploy</span> — Cloudflare Pages 透過 webhook 在 git 推送時自動部署</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ Section 5: 技術決策 (ADR) ═══ -->
+    <section id="decisions">
+      <h2 class="text-xl font-bold text-white mb-2">技術決策</h2>
+      <p class="text-gray-500 text-sm mb-6">架構決策記錄 — 關鍵技術選擇背後的理由。</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <!-- ADR 1: SQLite -->
+        <div class="adr-card">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <span class="text-xs text-violet-400 font-semibold uppercase tracking-wide">ADR-001</span>
+              <h3 class="text-white font-bold mt-1">SQLite 優於 PostgreSQL</h3>
+            </div>
+            <span class="bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs px-2 py-0.5 rounded-full font-semibold">儲存</span>
+          </div>
+          <div class="space-y-2 text-sm text-gray-400">
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 單一寫入 ETL 表示沒有並發寫入衝突</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 零配置、零營運開銷 — 在 Python 執行的任何地方執行</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 整個資料庫是單一可移植檔案，簡化 CI/CD</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 讀取密集的分析工作負載非常適合 WAL 模式</div>
+            <div class="flex gap-2 pt-2 border-t border-surface-border"><span class="text-yellow-400 font-bold">!</span> 接受的折衷：無並發寫入、1 TB 實際大小限制</div>
+          </div>
+        </div>
+
+        <!-- ADR 2: Static JSON -->
+        <div class="adr-card">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <span class="text-xs text-orange-400 font-semibold uppercase tracking-wide">ADR-002</span>
+              <h3 class="text-white font-bold mt-1">靜態 JSON 匯出</h3>
+            </div>
+            <span class="bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs px-2 py-0.5 rounded-full font-semibold">代管</span>
+          </div>
+          <div class="space-y-2 text-sm text-gray-400">
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> Cloudflare Pages 免費層 — 每月 $0 用於全球 CDN</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 無需伺服器執行時；消除冷啟動</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 透過 300+ 個 PoPs 的即時全球分佈</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 資料每日透過 cron 更新 — 對分析的新鮮度是可以接受的</div>
+            <div class="flex gap-2 pt-2 border-t border-surface-border"><span class="text-yellow-400 font-bold">!</span> 接受的折衷：無實時查詢；僅預計算彙總</div>
+          </div>
+        </div>
+
+        <!-- ADR 3: ECharts -->
+        <div class="adr-card">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <span class="text-xs text-sky-400 font-semibold uppercase tracking-wide">ADR-003</span>
+              <h3 class="text-white font-bold mt-1">ECharts 優於 D3 / Plotly</h3>
+            </div>
+            <span class="bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs px-2 py-0.5 rounded-full font-semibold">視覺化</span>
+          </div>
+          <div class="space-y-2 text-sm text-gray-400">
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 基於 Canvas 的渲染 — 比 SVG 密集的 D3 具有更好的行動效能</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> ~750 KB vs Plotly 的 ~3.5 MB — 顯著的包大小縮減</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 內建互動（縮放、提示、圖例切換）零程式碼</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 現成的深色主題支援符合儀表板美觀</div>
+            <div class="flex gap-2 pt-2 border-t border-surface-border"><span class="text-yellow-400 font-bold">!</span> 接受的折衷：對於完全自訂視覺不如 D3 靈活</div>
+          </div>
+        </div>
+
+        <!-- ADR 4: Python -->
+        <div class="adr-card">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <span class="text-xs text-yellow-400 font-semibold uppercase tracking-wide">ADR-004</span>
+              <h3 class="text-white font-bold mt-1">Python 優於 Node.js</h3>
+            </div>
+            <span class="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs px-2 py-0.5 rounded-full font-semibold">後端</span>
+          </div>
+          <div class="space-y-2 text-sm text-gray-400">
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> pandas / numpy 用於資料處理；Node 生態系中無等價物</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 更豐富的統計函式庫（scipy、statsmodels）用於分析模組</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> FastAPI + SQLAlchemy 2.0 提供與 Node 可比的非同步效能</div>
+            <div class="flex gap-2"><span class="text-green-400 font-bold">+</span> 未來 ML 功能（投球分類、ERA 預測）已在生態系中</div>
+            <div class="flex gap-2 pt-2 border-t border-surface-border"><span class="text-yellow-400 font-bold">!</span> 接受的折衷：Python GIL 限制 CPU 綁定並發 vs Node 事件迴圈</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料：Rebas Open Data（ODC-By 授權條款）+ CPBL Public API | Murs 構建
+  </footer>
+
+</body>
+</html>

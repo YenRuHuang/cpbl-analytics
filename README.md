@@ -1,35 +1,36 @@
-# CPBL Analytics — 台灣職棒進階數據分析系統
+# CPBL Analytics — 後端工程 Portfolio
 
 [![CI](https://github.com/YenRuHuang/cpbl-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/YenRuHuang/cpbl-analytics/actions/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-129%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-84.78%25-brightgreen)
 
-**Live Demo → [cpblanalysis.mursfoto.com](https://cpblanalysis.mursfoto.com)**
+**Live → [cpblanalysis.mursfoto.com](https://cpblanalysis.mursfoto.com)**
 
-整合 [Rebas Open Data](https://github.com/rebas-tw/rebas.tw-open-data)（ODC-By License）與 CPBL 官網公開資料，計算台灣棒球圈尚未廣泛公開的進階指標。
+從零打造的 CPBL 棒球數據系統。整合 [Rebas Open Data](https://github.com/rebas-tw/rebas.tw-open-data)（ODC-By License）與 CPBL 官網公開資料，涵蓋 ETL 資料管線、資料庫設計、RESTful API、互動式 Dashboard、自動化 CI/CD。
 
-| 數據規模 | |
-|---------|---|
-| 比賽場數 | 370（2025 全季 + 2026 開季） |
-| 打席數 | 27,974 |
+| 指標 | |
+|------|---|
+| 比賽場數 | 370（2025 全季 + 2026 開季）|
+| 打席 | 27,974 |
 | 逐球事件 | 109,897 |
+| API Endpoints | 17 |
+| 測試 | 129 個 / 84.78% coverage |
+| 更新頻率 | GitHub Actions 每日自動 |
 
 ---
 
-## 四大分析模組
+## 架構總覽
 
-| 模組 | 說明 |
-|------|------|
-| **LOB% 殘壘效率** | 投手讓壘上跑者未得分的比率，交叉驗證 CPBL API 殘壘欄位，識別幸運/運氣差投手 |
-| **Clutch / Leverage Index** | 基於 RE24 矩陣計算情境壓力指數，量化打者在高壓局面（LI > 1.5）的表現差異 |
-| **Count Splits** | 打者與投手在不同球數（領先/落後/平手）下的表現分裂，追蹤 Chase Rate |
-| **Pitcher Fatigue** | 每 15 球為單位追蹤投手表現衰退曲線，自動偵測疲勞臨界點 |
+```
+Rebas Open Data (JSON) ──┐
+                         ├──→ ETL Pipeline ──→ SQLite (8 tables, WAL) ──→ FastAPI (17 endpoints) ──→ Static JSON Export
+CPBL 官網公開 API ────────┘                                                                            ↓
+                                                                                         Cloudflare Pages (auto deploy)
+                                                                                                       ↑
+                                                                                         GitHub Actions (CI + Daily Cron)
+```
 
-### 分析文章
-
-- [誰是 2025 CPBL 最幸運的投手？LOB% 解密](https://cpblanalysis.mursfoto.com/article-lob-2025)
-- [投手疲勞曲線：魔神樂 vs 後勁型投手](https://cpblanalysis.mursfoto.com/article-fatigue-2025)
-- [Clutch 打者排行：誰在關鍵時刻最可靠？](https://cpblanalysis.mursfoto.com/article-clutch-2025)
+詳細架構圖、DB Schema、CI/CD 流程、技術決策請見 **[Architecture 頁面](https://cpblanalysis.mursfoto.com/architecture.html)**。
 
 ---
 
@@ -39,91 +40,86 @@
 |------|------|
 | 語言 | Python 3.12+ |
 | 套件管理 | uv |
-| API 框架 | FastAPI + Uvicorn |
+| API | FastAPI + Uvicorn |
 | ORM | SQLAlchemy 2.0 |
-| 資料庫 | SQLite（WAL mode） |
-| 視覺化 | ECharts 5.4.3 + Tailwind CSS 3.4.1 |
-| 測試 | pytest + pytest-cov（84.78% coverage） |
-| 容器 | Docker + docker-compose |
-| CI/CD | GitHub Actions（CI + Daily Cron 自動更新） |
-| Linter / Type | ruff + mypy（strict mode） |
+| 資料庫 | SQLite（WAL mode）/ 8 tables / 15+ indexes |
+| 前端 | ECharts 5.4.3 + Tailwind CSS 3.4.1 |
+| 測試 | pytest + pytest-cov |
+| 容器 | Docker multi-stage build + docker-compose |
+| CI/CD | GitHub Actions（lint + test + coverage + daily cron ETL）|
+| Lint / Type | ruff + mypy（strict） |
 | 部署 | Cloudflare Pages（GitHub 整合自動部署） |
 
 ---
 
-## 架構
+## 工程亮點
 
-```
-Rebas Open Data JSON + CPBL 官網公開資料
-  → ETL (seed_cpbl.py / seed_rebas.py)
-  → SQLite (WAL mode)
-  → Analysis modules (4 個)
-  → FastAPI + Pydantic schemas
-  → export_static.py → 靜態 JSON
-  → ECharts Dashboard
-  → GitHub Actions daily cron (UTC 22:00)
-  → Cloudflare Pages (auto deploy)
-```
+### ETL 資料管線
+- 雙資料源整合：Rebas JSON 巢狀結構展平 + CPBL API
+- Join key：`game_date + home_team + away_team`
+- 球員名稱模糊比對（處理改名、交易）
+- Rate limiting（2s 間隔、30/min）
+- 冪等載入（skip existing games）
+- 磁碟快取 raw JSON
+
+### 資料庫設計
+- 8 張表：games / plate_appearances / pitch_events / batter_box / pitcher_box / analysis_cache / player_mapping / run_expectancy_matrix
+- WAL mode 支援讀寫分離
+- analysis_cache 做查詢結果快取（TTL-based）
+
+### API 設計
+- 17 個 RESTful endpoints（FastAPI + Pydantic v2）
+- Typed response models
+- CORS + Health check
+- 完整文件：**[API Docs 頁面](https://cpblanalysis.mursfoto.com/api-docs.html)**
+
+### CI/CD
+- Push 觸發：ruff lint → pytest → coverage report → deploy
+- Daily cron（UTC 22:00）：seed data → export static JSON → git push → auto deploy
+
+---
+
+## 分析模組
+
+基於資料管線之上的 4 個棒球分析模組：
+
+| 模組 | 說明 |
+|------|------|
+| **LOB%** | 殘壘率 — 投手運氣成分，預測 ERA 回歸 |
+| **Clutch / LI** | 基於 RE24 矩陣的高壓情境表現 |
+| **Count Splits** | 不同球數下的打擊/投球表現差異 |
+| **Pitcher Fatigue** | 每 15 球追蹤衰退曲線，自動偵測疲勞臨界點 |
+
+分析文章：
+- [LOB% 解密](https://cpblanalysis.mursfoto.com/article-lob-2025.html)
+- [投手疲勞曲線](https://cpblanalysis.mursfoto.com/article-fatigue-2025.html)
+- [Clutch 打者排行](https://cpblanalysis.mursfoto.com/article-clutch-2025.html)
 
 ---
 
 ## 快速開始
 
-### 1. 安裝依賴
-
 ```bash
+# 安裝
 git clone https://github.com/YenRuHuang/cpbl-analytics.git
 cd cpbl-analytics
 uv sync
-```
 
-### 2. 設定環境變數
-
-```bash
+# 環境變數
 cp .env.example .env
-# 編輯 .env，設定 DATABASE_URL 等參數
-```
 
-### 3. 匯入資料
-
-```bash
-# 匯入 Rebas Open Data（將 JSON 放入 data/rebas_raw/）
+# 匯入資料
 uv run python scripts/seed_rebas.py
-
-# 整合 CPBL 官網公開資料
 uv run python scripts/seed_cpbl.py --year 2026
-
-# 建立 Run Expectancy 矩陣
 uv run python scripts/build_re_matrix.py
-```
 
-### 4. 啟動 API Server
-
-```bash
+# 啟動 API
 uv run uvicorn src.api.app:create_app --factory --reload --port 8000
-```
+# → http://localhost:8000/docs
 
-API 文件：http://localhost:8000/docs
-
-### 5. 使用 Docker 啟動
-
-```bash
+# Docker
 docker compose up --build
 ```
-
----
-
-## API Endpoints
-
-| Method | Path | 說明 |
-|--------|------|------|
-| `GET` | `/health` | 健康檢查 |
-| `GET` | `/api/v1/players` | 球員列表 |
-| `GET` | `/api/v1/players/{player_id}/lob` | 球員 LOB% 統計 |
-| `GET` | `/api/v1/players/{player_id}/clutch` | 球員 Clutch Score |
-| `GET` | `/api/v1/players/{player_id}/count-splits` | 球數分裂數據 |
-| `GET` | `/api/v1/pitchers/{player_id}/fatigue` | 投手疲勞曲線 |
-| `GET` | `/api/v1/games/{game_id}/leverage` | 單場 Leverage Index |
 
 ---
 
@@ -133,15 +129,15 @@ docker compose up --build
 cpbl-analytics/
 ├── src/
 │   ├── config/         # pydantic-settings 環境管理
-│   ├── db/             # SQLAlchemy ORM models + engine
+│   ├── db/             # SQLAlchemy ORM + engine + migrations
 │   ├── etl/            # Rebas + CPBL 資料整合
-│   ├── analysis/       # 四大分析模組
+│   ├── analysis/       # 4 個分析模組
 │   ├── api/            # FastAPI app + routes + schemas
 │   └── utils/          # RE24 矩陣、常數
 ├── tests/              # pytest（129 tests, 84.78% coverage）
-├── scripts/            # 資料匯入 + 靜態 JSON 匯出
-├── dashboard/static/   # ECharts 互動式 Dashboard + 分析文章
-├── data/               # 原始資料（git-ignored，除 re_matrix.json）
+├── scripts/            # seed / export / build 腳本
+├── dashboard/static/   # ECharts Dashboard + 分析文章 + Architecture + API Docs
+├── data/               # 原始資料（git-ignored）
 ├── Dockerfile
 ├── docker-compose.yml
 └── pyproject.toml
@@ -149,30 +145,23 @@ cpbl-analytics/
 
 ---
 
-## 資料來源
-
-| 來源 | 授權 | 說明 |
-|------|------|------|
-| [Rebas Open Data](https://github.com/rebas-tw/rebas.tw-open-data) | ODC-By License | 逐打席（PA）與逐球（event）歷史資料 |
-| CPBL 官網公開資料 | 非商業用途 | 即時比分、殘壘數（Lobs / LeftBehindLobs） |
-
----
-
 ## 開發指令
 
 ```bash
-# 執行測試
-uv run pytest -v --cov=src
-
-# Lint 檢查
-uv run ruff check src/ tests/
-
-# Type check
-uv run mypy src/
-
-# 匯出靜態 JSON（部署用）
-uv run python scripts/export_static.py
+uv run pytest -v --cov=src      # 測試 + 覆蓋率
+uv run ruff check src/ tests/   # Lint
+uv run mypy src/                 # Type check
+uv run python scripts/export_static.py  # 匯出靜態 JSON
 ```
+
+---
+
+## 資料來源
+
+| 來源 | 授權 | 用途 |
+|------|------|------|
+| [Rebas Open Data](https://github.com/rebas-tw/rebas.tw-open-data) | ODC-By License | 逐打席 + 逐球歷史資料 |
+| CPBL 官網公開資料 | 非商業用途 | 即時比分、殘壘數 |
 
 ---
 

@@ -26,18 +26,24 @@
   <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-2">
-        <span class="text-2xl">⚾</span>
+        <span class="text-2xl">&#9918;</span>
         <span class="font-bold text-lg text-white">CPBL Analytics</span>
       </a>
-      <div class="hidden sm:flex items-center gap-6">
-        <a href="lob.html" class="text-sm text-gray-400 hover:text-white transition-colors">LOB%</a>
-        <a href="fatigue.html" class="text-sm text-gray-400 hover:text-white transition-colors">投手疲勞</a>
-        <a href="clutch.html" class="text-sm text-gray-400 hover:text-white transition-colors">關鍵時刻</a>
-        <a href="counts.html" class="text-sm text-purple-400 font-semibold">球數分析</a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="architecture.html" class="hover:text-white transition-colors font-medium text-gray-300">Architecture</a>
+        <a href="api-docs.html" class="hover:text-white transition-colors font-medium text-gray-300">API Docs</a>
+        <span class="text-surface-border">|</span>
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="text-purple-400 font-semibold">球數分析</a>
       </div>
       <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
     </div>
     <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="architecture.html" class="block py-1 hover:text-white font-medium text-gray-300">Architecture</a>
+      <a href="api-docs.html" class="block py-1 hover:text-white font-medium text-gray-300">API Docs</a>
+      <div class="border-t border-surface-border my-1"></div>
       <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
       <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
       <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>

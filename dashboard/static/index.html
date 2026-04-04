@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CPBL Analytics — 進階數據分析</title>
+  <title>CPBL Analytics — 後端工程 Portfolio</title>
   <script src="https://cdn.tailwindcss.com/3.4.1"></script>
   <script>
     tailwind.config = {
@@ -20,6 +20,7 @@
   <style>
     body { background-color: #141920; }
     .module-card:hover { transform: translateY(-2px); }
+    .stat-num { font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen font-sans">
@@ -28,89 +29,157 @@
   <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="index.html" class="flex items-center gap-2">
-        <span class="text-2xl">⚾</span>
+        <span class="text-2xl">&#9918;</span>
         <span class="font-bold text-lg text-white">CPBL Analytics</span>
       </a>
       <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="architecture.html" class="hover:text-white transition-colors font-medium text-gray-300">Architecture</a>
+        <a href="api-docs.html" class="hover:text-white transition-colors font-medium text-gray-300">API Docs</a>
+        <span class="text-surface-border">|</span>
         <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
-        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
-        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
-        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">Fatigue</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">Clutch</a>
+        <a href="counts.html" class="hover:text-white transition-colors">Counts</a>
       </div>
-      <!-- Mobile menu toggle placeholder -->
       <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
         &#9776;
       </button>
     </div>
-    <!-- Mobile menu -->
     <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="architecture.html" class="block py-1 hover:text-white font-medium text-gray-300">Architecture</a>
+      <a href="api-docs.html" class="block py-1 hover:text-white font-medium text-gray-300">API Docs</a>
+      <div class="border-t border-surface-border my-1"></div>
       <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
-      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
-      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
-      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">Fatigue</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">Clutch</a>
+      <a href="counts.html" class="block py-1 hover:text-white">Counts</a>
     </div>
   </nav>
 
   <!-- Hero -->
   <header class="max-w-6xl mx-auto px-4 py-16 text-center">
     <div class="inline-flex items-center gap-2 bg-brand/10 border border-brand/30 rounded-full px-4 py-1 text-brand text-xs mb-6">
-      Powered by Rebas Open Data
+      後端工程 Portfolio
     </div>
     <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-4">
       CPBL Analytics
     </h1>
-    <p class="text-xl text-gray-400 mb-2">進階數據分析</p>
+    <p class="text-xl text-gray-400 mb-2">從零打造的棒球數據系統</p>
     <p class="text-gray-500 max-w-2xl mx-auto text-sm leading-relaxed">
-      以賽伯計量學方法解讀中華職棒數據，從 LOB%、投手疲勞指數到關鍵時刻表現，<br class="hidden sm:block" />提供超越傳統打擊率的分析視角。
+      雙資料源 ETL pipeline、RESTful API、互動式 Dashboard、自動化 CI/CD。<br class="hidden sm:block" />
+      基於 Rebas Open Data + CPBL 官網公開資料。
     </p>
   </header>
 
-  <!-- Module Cards -->
+  <!-- Stats Banner -->
+  <section class="max-w-6xl mx-auto px-4 pb-12">
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-4 text-center">
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+        <div class="stat-num text-2xl font-bold text-white">370</div>
+        <div class="text-xs text-gray-500 mt-1">場比賽</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+        <div class="stat-num text-2xl font-bold text-white">110K</div>
+        <div class="text-xs text-gray-500 mt-1">逐球事件</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+        <div class="stat-num text-2xl font-bold text-white">17</div>
+        <div class="text-xs text-gray-500 mt-1">API Endpoints</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+        <div class="stat-num text-2xl font-bold text-white">129</div>
+        <div class="text-xs text-gray-500 mt-1">測試</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+        <div class="stat-num text-2xl font-bold text-white">85%</div>
+        <div class="text-xs text-gray-500 mt-1">覆蓋率</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+        <div class="stat-num text-2xl font-bold text-white">每日</div>
+        <div class="text-xs text-gray-500 mt-1">自動更新</div>
+      </div>
+    </div>
+  </section>
+
   <main class="max-w-6xl mx-auto px-4 pb-20">
+
+    <!-- Engineering Highlights -->
+    <h3 class="text-lg font-bold text-white mb-4">工程架構</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+
+      <a href="architecture.html#etl"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-brand/50 hover:shadow-lg hover:shadow-brand/10">
+        <div class="text-3xl mb-3">&#128260;</div>
+        <h2 class="text-lg font-bold text-white mb-2">ETL 資料管線</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          Rebas JSON + CPBL API 雙資料源整合。Rate limiting、磁碟快取、冪等載入、球員名稱模糊比對。
+        </p>
+        <div class="mt-4 text-brand text-xs font-semibold">查看架構 &rarr;</div>
+      </a>
+
+      <a href="api-docs.html"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10">
+        <div class="text-3xl mb-3">&#128268;</div>
+        <h2 class="text-lg font-bold text-white mb-2">API 設計</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          17 個 RESTful endpoints。FastAPI + Pydantic v2 schema 驗證、型別化回應、CORS、health check。
+        </p>
+        <div class="mt-4 text-cyan-400 text-xs font-semibold">查看 API 文件 &rarr;</div>
+      </a>
+
+      <a href="architecture.html#database"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10">
+        <div class="text-3xl mb-3">&#128451;</div>
+        <h2 class="text-lg font-bold text-white mb-2">資料庫</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          8 張表、15+ 索引、WAL mode。分析快取層、球員對照表模糊 join。
+        </p>
+        <div class="mt-4 text-emerald-400 text-xs font-semibold">查看 Schema &rarr;</div>
+      </a>
+
+      <a href="architecture.html#cicd"
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10">
+        <div class="text-3xl mb-3">&#9881;</div>
+        <h2 class="text-lg font-bold text-white mb-2">DevOps</h2>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          Docker multi-stage build。GitHub Actions CI + 每日 cron ETL。Cloudflare Pages push 自動部署。
+        </p>
+        <div class="mt-4 text-amber-400 text-xs font-semibold">查看流程 &rarr;</div>
+      </a>
+
+    </div>
+
+    <!-- Analytics Modules -->
+    <h3 class="text-lg font-bold text-white mb-1">棒球知識：分析模組</h3>
+    <p class="text-gray-500 text-sm mb-4">基於資料管線之上的 4 個分析模組，展示對棒球進階數據的理解。</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-      <!-- LOB% -->
       <a href="lob.html"
-         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-brand/50 hover:shadow-lg hover:shadow-brand/10">
-        <div class="text-3xl mb-3">📊</div>
-        <h2 class="text-lg font-bold text-white mb-2">LOB% 分析</h2>
-        <p class="text-gray-400 text-sm leading-relaxed">
-          殘壘率（Left-On-Base%）反映投手的幸運程度。過高代表運氣好，過低代表運氣差，可預測未來 ERA 回歸方向。
-        </p>
-        <div class="mt-4 text-brand text-xs font-semibold">查看分析 →</div>
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-brand/50">
+        <h2 class="text-base font-bold text-white mb-1">LOB% 分析</h2>
+        <p class="text-gray-500 text-xs leading-relaxed">殘壘率反映投手運氣成分，可預測 ERA 回歸方向。</p>
+        <div class="mt-2 text-brand text-xs">查看 &rarr;</div>
       </a>
 
-      <!-- Fatigue -->
       <a href="fatigue.html"
-         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10">
-        <div class="text-3xl mb-3">🔥</div>
-        <h2 class="text-lg font-bold text-white mb-2">投手疲勞</h2>
-        <p class="text-gray-400 text-sm leading-relaxed">
-          追蹤投手在不同投球數區間的表現變化，找出疲勞閾值，協助教練做出最佳換投時機決策。
-        </p>
-        <div class="mt-4 text-yellow-400 text-xs font-semibold">查看分析 →</div>
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-yellow-500/50">
+        <h2 class="text-base font-bold text-white mb-1">投手疲勞曲線</h2>
+        <p class="text-gray-500 text-xs leading-relaxed">按投球數區間追蹤表現衰退，自動偵測疲勞臨界點。</p>
+        <div class="mt-2 text-yellow-400 text-xs">查看 &rarr;</div>
       </a>
 
-      <!-- Clutch -->
       <a href="clutch.html"
-         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10">
-        <div class="text-3xl mb-3">⚡</div>
-        <h2 class="text-lg font-bold text-white mb-2">關鍵時刻表現</h2>
-        <p class="text-gray-400 text-sm leading-relaxed">
-          比較打者在高槓桿指數情境下的打擊率與整體打擊率，找出真正在壓力下能表現的關鍵球員。
-        </p>
-        <div class="mt-4 text-green-400 text-xs font-semibold">查看分析 →</div>
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-green-500/50">
+        <h2 class="text-base font-bold text-white mb-1">關鍵時刻表現</h2>
+        <p class="text-gray-500 text-xs leading-relaxed">高壓情境打擊 vs 整體表現，基於 RE24 矩陣的 Leverage Index。</p>
+        <div class="mt-2 text-green-400 text-xs">查看 &rarr;</div>
       </a>
 
-      <!-- Count Splits -->
       <a href="counts.html"
-         class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10">
-        <div class="text-3xl mb-3">🎯</div>
-        <h2 class="text-lg font-bold text-white mb-2">球數分布分析</h2>
-        <p class="text-gray-400 text-sm leading-relaxed">
-          分析打者在領先球數、落後球數、平球數及兩好球等不同情境下的打擊表現，找出球種策略弱點。
-        </p>
-        <div class="mt-4 text-purple-400 text-xs font-semibold">查看分析 →</div>
+         class="module-card block bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-purple-500/50">
+        <h2 class="text-base font-bold text-white mb-1">球數分析</h2>
+        <p class="text-gray-500 text-xs leading-relaxed">不同球數情境下的打者/投手表現差異：領先、落後、平球數、兩好球。</p>
+        <div class="mt-2 text-purple-400 text-xs">查看 &rarr;</div>
       </a>
 
     </div>
@@ -123,7 +192,6 @@
            class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-brand/50 hover:shadow-lg hover:shadow-brand/10">
           <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
             <span class="bg-brand/10 border border-brand/30 rounded-full px-2 py-0.5 text-brand font-semibold">LOB%</span>
-            <span>2026.04.04</span>
           </div>
           <h4 class="text-white font-bold mb-2">誰是最幸運的投手？LOB% 解密</h4>
           <p class="text-gray-400 text-sm leading-relaxed">用殘壘率拆解 77 位投手的運氣成分，預測 ERA 回歸方向。</p>
@@ -132,8 +200,7 @@
         <a href="article-fatigue-2025.html"
            class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10">
           <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
-            <span class="bg-yellow-500/10 border border-yellow-500/30 rounded-full px-2 py-0.5 text-yellow-400 font-semibold">疲勞</span>
-            <span>2026.04.04</span>
+            <span class="bg-yellow-500/10 border border-yellow-500/30 rounded-full px-2 py-0.5 text-yellow-400 font-semibold">Fatigue</span>
           </div>
           <h4 class="text-white font-bold mb-2">投手第幾球開始崩盤？疲勞曲線分析</h4>
           <p class="text-gray-400 text-sm leading-relaxed">38 位先發的疲勞閾值，從 16 球到 106 球差異巨大。</p>
@@ -143,7 +210,6 @@
            class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10">
           <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
             <span class="bg-green-500/10 border border-green-500/30 rounded-full px-2 py-0.5 text-green-400 font-semibold">Clutch</span>
-            <span>2026.04.04</span>
           </div>
           <h4 class="text-white font-bold mb-2">關鍵時刻誰最可靠？Clutch 打者排行</h4>
           <p class="text-gray-400 text-sm leading-relaxed">62 位打者在高壓情境下的表現差異 — 以及為什麼不該太相信。</p>
@@ -152,21 +218,25 @@
       </div>
     </div>
 
-    <!-- Data Source Section -->
+    <!-- Tech Stack -->
     <div class="mt-12 bg-surface-card border border-surface-border rounded-xl p-6">
-      <h3 class="text-sm font-semibold text-gray-300 mb-3">關於本系統</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-500">
+      <h3 class="text-sm font-semibold text-gray-300 mb-3">技術棧</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs text-gray-500">
+        <div>
+          <span class="text-gray-400 font-medium block mb-1">後端</span>
+          Python 3.12, FastAPI, SQLAlchemy, SQLite
+        </div>
+        <div>
+          <span class="text-gray-400 font-medium block mb-1">前端</span>
+          ECharts 5.4.3, Tailwind CSS
+        </div>
+        <div>
+          <span class="text-gray-400 font-medium block mb-1">DevOps</span>
+          Docker, GitHub Actions, Cloudflare Pages
+        </div>
         <div>
           <span class="text-gray-400 font-medium block mb-1">資料來源</span>
-          Rebas Open Data、CPBL 官網公開統計
-        </div>
-        <div>
-          <span class="text-gray-400 font-medium block mb-1">更新頻率</span>
-          每日賽後自動更新（ETL pipeline）
-        </div>
-        <div>
-          <span class="text-gray-400 font-medium block mb-1">授權</span>
-          ODC-By License（標示來源即可使用）
+          Rebas Open Data + CPBL 官網公開資料
         </div>
       </div>
     </div>
@@ -174,7 +244,7 @@
 
   <!-- Footer -->
   <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
-    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+    資料來源：Rebas Open Data (ODC-By License) + CPBL 官網公開資料 | Murs 開發
   </footer>
 
 </body>

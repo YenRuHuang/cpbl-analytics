@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API 文件 — CPBL Analytics</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    pre { tab-size: 2; }
+    .endpoint-card { border-left: 3px solid #2d3748; transition: border-color 0.15s; }
+    .endpoint-card:hover { border-left-color: #3b82f6; }
+    .json-key { color: #93c5fd; }
+    .json-str { color: #86efac; }
+    .json-num { color: #fcd34d; }
+    .json-bool { color: #f9a8d4; }
+    .json-null { color: #94a3b8; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e2530; }
+    ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
+    .sticky-toc { position: sticky; top: 64px; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="architecture.html" class="hover:text-white transition-colors font-medium text-gray-300">Architecture</a>
+        <a href="api-docs.html" class="text-brand font-semibold">API Docs</a>
+        <span class="text-surface-border">|</span>
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">Fatigue</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">Clutch</a>
+        <a href="counts.html" class="hover:text-white transition-colors">Counts</a>
+      </div>
+      <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+        &#9776;
+      </button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="architecture.html" class="block py-1 hover:text-white font-medium text-gray-300">Architecture</a>
+      <a href="api-docs.html" class="block py-1 text-brand font-semibold">API Docs</a>
+      <div class="border-t border-surface-border my-1"></div>
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">Fatigue</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">Clutch</a>
+      <a href="counts.html" class="block py-1 hover:text-white">Counts</a>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <header class="max-w-6xl mx-auto px-4 pt-12 pb-8">
+    <div class="inline-flex items-center gap-2 bg-brand/10 border border-brand/30 rounded-full px-4 py-1 text-brand text-xs mb-5">
+      REST API
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-3">API 文件</h1>
+    <p class="text-gray-400 max-w-2xl text-sm leading-relaxed mb-6">
+      17 個 RESTful 端點提供中華職棒數據及分析。所有端點均為唯讀（<code class="text-gray-300 bg-surface-card px-1 rounded">GET</code>），無需認證。Base URL： <code class="text-gray-300 bg-surface-card px-1.5 py-0.5 rounded text-xs">https://cpbl-analytics.onrender.com</code>
+    </p>
+    <a href="https://cpbl-analytics.onrender.com/docs" target="_blank" rel="noopener"
+       class="inline-flex items-center gap-2 bg-brand hover:bg-brand-dark transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      開啟 Swagger UI（線上試用）
+    </a>
+  </header>
+
+  <!-- Main layout -->
+  <main class="max-w-6xl mx-auto px-4 pb-16 flex gap-8">
+
+    <!-- TOC sidebar -->
+    <aside class="hidden lg:block w-52 shrink-0">
+      <nav class="sticky-toc text-xs text-gray-500 space-y-1 pt-2">
+        <p class="text-gray-400 font-semibold text-xs uppercase tracking-wider mb-3">目錄</p>
+        <a href="#overview" class="block py-1 hover:text-gray-300 transition-colors">總覽</a>
+        <a href="#response-format" class="block py-1 hover:text-gray-300 transition-colors">回應格式</a>
+        <a href="#errors" class="block py-1 hover:text-gray-300 transition-colors">錯誤處理</a>
+        <div class="border-t border-surface-border my-2"></div>
+        <p class="text-gray-400 font-medium text-xs mb-1">Games</p>
+        <a href="#games-list" class="block py-1 pl-2 hover:text-gray-300 transition-colors">列出比賽</a>
+        <a href="#games-get" class="block py-1 pl-2 hover:text-gray-300 transition-colors">取得比賽</a>
+        <div class="border-t border-surface-border my-2"></div>
+        <p class="text-gray-400 font-medium text-xs mb-1">Players</p>
+        <a href="#players-list" class="block py-1 pl-2 hover:text-gray-300 transition-colors">列出球員</a>
+        <a href="#players-get" class="block py-1 pl-2 hover:text-gray-300 transition-colors">取得球員</a>
+        <div class="border-t border-surface-border my-2"></div>
+        <p class="text-gray-400 font-medium text-xs mb-1">分析</p>
+        <a href="#lob-leaderboard" class="block py-1 pl-2 hover:text-gray-300 transition-colors">LOB% 排行榜</a>
+        <a href="#lob-batters" class="block py-1 pl-2 hover:text-gray-300 transition-colors">LOB% 打者</a>
+        <a href="#count-splits" class="block py-1 pl-2 hover:text-gray-300 transition-colors">球數分組</a>
+        <a href="#fatigue-leaderboard" class="block py-1 pl-2 hover:text-gray-300 transition-colors">疲勞排行榜</a>
+        <a href="#fatigue-pitcher" class="block py-1 pl-2 hover:text-gray-300 transition-colors">投手疲勞</a>
+        <a href="#clutch-leaderboard" class="block py-1 pl-2 hover:text-gray-300 transition-colors">緊急狀況排行榜</a>
+        <a href="#clutch-batter" class="block py-1 pl-2 hover:text-gray-300 transition-colors">打者緊急狀況</a>
+      </nav>
+    </aside>
+
+    <!-- Content -->
+    <div class="flex-1 min-w-0 space-y-12">
+
+      <!-- 總覽 -->
+      <section id="overview">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-surface-border">總覽</h2>
+        <div class="grid sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+            <div class="text-2xl font-bold text-white">17</div>
+            <div class="text-xs text-gray-500 mt-1">端點</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+            <div class="text-2xl font-bold text-white">3</div>
+            <div class="text-xs text-gray-500 mt-1">資源群組</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4">
+            <div class="text-2xl font-bold text-white">GET</div>
+            <div class="text-xs text-gray-500 mt-1">唯讀</div>
+          </div>
+        </div>
+        <div class="bg-surface-card border border-surface-border rounded-lg p-5 text-sm text-gray-400 leading-relaxed">
+          <p class="mb-2">該 API 使用 <span class="text-gray-300">FastAPI</span> 建置並透過 HTTPS 提供。所有回應均為 JSON。CORS 對瀏覽器客戶端開放。</p>
+          <p>互動式文件（Swagger UI）可在 <code class="text-brand">/docs</code> 取得。ReDoc 可在 <code class="text-brand">/redoc</code> 取得。</p>
+        </div>
+      </section>
+
+      <!-- 回應格式 -->
+      <section id="response-format">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-surface-border">回應格式</h2>
+        <p class="text-sm text-gray-400 mb-4">大多數端點返回純 JSON 物件或陣列。<code class="text-gray-300 bg-surface-card px-1 rounded">/api/games</code> 列出端點使用分頁信封：</p>
+        <div class="bg-surface-card border border-surface-border rounded-lg overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2 border-b border-surface-border bg-surface">
+            <span class="text-xs text-gray-500 font-mono">分頁信封</span>
+          </div>
+          <pre class="p-4 text-sm overflow-x-auto leading-relaxed"><code><span class="json-key">{</span>
+  <span class="json-key">"items"</span>:    <span class="json-str">[ ... ]</span>,     <span class="text-gray-600">// array of result objects</span>
+  <span class="json-key">"total"</span>:    <span class="json-num">370</span>,          <span class="text-gray-600">// total matching records</span>
+  <span class="json-key">"page"</span>:     <span class="json-num">1</span>,             <span class="text-gray-600">// current page (1-indexed)</span>
+  <span class="json-key">"per_page"</span>: <span class="json-num">50</span>             <span class="text-gray-600">// items per page (max 200)</span>
+<span class="json-key">}</span></code></pre>
+        </div>
+      </section>
+
+      <!-- 錯誤處理 -->
+      <section id="errors">
+        <h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-surface-border">錯誤處理</h2>
+        <p class="text-sm text-gray-400 mb-4">該 API 使用標準 HTTP 狀態碼。錯誤回應遵循 FastAPI 的預設 JSON 格式：</p>
+        <div class="space-y-3">
+          <div class="bg-surface-card border border-surface-border rounded-lg overflow-hidden">
+            <div class="flex items-center gap-3 px-4 py-2 border-b border-surface-border bg-surface">
+              <span class="text-xs font-mono font-bold text-yellow-400">404</span>
+              <span class="text-xs text-gray-500">找不到</span>
+            </div>
+            <pre class="p-4 text-sm overflow-x-auto"><code><span class="json-key">{ "detail": "Game '20250401001' not found" }</span></code></pre>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg overflow-hidden">
+            <div class="flex items-center gap-3 px-4 py-2 border-b border-surface-border bg-surface">
+              <span class="text-xs font-mono font-bold text-orange-400">422</span>
+              <span class="text-xs text-gray-500">驗證錯誤 — 無效的查詢參數</span>
+            </div>
+            <pre class="p-4 text-sm overflow-x-auto"><code><span class="json-key">{
+  "detail": [{ "loc": ["query", "year"], "msg": "value is not a valid integer", "type": "type_error.integer" }]
+}</span></code></pre>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg overflow-hidden">
+            <div class="flex items-center gap-3 px-4 py-2 border-b border-surface-border bg-surface">
+              <span class="text-xs font-mono font-bold text-red-400">500</span>
+              <span class="text-xs text-gray-500">內部伺服器錯誤</span>
+            </div>
+            <pre class="p-4 text-sm overflow-x-auto"><code><span class="json-key">{ "detail": "內部伺服器錯誤" }</span></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ──────────────── GAMES ──────────────── -->
+      <section>
+        <div class="flex items-center gap-3 mb-5">
+          <h2 class="text-xl font-bold text-white">Games</h2>
+          <span class="text-xs text-gray-500 bg-surface-card border border-surface-border rounded px-2 py-0.5">2 個端點</span>
+        </div>
+
+        <!-- 列出比賽 -->
+        <div id="games-list" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/games</code>
+            <span class="text-xs text-gray-500">List games with optional filters, paginated</span>
+          </div>
+          <div class="px-5 py-4">
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">查詢參數</h4>
+            <div class="overflow-x-auto">
+              <table class="text-xs w-full">
+                <thead>
+                  <tr class="text-gray-500 border-b border-surface-border">
+                    <th class="text-left py-2 pr-4 font-medium">參數</th>
+                    <th class="text-left py-2 pr-4 font-medium">類型</th>
+                    <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                    <th class="text-left py-2 font-medium">描述</th>
+                  </tr>
+                </thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50">
+                    <td class="py-2 pr-4 font-mono text-gray-300">year</td>
+                    <td class="py-2 pr-4">integer</td>
+                    <td class="py-2 pr-4">—</td>
+                    <td class="py-2">季節年份，例如 <code class="text-gray-300">2025</code></td>
+                  </tr>
+                  <tr class="border-b border-surface-border/50">
+                    <td class="py-2 pr-4 font-mono text-gray-300">team</td>
+                    <td class="py-2 pr-4">string</td>
+                    <td class="py-2 pr-4">—</td>
+                    <td class="py-2">按主隊或客隊代碼篩選，例如 <code class="text-gray-300">CTBC</code></td>
+                  </tr>
+                  <tr class="border-b border-surface-border/50">
+                    <td class="py-2 pr-4 font-mono text-gray-300">page</td>
+                    <td class="py-2 pr-4">integer</td>
+                    <td class="py-2 pr-4">1</td>
+                    <td class="py-2">頁碼（≥ 1）</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4 font-mono text-gray-300">per_page</td>
+                    <td class="py-2 pr-4">integer</td>
+                    <td class="py-2 pr-4">50</td>
+                    <td class="py-2">每頁項目數（1 – 200）</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-5 mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>{
+  <span class="json-key">"items"</span>: [
+    {
+      <span class="json-key">"game_id"</span>:    <span class="json-str">"20250401001"</span>,
+      <span class="json-key">"game_date"</span>:  <span class="json-str">"2025-04-01"</span>,
+      <span class="json-key">"year"</span>:       <span class="json-num">2025</span>,
+      <span class="json-key">"home_team"</span>:  <span class="json-str">"CTBC"</span>,
+      <span class="json-key">"away_team"</span>:  <span class="json-str">"UNI"</span>,
+      <span class="json-key">"home_score"</span>: <span class="json-num">5</span>,
+      <span class="json-key">"away_score"</span>: <span class="json-num">3</span>,
+      <span class="json-key">"venue"</span>:      <span class="json-str">"天母棒球場"</span>,
+      <span class="json-key">"kind_code"</span>:  <span class="json-str">"A"</span>,
+      <span class="json-key">"source"</span>:     <span class="json-str">"rebas"</span>
+    }
+  ],
+  <span class="json-key">"total"</span>:    <span class="json-num">370</span>,
+  <span class="json-key">"page"</span>:     <span class="json-num">1</span>,
+  <span class="json-key">"per_page"</span>: <span class="json-num">50</span>
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- 取得比賽 -->
+        <div id="games-get" class="endpoint-card bg-surface-card border border-surface-border rounded-lg overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/games/<span class="text-brand">{game_id}</span></code>
+            <span class="text-xs text-gray-500">按 ID 取得單一比賽</span>
+          </div>
+          <div class="px-5 py-4">
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">路徑參數</h4>
+            <div class="text-xs text-gray-400 mb-5">
+              <span class="font-mono text-gray-300">game_id</span> — 字串，例如 <code class="text-gray-300">20250401001</code>。找不到時返回 <code class="text-yellow-400">404</code>。
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>{
+  <span class="json-key">"game_id"</span>:    <span class="json-str">"20250401001"</span>,
+  <span class="json-key">"game_date"</span>:  <span class="json-str">"2025-04-01"</span>,
+  <span class="json-key">"year"</span>:       <span class="json-num">2025</span>,
+  <span class="json-key">"home_team"</span>:  <span class="json-str">"CTBC"</span>,
+  <span class="json-key">"away_team"</span>:  <span class="json-str">"UNI"</span>,
+  <span class="json-key">"home_score"</span>: <span class="json-num">5</span>,
+  <span class="json-key">"away_score"</span>: <span class="json-num">3</span>,
+  <span class="json-key">"venue"</span>:      <span class="json-str">"天母棒球場"</span>,
+  <span class="json-key">"kind_code"</span>:  <span class="json-str">"A"</span>,
+  <span class="json-key">"source"</span>:     <span class="json-str">"rebas"</span>
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ──────────────── PLAYERS ──────────────── -->
+      <section>
+        <div class="flex items-center gap-3 mb-5">
+          <h2 class="text-xl font-bold text-white">Players</h2>
+          <span class="text-xs text-gray-500 bg-surface-card border border-surface-border rounded px-2 py-0.5">2 個端點</span>
+        </div>
+
+        <!-- 列出球員 -->
+        <div id="players-list" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/players</code>
+            <span class="text-xs text-gray-500">列出所有球員，可選按球隊篩選</span>
+          </div>
+          <div class="px-5 py-4">
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead>
+                  <tr class="text-gray-500 border-b border-surface-border">
+                    <th class="text-left py-2 pr-4 font-medium">參數</th>
+                    <th class="text-left py-2 pr-4 font-medium">類型</th>
+                    <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                    <th class="text-left py-2 font-medium">描述</th>
+                  </tr>
+                </thead>
+                <tbody class="text-gray-400">
+                  <tr>
+                    <td class="py-2 pr-4 font-mono text-gray-300">team</td>
+                    <td class="py-2 pr-4">string</td>
+                    <td class="py-2 pr-4">—</td>
+                    <td class="py-2">按球隊代碼篩選，例如 <code class="text-gray-300">CTBC</code>、<code class="text-gray-300">UNI</code>、<code class="text-gray-300">RAKUTEN</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>[
+  {
+    <span class="json-key">"player_id"</span>: <span class="json-str">"P001234"</span>,
+    <span class="json-key">"name_zh"</span>:  <span class="json-str">"林智勝"</span>,
+    <span class="json-key">"name_en"</span>:  <span class="json-str">"Lin Chih-Sheng"</span>,
+    <span class="json-key">"team"</span>:     <span class="json-str">"CTBC"</span>,
+    <span class="json-key">"position"</span>: <span class="json-str">"1B"</span>,
+    <span class="json-key">"bats"</span>:     <span class="json-str">"R"</span>,
+    <span class="json-key">"throws"</span>:   <span class="json-str">"R"</span>
+  }
+]</code></pre>
+          </div>
+        </div>
+
+        <!-- 取得球員 -->
+        <div id="players-get" class="endpoint-card bg-surface-card border border-surface-border rounded-lg overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/players/<span class="text-brand">{player_id}</span></code>
+            <span class="text-xs text-gray-500">按 ID 取得單一球員</span>
+          </div>
+          <div class="px-5 py-4">
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">路徑參數</h4>
+            <div class="text-xs text-gray-400 mb-5">
+              <span class="font-mono text-gray-300">player_id</span> — 字串，例如 <code class="text-gray-300">P001234</code>。找不到時返回 <code class="text-yellow-400">404</code>。
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>{
+  <span class="json-key">"player_id"</span>: <span class="json-str">"P001234"</span>,
+  <span class="json-key">"name_zh"</span>:  <span class="json-str">"林智勝"</span>,
+  <span class="json-key">"name_en"</span>:  <span class="json-str">"Lin Chih-Sheng"</span>,
+  <span class="json-key">"team"</span>:     <span class="json-str">"CTBC"</span>,
+  <span class="json-key">"position"</span>: <span class="json-str">"1B"</span>,
+  <span class="json-key">"bats"</span>:     <span class="json-str">"R"</span>,
+  <span class="json-key">"throws"</span>:   <span class="json-str">"R"</span>
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ──────────────── ANALYSIS ──────────────── -->
+      <section>
+        <div class="flex items-center gap-3 mb-5">
+          <h2 class="text-xl font-bold text-white">分析</h2>
+          <span class="text-xs text-gray-500 bg-surface-card border border-surface-border rounded px-2 py-0.5">9 個端點</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-6">從投球級別和逐球數據計算的進階分析。所有端點接受 <code class="text-gray-400">year</code> 參數（預設 <code class="text-gray-400">2025</code>）和閾值篩選器（<code class="text-gray-400">min_ip</code> 或 <code class="text-gray-400">min_pa</code>）以確保最小樣本量。</p>
+
+        <!-- LOB% 排行榜 -->
+        <div id="lob-leaderboard" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/analysis/lob</code>
+            <span class="text-xs bg-purple-500/15 text-purple-400 border border-purple-500/25 rounded px-2 py-0.5">LOB%</span>
+            <span class="text-xs text-gray-500">投手 LOB% 排行榜</span>
+          </div>
+          <div class="px-5 py-4">
+            <p class="text-xs text-gray-500 mb-4">留在壘百分比衡量投手滯留壘上跑者的頻率。聯盟平均約 70%。超過 78% 可能表示運氣；低於 65% 可能表示厄運。</p>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead><tr class="text-gray-500 border-b border-surface-border">
+                  <th class="text-left py-2 pr-4 font-medium">參數</th>
+                  <th class="text-left py-2 pr-4 font-medium">類型</th>
+                  <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                  <th class="text-left py-2 font-medium">描述</th>
+                </tr></thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50"><td class="py-2 pr-4 font-mono text-gray-300">year</td><td class="py-2 pr-4">integer</td><td class="py-2 pr-4">2025</td><td class="py-2">季節年份</td></tr>
+                  <tr><td class="py-2 pr-4 font-mono text-gray-300">min_ip</td><td class="py-2 pr-4">float</td><td class="py-2 pr-4">5.0</td><td class="py-2">最少投球局數</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>[
+  {
+    <span class="json-key">"player_id"</span>:   <span class="json-str">"P002345"</span>,
+    <span class="json-key">"player_name"</span>: <span class="json-str">"王維中"</span>,
+    <span class="json-key">"team"</span>:         <span class="json-str">"CTBC"</span>,
+    <span class="json-key">"games"</span>:        <span class="json-num">18</span>,
+    <span class="json-key">"ip"</span>:           <span class="json-num">112.3</span>,
+    <span class="json-key">"lob_pct"</span>:     <span class="json-num">0.742</span>,
+    <span class="json-key">"league_avg"</span>:  <span class="json-num">0.701</span>,
+    <span class="json-key">"is_lucky"</span>:    <span class="json-bool">false</span>,
+    <span class="json-key">"is_unlucky"</span>:  <span class="json-bool">false</span>,
+    <span class="json-key">"sample_note"</span>: <span class="json-str">"sufficient sample"</span>
+  }
+]</code></pre>
+          </div>
+        </div>
+
+        <!-- LOB% 打者 -->
+        <div id="lob-batters" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/analysis/lob/batters</code>
+            <span class="text-xs bg-purple-500/15 text-purple-400 border border-purple-500/25 rounded px-2 py-0.5">LOB%</span>
+            <span class="text-xs text-gray-500">打者 LOB（留在壘）費率</span>
+          </div>
+          <div class="px-5 py-4">
+            <p class="text-xs text-gray-500 mb-4">打者在有人在壘時上手時滯留跑者的頻率。高 <code class="text-gray-400">lob_per_game</code> 可能表示緊急狀況擊球差或不幸的序列。</p>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead><tr class="text-gray-500 border-b border-surface-border">
+                  <th class="text-left py-2 pr-4 font-medium">參數</th>
+                  <th class="text-left py-2 pr-4 font-medium">類型</th>
+                  <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                  <th class="text-left py-2 font-medium">描述</th>
+                </tr></thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50"><td class="py-2 pr-4 font-mono text-gray-300">year</td><td class="py-2 pr-4">integer</td><td class="py-2 pr-4">2025</td><td class="py-2">季節年份</td></tr>
+                  <tr><td class="py-2 pr-4 font-mono text-gray-300">min_pa</td><td class="py-2 pr-4">integer</td><td class="py-2 pr-4">10</td><td class="py-2">最少打數（≥ 1）</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>[
+  {
+    <span class="json-key">"player_id"</span>:       <span class="json-str">"P003456"</span>,
+    <span class="json-key">"player_name"</span>:     <span class="json-str">"陳傑憲"</span>,
+    <span class="json-key">"games"</span>:           <span class="json-num">87</span>,
+    <span class="json-key">"ab"</span>:              <span class="json-num">320</span>,
+    <span class="json-key">"h"</span>:               <span class="json-num">95</span>,
+    <span class="json-key">"rbi"</span>:             <span class="json-num">42</span>,
+    <span class="json-key">"lob"</span>:             <span class="json-num">67</span>,
+    <span class="json-key">"left_behind_lob"</span>: <span class="json-num">31</span>,
+    <span class="json-key">"lob_per_game"</span>:   <span class="json-num">0.77</span>
+  }
+]</code></pre>
+          </div>
+        </div>
+
+        <!-- 球數分組 -->
+        <div id="count-splits" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/analysis/count-splits/<span class="text-brand">{batter_id}</span></code>
+            <span class="text-xs bg-cyan-500/15 text-cyan-400 border border-cyan-500/25 rounded px-2 py-0.5">球數分組</span>
+          </div>
+          <div class="px-5 py-4">
+            <p class="text-xs text-gray-500 mb-4">打者表現按球數情況分解：<em>前面</em>（打者友善）、<em>後面</em>（投手友善）、<em>平手</em>和<em>兩好球</em>。包括每球分解和第一球揮棒率。</p>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Path + 查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead><tr class="text-gray-500 border-b border-surface-border">
+                  <th class="text-left py-2 pr-4 font-medium">參數</th>
+                  <th class="text-left py-2 pr-4 font-medium">位置</th>
+                  <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                  <th class="text-left py-2 font-medium">描述</th>
+                </tr></thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50"><td class="py-2 pr-4 font-mono text-gray-300">batter_id</td><td class="py-2 pr-4">path</td><td class="py-2 pr-4">必填</td><td class="py-2">球員 ID，例如 <code class="text-gray-300">P003456</code></td></tr>
+                  <tr><td class="py-2 pr-4 font-mono text-gray-300">year</td><td class="py-2 pr-4">query</td><td class="py-2 pr-4">2025</td><td class="py-2">季節年份</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>{
+  <span class="json-key">"player_id"</span>:   <span class="json-str">"P003456"</span>,
+  <span class="json-key">"player_name"</span>: <span class="json-str">"陳傑憲"</span>,
+  <span class="json-key">"role"</span>:        <span class="json-str">"batter"</span>,
+  <span class="json-key">"total_pa"</span>:   <span class="json-num">345</span>,
+  <span class="json-key">"ahead"</span>: {
+    <span class="json-key">"count"</span>: <span class="json-str">"ahead"</span>, <span class="json-key">"pa"</span>: <span class="json-num">98</span>, <span class="json-key">"ba"</span>: <span class="json-num">0.312</span>,
+    <span class="json-key">"k_pct"</span>: <span class="json-num">0.082</span>, <span class="json-key">"bb_pct"</span>: <span class="json-num">0.143</span>
+  },
+  <span class="json-key">"behind"</span>: { <span class="json-key">"count"</span>: <span class="json-str">"behind"</span>, <span class="json-key">"pa"</span>: <span class="json-num">112</span>, <span class="json-key">"ba"</span>: <span class="json-num">0.241</span>, <span class="text-gray-600">...</span> },
+  <span class="json-key">"two_strike"</span>: { <span class="json-key">"count"</span>: <span class="json-str">"two_strike"</span>, <span class="json-key">"pa"</span>: <span class="json-num">130</span>, <span class="json-key">"ba"</span>: <span class="json-num">0.198</span>, <span class="text-gray-600">...</span> },
+  <span class="json-key">"first_pitch_swing_pct"</span>: <span class="json-num">0.384</span>,
+  <span class="json-key">"by_count"</span>: [ <span class="text-gray-600">/* array of CountStatsResponse per specific count */</span> ]
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Pitcher 疲勞排行榜 -->
+        <div id="fatigue-leaderboard" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/analysis/pitcher-fatigue</code>
+            <span class="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/25 rounded px-2 py-0.5">Fatigue</span>
+            <span class="text-xs text-gray-500">疲勞排行榜（所有投手）</span>
+          </div>
+          <div class="px-5 py-4">
+            <p class="text-xs text-gray-500 mb-4">所有合格投手的摘要統計：總投球數、疲勞閾值（表現下降時的投球數）和季度級別 BA 對戰 / K%。</p>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead><tr class="text-gray-500 border-b border-surface-border">
+                  <th class="text-left py-2 pr-4 font-medium">參數</th>
+                  <th class="text-left py-2 pr-4 font-medium">類型</th>
+                  <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                  <th class="text-left py-2 font-medium">描述</th>
+                </tr></thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50"><td class="py-2 pr-4 font-mono text-gray-300">year</td><td class="py-2 pr-4">integer</td><td class="py-2 pr-4">2025</td><td class="py-2">季節年份</td></tr>
+                  <tr><td class="py-2 pr-4 font-mono text-gray-300">min_ip</td><td class="py-2 pr-4">float</td><td class="py-2 pr-4">20.0</td><td class="py-2">最少投球局數</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>[
+  {
+    <span class="json-key">"pitcher_id"</span>:              <span class="json-str">"P002345"</span>,
+    <span class="json-key">"team"</span>:                    <span class="json-str">"CTBC"</span>,
+    <span class="json-key">"year"</span>:                    <span class="json-num">2025</span>,
+    <span class="json-key">"total_ip"</span>:               <span class="json-num">112.3</span>,
+    <span class="json-key">"games"</span>:                  <span class="json-num">18</span>,
+    <span class="json-key">"total_pitches"</span>:          <span class="json-num">1847</span>,
+    <span class="json-key">"fatigue_threshold_pitch"</span>: <span class="json-num">85</span>,
+    <span class="json-key">"overall_ba_against"</span>:     <span class="json-num">0.253</span>,
+    <span class="json-key">"overall_k_pct"</span>:          <span class="json-num">0.224</span>,
+    <span class="json-key">"sample_note"</span>:            <span class="json-str">"sufficient sample"</span>
+  }
+]</code></pre>
+          </div>
+        </div>
+
+        <!-- 投手疲勞 Detail -->
+        <div id="fatigue-pitcher" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/analysis/pitcher-fatigue/<span class="text-brand">{pitcher_id}</span></code>
+            <span class="text-xs bg-orange-500/15 text-orange-400 border border-orange-500/25 rounded px-2 py-0.5">Fatigue</span>
+            <span class="text-xs text-gray-500">單一投手的完整疲勞曲線</span>
+          </div>
+          <div class="px-5 py-4">
+            <p class="text-xs text-gray-500 mb-4">按 15 球分組的 BA 對戰、K% 和 BB% 分解。<code class="text-gray-400">is_fatigue_point</code> 標誌標記變點檢測到的降級分組。</p>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Path + 查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead><tr class="text-gray-500 border-b border-surface-border">
+                  <th class="text-left py-2 pr-4 font-medium">參數</th>
+                  <th class="text-left py-2 pr-4 font-medium">位置</th>
+                  <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                  <th class="text-left py-2 font-medium">描述</th>
+                </tr></thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50"><td class="py-2 pr-4 font-mono text-gray-300">pitcher_id</td><td class="py-2 pr-4">path</td><td class="py-2 pr-4">必填</td><td class="py-2">Player ID, e.g. <code class="text-gray-300">P002345</code></td></tr>
+                  <tr><td class="py-2 pr-4 font-mono text-gray-300">year</td><td class="py-2 pr-4">query</td><td class="py-2 pr-4">2025</td><td class="py-2">季節年份</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>{
+  <span class="json-key">"pitcher_id"</span>:              <span class="json-str">"P002345"</span>,
+  <span class="json-key">"year"</span>:                    <span class="json-num">2025</span>,
+  <span class="json-key">"total_pitches"</span>:          <span class="json-num">1847</span>,
+  <span class="json-key">"games_analyzed"</span>:         <span class="json-num">18</span>,
+  <span class="json-key">"overall_ba_against"</span>:     <span class="json-num">0.253</span>,
+  <span class="json-key">"overall_k_pct"</span>:          <span class="json-num">0.224</span>,
+  <span class="json-key">"overall_bb_pct"</span>:         <span class="json-num">0.081</span>,
+  <span class="json-key">"fatigue_threshold_pitch"</span>: <span class="json-num">85</span>,
+  <span class="json-key">"buckets"</span>: [
+    {
+      <span class="json-key">"bucket_index"</span>:   <span class="json-num">0</span>,
+      <span class="json-key">"pitch_start"</span>:   <span class="json-num">1</span>,
+      <span class="json-key">"pitch_end"</span>:     <span class="json-num">15</span>,
+      <span class="json-key">"batters_faced"</span>: <span class="json-num">72</span>,
+      <span class="json-key">"ba_against"</span>:   <span class="json-num">0.222</span>,
+      <span class="json-key">"k_pct"</span>:        <span class="json-num">0.264</span>,
+      <span class="json-key">"is_fatigue_point"</span>: <span class="json-bool">false</span>
+    },
+    { <span class="json-key">"bucket_index"</span>: <span class="json-num">5</span>, <span class="json-key">"pitch_start"</span>: <span class="json-num">76</span>, <span class="json-key">"pitch_end"</span>: <span class="json-num">90</span>, <span class="json-key">"is_fatigue_point"</span>: <span class="json-bool">true</span>, <span class="text-gray-600">...</span> }
+  ],
+  <span class="json-key">"sample_note"</span>: <span class="json-str">"sufficient sample"</span>
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- 緊急狀況排行榜 -->
+        <div id="clutch-leaderboard" class="endpoint-card bg-surface-card border border-surface-border rounded-lg mb-4 overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/analysis/clutch</code>
+            <span class="text-xs bg-green-500/15 text-green-400 border border-green-500/25 rounded px-2 py-0.5">緊急狀況 / LI</span>
+            <span class="text-xs text-gray-500">緊急狀況擊球排行榜</span>
+          </div>
+          <div class="px-5 py-4">
+            <p class="text-xs text-gray-500 mb-4">按 <code class="text-gray-400">clutch_score</code> 排名打者：高槓桿局面（LI > 1.5）中的打擊率與整體打擊率之間的差異。正數 = 壓力下表現更好。</p>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead><tr class="text-gray-500 border-b border-surface-border">
+                  <th class="text-left py-2 pr-4 font-medium">參數</th>
+                  <th class="text-left py-2 pr-4 font-medium">類型</th>
+                  <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                  <th class="text-left py-2 font-medium">描述</th>
+                </tr></thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50"><td class="py-2 pr-4 font-mono text-gray-300">year</td><td class="py-2 pr-4">integer</td><td class="py-2 pr-4">2025</td><td class="py-2">季節年份</td></tr>
+                  <tr><td class="py-2 pr-4 font-mono text-gray-300">min_pa</td><td class="py-2 pr-4">integer</td><td class="py-2 pr-4">30</td><td class="py-2">最少打數（≥ 1）</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">範例回應</h4>
+            <pre class="bg-surface border border-surface-border rounded-lg p-4 text-xs overflow-x-auto leading-relaxed"><code>[
+  {
+    <span class="json-key">"player_id"</span>:       <span class="json-str">"P003456"</span>,
+    <span class="json-key">"player_name"</span>:     <span class="json-str">"陳傑憲"</span>,
+    <span class="json-key">"total_pa"</span>:        <span class="json-num">345</span>,
+    <span class="json-key">"high_leverage_pa"</span>: <span class="json-num">67</span>,
+    <span class="json-key">"high_li_ba"</span>:      <span class="json-num">0.328</span>,
+    <span class="json-key">"overall_ba"</span>:      <span class="json-num">0.297</span>,
+    <span class="json-key">"clutch_score"</span>:    <span class="json-num">0.031</span>,
+    <span class="json-key">"high_li_ops"</span>:     <span class="json-num">0.912</span>,
+    <span class="json-key">"sample_note"</span>:     <span class="json-str">"sufficient sample"</span>
+  }
+]</code></pre>
+          </div>
+        </div>
+
+        <!-- 打者緊急狀況 -->
+        <div id="clutch-batter" class="endpoint-card bg-surface-card border border-surface-border rounded-lg overflow-hidden">
+          <div class="px-5 py-4 border-b border-surface-border flex flex-wrap items-center gap-3">
+            <span class="text-xs font-bold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded px-2 py-0.5">GET</span>
+            <code class="text-sm text-gray-200">/api/analysis/clutch/<span class="text-brand">{batter_id}</span></code>
+            <span class="text-xs bg-green-500/15 text-green-400 border border-green-500/25 rounded px-2 py-0.5">緊急狀況 / LI</span>
+            <span class="text-xs text-gray-500">單一打者的緊急狀況統計</span>
+          </div>
+          <div class="px-5 py-4">
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Path + 查詢參數</h4>
+            <div class="overflow-x-auto mb-5">
+              <table class="text-xs w-full">
+                <thead><tr class="text-gray-500 border-b border-surface-border">
+                  <th class="text-left py-2 pr-4 font-medium">參數</th>
+                  <th class="text-left py-2 pr-4 font-medium">位置</th>
+                  <th class="text-left py-2 pr-4 font-medium">預設值</th>
+                  <th class="text-left py-2 font-medium">描述</th>
+                </tr></thead>
+                <tbody class="text-gray-400">
+                  <tr class="border-b border-surface-border/50"><td class="py-2 pr-4 font-mono text-gray-300">batter_id</td><td class="py-2 pr-4">path</td><td class="py-2 pr-4">必填</td><td class="py-2">球員 ID，例如 <code class="text-gray-300">P003456</code></td></tr>
+                  <tr><td class="py-2 pr-4 font-mono text-gray-300">year</td><td class="py-2 pr-4">query</td><td class="py-2 pr-4">2025</td><td class="py-2">季節年份</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-xs text-gray-500">返回單一 <code class="text-gray-400">LeverageResponse</code> 物件（與排行榜項目相同的模式）。如果該球員/年份組合沒有槓桿數據，返回 <code class="text-yellow-400">404</code>。</p>
+          </div>
+        </div>
+
+      </section>
+
+    </div><!-- /content -->
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料：Rebas 開放資料（ODC-By 授權）+ 中華職棒公開 API | Murs 開發
+  </footer>
+
+</body>
+</html>
