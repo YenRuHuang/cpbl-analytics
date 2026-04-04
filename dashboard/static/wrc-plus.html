@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>wRC+ 打者排行 — 2025 CPBL</title>
   <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -48,6 +49,29 @@
       overflow-x: auto;
       white-space: pre;
     }
+
+    /* Percentile bar */
+    .pct-bar-track {
+      background: #2d3748;
+      border-radius: 9999px;
+      height: 10px;
+      flex: 1;
+      overflow: hidden;
+    }
+    .pct-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+    .pct-color-10  { background: #c0392b; }
+    .pct-color-30  { background: #e74c3c; }
+    .pct-color-50  { background: #95a5a6; }
+    .pct-color-70  { background: #3498db; }
+    .pct-color-90  { background: #2980b9; }
+    .pct-color-100 { background: #1a5276; }
+
+    tbody tr { cursor: pointer; }
+    tbody tr.selected { background-color: rgba(59,130,246,0.15) !important; }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen font-sans">
@@ -159,6 +183,19 @@
         <span class="ml-auto text-gray-600" id="qualifiedCount"></span>
       </div>
 
+      <!-- Player Card (Savant-style percentile bars) -->
+      <div id="playerCard" class="hidden mb-5 bg-surface-card border border-surface-border rounded-xl p-5">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div id="cardName" class="text-lg font-bold text-white"></div>
+            <div id="cardTeam" class="text-xs text-gray-400 mt-0.5"></div>
+          </div>
+          <button id="cardClose" class="text-gray-500 hover:text-white text-xl leading-none" aria-label="關閉">&#x2715;</button>
+        </div>
+        <div id="cardBars" class="space-y-3"></div>
+        <p class="text-gray-600 text-xs mt-4">百分位數計算基於所有合格打者（PA ≥ 100）</p>
+      </div>
+
       <div class="overflow-x-auto rounded-xl border border-surface-border">
         <table class="w-full text-sm">
           <thead class="bg-surface text-gray-400 text-xs uppercase tracking-wider">
@@ -179,6 +216,25 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Radar Comparison Section -->
+    <div id="radarSection" class="hidden mt-10 bg-surface-card border border-surface-border rounded-xl p-6 sm:p-8">
+      <h2 class="text-lg font-bold text-white mb-1">球員多維度比較</h2>
+      <p class="text-gray-500 text-xs mb-5">選擇兩位打者，比較六項進攻維度的百分位數表現</p>
+      <div class="flex flex-wrap items-center gap-4 mb-6">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-3 h-3 rounded-full bg-blue-500"></span>
+          <label for="radarP1" class="text-xs text-gray-400 shrink-0">球員 1：</label>
+          <select id="radarP1" class="bg-surface border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand"></select>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-3 h-3 rounded-full bg-orange-500"></span>
+          <label for="radarP2" class="text-xs text-gray-400 shrink-0">球員 2：</label>
+          <select id="radarP2" class="bg-surface border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand"></select>
+        </div>
+      </div>
+      <div id="radarChart" style="width:100%;height:420px;"></div>
     </div>
 
     <!-- wRC+ Formula Explainer -->
@@ -444,12 +500,316 @@
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('tableContainer').classList.remove('hidden');
 
+        buildPercentileLookups();
         sortAndRender();
+        initRadarSection();
       } catch (err) {
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('errorMsg').textContent = '資料載入失敗：' + err.message;
         document.getElementById('errorState').classList.remove('hidden');
       }
+    }
+
+    // =============================================
+    // PERCENTILE UTILITIES
+    // =============================================
+
+    // Returns a value's percentile rank (0–100) within an array of values
+    function calcPercentile(val, sortedVals) {
+      if (!sortedVals || sortedVals.length === 0) return 50;
+      let below = 0;
+      for (let i = 0; i < sortedVals.length; i++) {
+        if (sortedVals[i] < val) below++;
+      }
+      return Math.round((below / sortedVals.length) * 100);
+    }
+
+    // Pre-sorted stat arrays for percentile lookups (populated after data loads)
+    const pctSorted = {};
+
+    function buildPercentileLookups() {
+      const statKeys = [
+        { key: 'avg', getter: function(r) { return r.avg ?? r.AVG; } },
+        { key: 'obp', getter: function(r) { return r.obp ?? r.OBP; } },
+        { key: 'slg', getter: function(r) { return r.slg ?? r.SLG; } },
+        { key: 'woba', getter: function(r) { return r.woba ?? r.wOBA; } },
+        { key: 'wrc_plus', getter: function(r) { return r.wrc_plus ?? r.wrcPlus ?? r['wRC+']; } },
+        { key: 'bb_pct', getter: function(r) {
+            const bb = r.bb ?? r.BB ?? 0;
+            const pa = r.pa ?? r.PA;
+            return (pa && pa > 0) ? bb / pa : null;
+          }
+        },
+      ];
+      statKeys.forEach(function(s) {
+        const vals = allRows
+          .map(s.getter)
+          .filter(function(v) { return v != null && !Number.isNaN(v); })
+          .sort(function(a, b) { return a - b; });
+        pctSorted[s.key] = vals;
+      });
+    }
+
+    function pctColor(pct) {
+      if (pct <= 10)  return '#c0392b';
+      if (pct <= 30)  return '#e74c3c';
+      if (pct <= 50)  return '#95a5a6';
+      if (pct <= 70)  return '#3498db';
+      if (pct <= 90)  return '#2980b9';
+      return '#1a5276';
+    }
+
+    // =============================================
+    // PLAYER CARD (SAVANT-STYLE)
+    // =============================================
+
+    const CARD_STATS = [
+      { label: 'AVG', key: 'avg',      fmt: function(v) { return fmt3(v); }, getter: function(r) { return r.avg ?? r.AVG; } },
+      { label: 'OBP', key: 'obp',      fmt: function(v) { return fmt3(v); }, getter: function(r) { return r.obp ?? r.OBP; } },
+      { label: 'SLG', key: 'slg',      fmt: function(v) { return fmt3(v); }, getter: function(r) { return r.slg ?? r.SLG; } },
+      { label: 'wOBA', key: 'woba',    fmt: function(v) { return fmt3(v); }, getter: function(r) { return r.woba ?? r.wOBA; } },
+      { label: 'wRC+', key: 'wrc_plus', fmt: function(v) { return v != null ? String(Math.round(v)) : '—'; }, getter: function(r) { return r.wrc_plus ?? r.wrcPlus ?? r['wRC+']; } },
+      { label: 'BB%',  key: 'bb_pct',  fmt: function(v) {
+          if (v == null) return '—';
+          return (v * 100).toFixed(1) + '%';
+        },
+        getter: function(r) {
+          const bb = r.bb ?? r.BB ?? 0;
+          const pa = r.pa ?? r.PA;
+          return (pa && pa > 0) ? bb / pa : null;
+        }
+      },
+    ];
+
+    function showPlayerCard(row) {
+      const card    = document.getElementById('playerCard');
+      const name    = stripPrefix(row.name_zh || row.player_name || row.name || '');
+      const team    = row.team || row.team_name || row.teamName || '—';
+
+      document.getElementById('cardName').textContent = name;
+      document.getElementById('cardTeam').textContent = team;
+
+      const barsContainer = document.getElementById('cardBars');
+      // Clear previous bars
+      while (barsContainer.firstChild) {
+        barsContainer.removeChild(barsContainer.firstChild);
+      }
+
+      CARD_STATS.forEach(function(stat) {
+        const val = stat.getter(row);
+        const pct = (val != null && pctSorted[stat.key])
+          ? calcPercentile(val, pctSorted[stat.key])
+          : 50;
+        const color = pctColor(pct);
+
+        // Row wrapper
+        const row_el = document.createElement('div');
+        row_el.className = 'flex items-center gap-3';
+
+        // Label
+        const labelEl = document.createElement('div');
+        labelEl.className = 'text-xs text-gray-400 w-12 shrink-0 text-right';
+        labelEl.textContent = stat.label;
+
+        // Actual value
+        const valEl = document.createElement('div');
+        valEl.className = 'text-xs text-gray-300 stat-num w-14 shrink-0';
+        valEl.textContent = stat.fmt(val);
+
+        // Bar track
+        const track = document.createElement('div');
+        track.className = 'pct-bar-track';
+
+        const fill = document.createElement('div');
+        fill.className = 'pct-bar-fill';
+        fill.style.width = pct + '%';
+        fill.style.background = color;
+        track.appendChild(fill);
+
+        // Percentile number
+        const pctEl = document.createElement('div');
+        pctEl.className = 'text-xs stat-num w-8 shrink-0 text-right';
+        pctEl.style.color = color;
+        pctEl.textContent = pct;
+
+        row_el.appendChild(labelEl);
+        row_el.appendChild(valEl);
+        row_el.appendChild(track);
+        row_el.appendChild(pctEl);
+        barsContainer.appendChild(row_el);
+      });
+
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    document.getElementById('cardClose').addEventListener('click', function() {
+      document.getElementById('playerCard').classList.add('hidden');
+      // deselect rows
+      document.querySelectorAll('tbody tr.selected').forEach(function(tr) {
+        tr.classList.remove('selected');
+      });
+    });
+
+    // Delegate click on tbody
+    document.getElementById('leaderboardBody').addEventListener('click', function(e) {
+      const tr = e.target.closest('tr');
+      if (!tr) return;
+      // Find row index to look up in allRows
+      const tbody = document.getElementById('leaderboardBody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const idx  = rows.indexOf(tr);
+      if (idx < 0) return;
+
+      // Get the currently rendered (filtered + sorted) rows
+      const filtered = activeTeam
+        ? allRows.filter(function(r) { return (r.team || r.team_name || r.teamName || '') === activeTeam; })
+        : allRows;
+      const sorted = [...filtered].sort(function(a, b) {
+        let va = getField(a, sortCol);
+        let vb = getField(b, sortCol);
+        if (va == null) va = sortDir === 'desc' ? -Infinity : Infinity;
+        if (vb == null) vb = sortDir === 'desc' ? -Infinity : Infinity;
+        if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        return sortDir === 'asc' ? va - vb : vb - va;
+      });
+
+      const rowData = sorted[idx];
+      if (!rowData) return;
+
+      // Highlight selected row
+      rows.forEach(function(r) { r.classList.remove('selected'); });
+      tr.classList.add('selected');
+
+      showPlayerCard(rowData);
+    });
+
+    // =============================================
+    // RADAR CHART
+    // =============================================
+
+    let radarChart = null;
+
+    function getPlayerStats(row) {
+      return CARD_STATS.map(function(stat) {
+        const val = stat.getter(row);
+        const pct = (val != null && pctSorted[stat.key])
+          ? calcPercentile(val, pctSorted[stat.key])
+          : 50;
+        return pct;
+      });
+    }
+
+    function updateRadarChart() {
+      const p1Sel = document.getElementById('radarP1');
+      const p2Sel = document.getElementById('radarP2');
+      const name1 = p1Sel.value;
+      const name2 = p2Sel.value;
+
+      const row1 = allRows.find(function(r) {
+        return (stripPrefix(r.name_zh || r.player_name || r.name || '')) === name1;
+      });
+      const row2 = allRows.find(function(r) {
+        return (stripPrefix(r.name_zh || r.player_name || r.name || '')) === name2;
+      });
+
+      if (!row1 || !row2) return;
+
+      const dims = CARD_STATS.map(function(s) { return s.label; });
+      const vals1 = getPlayerStats(row1);
+      const vals2 = getPlayerStats(row2);
+
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#e5e7eb', fontSize: 12 },
+          formatter: function(params) {
+            const stats = CARD_STATS;
+            return params.name + '<br>' +
+              stats.map(function(s, i) {
+                return s.label + ': ' + params.value[i] + ' <span style="color:#6b7280">pct</span>';
+              }).join('<br>');
+          }
+        },
+        legend: {
+          data: [name1, name2],
+          top: 10,
+          textStyle: { color: '#9ca3af', fontSize: 12 },
+        },
+        radar: {
+          indicator: dims.map(function(d) { return { name: d, max: 100, min: 0 }; }),
+          center: ['50%', '55%'],
+          radius: '60%',
+          splitNumber: 4,
+          axisName: { color: '#9ca3af', fontSize: 12 },
+          splitLine: { lineStyle: { color: '#2d3748' } },
+          splitArea: { areaStyle: { color: ['rgba(45,55,72,0.3)', 'rgba(45,55,72,0.1)'] } },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+        },
+        series: [
+          {
+            type: 'radar',
+            name: name1,
+            data: [{ value: vals1, name: name1 }],
+            lineStyle: { color: '#3b82f6', width: 2 },
+            areaStyle: { color: 'rgba(59,130,246,0.2)' },
+            itemStyle: { color: '#3b82f6' },
+          },
+          {
+            type: 'radar',
+            name: name2,
+            data: [{ value: vals2, name: name2 }],
+            lineStyle: { color: '#f97316', width: 2 },
+            areaStyle: { color: 'rgba(249,115,22,0.2)' },
+            itemStyle: { color: '#f97316' },
+          },
+        ],
+      };
+
+      if (!radarChart) {
+        radarChart = echarts.init(document.getElementById('radarChart'), null, { renderer: 'canvas' });
+        window.addEventListener('resize', function() { radarChart.resize(); });
+      }
+      radarChart.setOption(option, true);
+    }
+
+    function initRadarSection() {
+      const p1Sel = document.getElementById('radarP1');
+      const p2Sel = document.getElementById('radarP2');
+
+      // Sort by wrc+ desc to get top players
+      const sorted = [...allRows].sort(function(a, b) {
+        const va = a.wrc_plus ?? a.wrcPlus ?? a['wRC+'] ?? 0;
+        const vb = b.wrc_plus ?? b.wrcPlus ?? b['wRC+'] ?? 0;
+        return vb - va;
+      });
+
+      [p1Sel, p2Sel].forEach(function(sel) {
+        while (sel.firstChild) sel.removeChild(sel.firstChild);
+        sorted.forEach(function(row) {
+          const name = stripPrefix(row.name_zh || row.player_name || row.name || '');
+          if (!name) return;
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          sel.appendChild(opt);
+        });
+      });
+
+      // Default: top 2 wRC+ batters
+      if (sorted.length >= 2) {
+        p1Sel.value = stripPrefix(sorted[0].name_zh || sorted[0].player_name || sorted[0].name || '');
+        p2Sel.value = stripPrefix(sorted[1].name_zh || sorted[1].player_name || sorted[1].name || '');
+      }
+
+      p1Sel.addEventListener('change', updateRadarChart);
+      p2Sel.addEventListener('change', updateRadarChart);
+
+      document.getElementById('radarSection').classList.remove('hidden');
+      updateRadarChart();
     }
 
     loadData();

@@ -111,6 +111,25 @@
       </select>
     </div>
 
+    <!-- Rolling wOBA Line Chart -->
+    <div class="bg-surface-card border border-surface-border rounded-xl p-4 mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-base font-semibold text-white">Rolling wOBA 走勢圖（50PA 滾動窗口）</h2>
+          <p class="text-xs text-gray-500 mt-0.5">最多選 5 位打者同時比較，X 軸為累計打席數</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <label class="text-xs text-gray-400 shrink-0">比較球員：</label>
+          <select id="rollingPlayerSelect" multiple
+            class="bg-surface border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand"
+            style="min-width:180px;max-height:120px;">
+          </select>
+          <span class="text-xs text-gray-600">（Ctrl/Cmd 多選）</span>
+        </div>
+      </div>
+      <div id="rollingChart" style="width:100%;height:400px;"></div>
+    </div>
+
     <!-- Diverging bar chart -->
     <div class="bg-surface-card border border-surface-border rounded-xl p-4 mb-8">
       <div id="splitsChart" style="width:100%;height:600px;"></div>
@@ -353,6 +372,194 @@
     }
 
     loadData();
+
+    // ── Rolling wOBA chart ─────────────────────────────────────────────────
+    var rollingData = [];
+    var rollingChart = null;
+    var LEAGUE_AVG_WOBA = 0.278;
+
+    var ROLLING_COLORS = [
+      '#60a5fa', '#34d399', '#f87171', '#fbbf24', '#a78bfa'
+    ];
+
+    function buildRollingOptions(selectedIds) {
+      var series = [];
+      var colorIdx = 0;
+
+      selectedIds.forEach(function(pid) {
+        var player = null;
+        for (var i = 0; i < rollingData.length; i++) {
+          if (rollingData[i].player_id === pid) { player = rollingData[i]; break; }
+        }
+        if (!player) return;
+
+        var pts = player.series.map(function(s) {
+          return [s.pa_num, s.woba, s.date, s.avg];
+        });
+
+        series.push({
+          name: stripPrefix(player.name_zh) + '（' + player.team + '）',
+          type: 'line',
+          smooth: true,
+          symbol: 'none',
+          lineStyle: { width: 2, color: ROLLING_COLORS[colorIdx % ROLLING_COLORS.length] },
+          itemStyle: { color: ROLLING_COLORS[colorIdx % ROLLING_COLORS.length] },
+          data: pts.map(function(p) { return [p[0], p[1]]; }),
+          encode: { x: 0, y: 1 },
+          tooltip: {
+            formatter: function(params) {
+              var p = pts[params.dataIndex];
+              return (
+                '<b>' + params.seriesName + '</b><br/>' +
+                '打席 #' + p[0] + '　' + p[2] + '<br/>' +
+                'wOBA: <b>' + p[1].toFixed(4) + '</b>　AVG: ' + p[3].toFixed(3)
+              );
+            }
+          }
+        });
+        colorIdx++;
+      });
+
+      // League average reference line
+      series.push({
+        name: '聯盟平均 wOBA',
+        type: 'line',
+        symbol: 'none',
+        lineStyle: { type: 'dashed', color: '#6b7280', width: 1.5 },
+        itemStyle: { color: '#6b7280' },
+        markLine: {
+          silent: true,
+          data: [{ yAxis: LEAGUE_AVG_WOBA }],
+          label: { show: false }
+        },
+        data: [],
+        tooltip: { show: false }
+      });
+
+      return {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#1e2530',
+          borderColor: '#2d3748',
+          textStyle: { color: '#e5e7eb', fontSize: 12 }
+        },
+        legend: {
+          type: 'scroll',
+          bottom: 0,
+          textStyle: { color: '#9ca3af', fontSize: 11 },
+          icon: 'circle',
+          itemWidth: 10,
+          itemHeight: 10
+        },
+        grid: { left: 60, right: 20, top: 20, bottom: 55 },
+        xAxis: {
+          type: 'value',
+          name: 'PA#',
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          min: 50,
+          axisLabel: { color: '#9ca3af' },
+          splitLine: { lineStyle: { color: '#2d3748', type: 'dashed' } },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        yAxis: {
+          type: 'value',
+          name: 'wOBA',
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: {
+            color: '#9ca3af',
+            formatter: function(v) { return v.toFixed(3); }
+          },
+          splitLine: { lineStyle: { color: '#2d3748', type: 'dashed' } },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        series: series
+      };
+    }
+
+    function renderRollingChart() {
+      var sel = document.getElementById('rollingPlayerSelect');
+      var selected = [];
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].selected) selected.push(sel.options[i].value);
+      }
+      if (selected.length > 5) selected = selected.slice(0, 5);
+      if (!rollingChart) {
+        rollingChart = echarts.init(document.getElementById('rollingChart'));
+        window.addEventListener('resize', function() { rollingChart.resize(); });
+      }
+      rollingChart.setOption(buildRollingOptions(selected), true);
+    }
+
+    async function loadRollingData() {
+      try {
+        var res = await fetch('api/analysis/rolling_woba_2025.json');
+        if (!res.ok) return;
+        var json = await res.json();
+        rollingData = json.players || [];
+
+        // Populate select options — will be sorted after splits data loads
+        var sel = document.getElementById('rollingPlayerSelect');
+        while (sel.firstChild) sel.removeChild(sel.firstChild);
+        rollingData.forEach(function(p) {
+          var opt = document.createElement('option');
+          opt.value = p.player_id;
+          opt.textContent = stripPrefix(p.name_zh) + '（' + p.team + '）';
+          sel.appendChild(opt);
+        });
+
+        // Default: top 3 wRC+ batters from splits data (by highest first-half wOBA as proxy)
+        // We wait briefly for allData to be populated, then auto-select
+        function autoSelectDefault() {
+          if (allData.length === 0) {
+            setTimeout(autoSelectDefault, 100);
+            return;
+          }
+          // Sort splits allData by average wOBA desc
+          var sorted = allData.slice().sort(function(a, b) {
+            var wa = ((a.first_half.woba || 0) + (a.second_half.woba || 0)) / 2;
+            var wb = ((b.first_half.woba || 0) + (b.second_half.woba || 0)) / 2;
+            return wb - wa;
+          });
+          var topNames = sorted.slice(0, 3).map(function(d) {
+            return stripPrefix(d.name_zh);
+          });
+
+          // Match to rolling player_ids
+          var matched = [];
+          for (var i = 0; i < sel.options.length; i++) {
+            var optName = stripPrefix(sel.options[i].value);
+            if (topNames.indexOf(stripPrefix(sel.options[i].textContent.replace(/（.*）$/, ''))) !== -1) {
+              matched.push(sel.options[i].value);
+            }
+          }
+          // Fallback: just pick first 3 rolling players
+          if (matched.length === 0) {
+            for (var j = 0; j < Math.min(3, sel.options.length); j++) {
+              matched.push(sel.options[j].value);
+            }
+          }
+
+          for (var k = 0; k < sel.options.length; k++) {
+            sel.options[k].selected = matched.indexOf(sel.options[k].value) !== -1;
+          }
+
+          renderRollingChart();
+        }
+        autoSelectDefault();
+
+        sel.addEventListener('change', function() { renderRollingChart(); });
+
+      } catch (e) {
+        // Rolling data not available — hide section gracefully
+        var section = document.getElementById('rollingChart');
+        if (section && section.parentElement) {
+          section.parentElement.parentElement.style.display = 'none';
+        }
+      }
+    }
+
+    loadRollingData();
   </script>
 </body>
 </html>

@@ -68,6 +68,22 @@
   <!-- Main Content -->
   <main class="max-w-6xl mx-auto px-4 pb-20">
 
+    <!-- League Heatmap Section -->
+    <section class="mb-10 bg-surface-card border border-surface-border rounded-xl p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-white">聯盟球數色溫圖 — 2025 賽季</h2>
+          <p class="text-xs text-gray-500 mt-0.5">全聯盟 105 名打者匯總 · 顏色深淺代表數值高低</p>
+        </div>
+        <div class="flex gap-2" id="hmMetricBtns">
+          <button class="hm-btn active bg-purple-700 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors" data-hm="ba">打擊率</button>
+          <button class="hm-btn bg-surface border border-surface-border text-gray-400 text-xs font-semibold px-4 py-1.5 rounded-full hover:text-white transition-colors" data-hm="k_pct">三振率</button>
+          <button class="hm-btn bg-surface border border-surface-border text-gray-400 text-xs font-semibold px-4 py-1.5 rounded-full hover:text-white transition-colors" data-hm="bb_pct">保送率</button>
+        </div>
+      </div>
+      <div id="leagueHeatmap" style="height:340px;"></div>
+    </section>
+
     <!-- Batter Search -->
     <div class="mb-6 bg-surface-card border border-surface-border rounded-xl p-5">
       <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
@@ -467,6 +483,171 @@
         loadCountData(selectedBatterId, year, name);
       }
     });
+
+    // ── League Heatmap ──────────────────────────────────────────────────────────
+    let hmChart = null;
+    let hmData = null;
+    let activeHmMetric = 'ba';
+
+    const HM_META = {
+      ba:     { label: '打擊率', colorMin: '#1e3a5f', colorMax: '#ef4444', fmt: v => v.toFixed(3) },
+      k_pct:  { label: '三振率', colorMin: '#1e3a5f', colorMax: '#f97316', fmt: v => (v * 100).toFixed(1) + '%' },
+      bb_pct: { label: '保送率', colorMin: '#1e3a5f', colorMax: '#22c55e', fmt: v => (v * 100).toFixed(1) + '%' },
+    };
+
+    // Grid position: x = strikes (0-2), y = balls (0-3)
+    // ECharts heatmap: data = [x, y, value]
+    function renderLeagueHeatmap(data, metric) {
+      const meta = HM_META[metric];
+      const counts = data.counts;
+
+      // Build 4×3 grid (balls 0-3 on Y, strikes 0-2 on X)
+      // values[balls][strikes] = count record
+      const grid = {};
+      counts.forEach(c => {
+        grid[`${c.balls}-${c.strikes}`] = c;
+      });
+
+      const hmValues = [];
+      for (let b = 0; b <= 3; b++) {
+        for (let s = 0; s <= 2; s++) {
+          const key = `${b}-${s}`;
+          const rec = grid[key];
+          const val = rec ? (rec[metric] || 0) : null;
+          hmValues.push([s, b, val]);
+        }
+      }
+
+      const validVals = hmValues.filter(d => d[2] !== null).map(d => d[2]);
+      const minVal = Math.min(...validVals);
+      const maxVal = Math.max(...validVals);
+
+      if (!hmChart) {
+        hmChart = echarts.init(document.getElementById('leagueHeatmap'));
+        window.addEventListener('resize', () => { if (hmChart) hmChart.resize(); });
+      }
+
+      hmChart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 20, right: 120, bottom: 50, left: 70 },
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 13 },
+          formatter: params => {
+            if (params.data[2] === null) return '';
+            const key = `${params.data[1]}-${params.data[0]}`;
+            const rec = grid[key];
+            if (!rec) return '';
+            return [
+              `<b>${rec.balls} 壞 ${rec.strikes} 好 (${rec.count})</b>`,
+              `${meta.label}：<b>${meta.fmt(rec[metric])}</b>`,
+              `打擊率：${rec.ba.toFixed(3)}`,
+              `三振率：${(rec.k_pct * 100).toFixed(1)}%`,
+              `保送率：${(rec.bb_pct * 100).toFixed(1)}%`,
+              `打席數：${rec.pa.toLocaleString()}`,
+            ].join('<br/>');
+          },
+        },
+        xAxis: {
+          type: 'category',
+          data: ['0 好球', '1 好球', '2 好球'],
+          name: '好球數',
+          nameLocation: 'middle',
+          nameGap: 32,
+          nameTextStyle: { color: '#9ca3af', fontSize: 12 },
+          axisLabel: { color: '#9ca3af', fontSize: 12 },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+          axisTick: { show: false },
+          splitArea: { show: true, areaStyle: { color: ['rgba(255,255,255,0.01)', 'rgba(255,255,255,0.03)'] } },
+        },
+        yAxis: {
+          type: 'category',
+          data: ['0 壞球', '1 壞球', '2 壞球', '3 壞球'],
+          name: '壞球數',
+          nameLocation: 'middle',
+          nameGap: 55,
+          nameTextStyle: { color: '#9ca3af', fontSize: 12 },
+          axisLabel: { color: '#9ca3af', fontSize: 12 },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+          axisTick: { show: false },
+          splitArea: { show: true, areaStyle: { color: ['rgba(255,255,255,0.01)', 'rgba(255,255,255,0.03)'] } },
+        },
+        visualMap: {
+          min: minVal,
+          max: maxVal,
+          calculable: true,
+          orient: 'vertical',
+          right: 10,
+          top: 'center',
+          inRange: { color: [meta.colorMin, '#6366f1', meta.colorMax] },
+          textStyle: { color: '#9ca3af', fontSize: 11 },
+          formatter: v => meta.fmt(v),
+        },
+        series: [{
+          name: meta.label,
+          type: 'heatmap',
+          data: hmValues,
+          label: {
+            show: true,
+            formatter: params => {
+              if (params.data[2] === null) return '—';
+              return meta.fmt(params.data[2]);
+            },
+            fontSize: 13,
+            fontWeight: 'bold',
+            color: '#ffffff',
+          },
+          itemStyle: { borderColor: '#141920', borderWidth: 3, borderRadius: 4 },
+          emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.5)' } },
+        }],
+        animationDuration: 500,
+      }, true);
+    }
+
+    async function loadLeagueHeatmap() {
+      try {
+        const res = await fetch('api/analysis/count_heatmap_2025.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        hmData = json;
+        renderLeagueHeatmap(hmData, activeHmMetric);
+      } catch (e) {
+        // Fallback: inline static data derived from 2025 aggregation
+        hmData = {
+          year: 2025,
+          counts: [
+            { count: '0-0', balls: 0, strikes: 0, pa: 5417, ba: 0.299, k_pct: 0.001, bb_pct: 0.018 },
+            { count: '0-1', balls: 0, strikes: 1, pa: 1450, ba: 0.279, k_pct: 0.001, bb_pct: 0.0 },
+            { count: '0-2', balls: 0, strikes: 2, pa:  957, ba: 0.009, k_pct: 0.938, bb_pct: 0.0 },
+            { count: '1-0', balls: 1, strikes: 0, pa: 3097, ba: 0.319, k_pct: 0.0,   bb_pct: 0.0 },
+            { count: '1-1', balls: 1, strikes: 1, pa: 2664, ba: 0.312, k_pct: 0.0,   bb_pct: 0.0 },
+            { count: '1-2', balls: 1, strikes: 2, pa: 2552, ba: 0.121, k_pct: 0.569, bb_pct: 0.0 },
+            { count: '2-0', balls: 2, strikes: 0, pa: 1082, ba: 0.319, k_pct: 0.0,   bb_pct: 0.007 },
+            { count: '2-1', balls: 2, strikes: 1, pa: 1797, ba: 0.317, k_pct: 0.0,   bb_pct: 0.001 },
+            { count: '2-2', balls: 2, strikes: 2, pa: 2623, ba: 0.156, k_pct: 0.465, bb_pct: 0.0 },
+            { count: '3-0', balls: 3, strikes: 0, pa:  568, ba: 0.127, k_pct: 0.0,   bb_pct: 0.644 },
+            { count: '3-1', balls: 3, strikes: 1, pa: 1340, ba: 0.19,  k_pct: 0.0,   bb_pct: 0.433 },
+            { count: '3-2', balls: 3, strikes: 2, pa: 2628, ba: 0.113, k_pct: 0.263, bb_pct: 0.357 },
+          ]
+        };
+        renderLeagueHeatmap(hmData, activeHmMetric);
+      }
+    }
+
+    document.querySelectorAll('.hm-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.hm-btn').forEach(b => {
+          b.className = 'hm-btn bg-surface border border-surface-border text-gray-400 text-xs font-semibold px-4 py-1.5 rounded-full hover:text-white transition-colors';
+        });
+        this.className = 'hm-btn active bg-purple-700 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors';
+        activeHmMetric = this.dataset.hm;
+        if (hmData) renderLeagueHeatmap(hmData, activeHmMetric);
+      });
+    });
+
+    loadLeagueHeatmap();
   </script>
 </body>
 </html>

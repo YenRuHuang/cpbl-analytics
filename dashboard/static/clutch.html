@@ -145,6 +145,11 @@
       <div id="clutchChart" style="height:520px;"></div>
     </div>
 
+    <!-- Diverging Dot Plot -->
+    <div id="divergingContainer" class="hidden mt-6 bg-surface-card border border-surface-border rounded-xl p-4">
+      <div id="divergingChart" style="height:700px;"></div>
+    </div>
+
     <!-- Table -->
     <div id="tableContainer" class="hidden mt-6 bg-surface-card border border-surface-border rounded-xl overflow-hidden">
       <div class="px-5 py-4 border-b border-surface-border flex items-center justify-between">
@@ -215,6 +220,7 @@
       document.getElementById('loadingState').classList.remove('hidden');
       document.getElementById('errorState').classList.add('hidden');
       document.getElementById('chartContainer').classList.add('hidden');
+      document.getElementById('divergingContainer').classList.add('hidden');
       document.getElementById('tableContainer').classList.add('hidden');
       document.getElementById('playerDetail').classList.add('hidden');
 
@@ -250,6 +256,7 @@
       teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSel.appendChild(o); });
 
       document.getElementById('chartContainer').classList.remove('hidden');
+      document.getElementById('divergingContainer').classList.remove('hidden');
       document.getElementById('tableContainer').classList.remove('hidden');
       applyClutchFilter();
     }
@@ -258,6 +265,7 @@
       const team = document.getElementById('teamFilter').value;
       const filtered = team ? allData.filter(d => d.team === team) : allData;
       renderChart(filtered);
+      renderDivergingChart(filtered);
       renderTable(filtered);
       document.getElementById('playerCount').textContent = `共 ${filtered.length} 名打者`;
     }
@@ -360,7 +368,116 @@
       });
     }
 
-    window.addEventListener('resize', () => { if (clutchChart) clutchChart.resize(); });
+    let divergingChart = null;
+
+    function renderDivergingChart(data) {
+      const qualified = data.filter(d =>
+        (d.total_pa == null || d.total_pa >= 100) &&
+        (d.high_leverage_pa == null || d.high_leverage_pa >= 10)
+      );
+
+      const sorted = [...qualified].sort((a, b) => {
+        const sa = (a.clutch_score != null) ? a.clutch_score : ((a.high_li_ba || 0) - (a.overall_ba || 0));
+        const sb = (b.clutch_score != null) ? b.clutch_score : ((b.high_li_ba || 0) - (b.overall_ba || 0));
+        return sb - sa;
+      });
+
+      const top15 = sorted.slice(0, 15);
+      const bottom15 = sorted.slice(-15).reverse();
+      const combined = [];
+      const seen = new Set();
+      [...bottom15, ...top15].forEach(p => {
+        if (!seen.has(p.player_name)) {
+          seen.add(p.player_name);
+          combined.push(p);
+        }
+      });
+
+      const players = combined;
+      const names = players.map(p => p.player_name);
+      const scores = players.map(p =>
+        p.clutch_score != null ? p.clutch_score : ((p.high_li_ba || 0) - (p.overall_ba || 0))
+      );
+      const colors = scores.map(s => s >= 0 ? '#4ade80' : '#f87171');
+
+      if (divergingChart) divergingChart.dispose();
+      divergingChart = echarts.init(document.getElementById('divergingChart'));
+
+      divergingChart.setOption({
+        backgroundColor: 'transparent',
+        title: {
+          text: 'Clutch 差異排行（高壓 BA − 整體 BA）',
+          left: 'center',
+          top: 8,
+          textStyle: { color: '#f3f4f6', fontSize: 14, fontWeight: 'bold' },
+        },
+        grid: { top: 48, right: 100, bottom: 40, left: 20, containLabel: true },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'none' },
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 12 },
+          formatter: params => {
+            const idx = params[0].dataIndex;
+            const p = players[idx];
+            const diff = scores[idx];
+            const color = diff >= 0 ? '#4ade80' : '#f87171';
+            return '<b>' + (p.player_name || '—') + '</b> (' + (p.team || '—') + ')<br/>' +
+              '整體 BA: ' + (p.overall_ba || 0).toFixed(3) + '<br/>' +
+              '高槓桿 BA: ' + (p.high_li_ba || 0).toFixed(3) + '<br/>' +
+              '差異: <span style="color:' + color + '">' + (diff >= 0 ? '+' : '') + diff.toFixed(3) + '</span>';
+          },
+        },
+        xAxis: {
+          type: 'value',
+          axisLabel: {
+            formatter: v => (v >= 0 ? '+' : '') + v.toFixed(3),
+            color: '#9ca3af',
+            fontSize: 11,
+          },
+          splitLine: { lineStyle: { color: '#2d3748' } },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+        },
+        yAxis: {
+          type: 'category',
+          data: names,
+          axisLabel: { color: '#9ca3af', fontSize: 12 },
+          axisLine: { lineStyle: { color: '#2d3748' } },
+          axisTick: { show: false },
+        },
+        series: [
+          {
+            type: 'bar',
+            data: scores.map((s, i) => ({
+              value: s,
+              itemStyle: { color: colors[i] },
+            })),
+            barMaxWidth: 18,
+            label: {
+              show: true,
+              formatter: p => (p.value >= 0 ? '+' : '') + Number(p.value).toFixed(3),
+              position: 'right',
+              color: '#d1d5db',
+              fontSize: 11,
+            },
+            markLine: {
+              silent: true,
+              symbol: 'none',
+              data: [{ xAxis: 0 }],
+              lineStyle: { color: '#6b7280', type: 'solid', width: 1.5 },
+              label: { show: false },
+            },
+            animationDuration: 600,
+          },
+        ],
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (clutchChart) clutchChart.resize();
+      if (divergingChart) divergingChart.resize();
+    });;
 
     function renderTable(data) {
       const sorted = [...data].sort((a, b) => {
