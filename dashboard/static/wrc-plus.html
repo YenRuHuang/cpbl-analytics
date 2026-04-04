@@ -135,6 +135,14 @@
 
     <!-- Table -->
     <div id="tableContainer" class="hidden">
+      <!-- Team Filter -->
+      <div class="flex items-center gap-3 mb-4">
+        <label for="teamFilter" class="text-xs text-gray-400 shrink-0">篩選球隊：</label>
+        <select id="teamFilter" class="bg-surface-card border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand">
+          <option value="">全部球隊</option>
+        </select>
+      </div>
+
       <!-- Legend -->
       <div class="flex flex-wrap items-center gap-4 mb-4 text-xs text-gray-500">
         <span class="text-gray-400 font-medium">wRC+ 色彩：</span>
@@ -151,6 +159,7 @@
             <tr>
               <th class="sortable px-4 py-3 text-left" data-col="rank">排名</th>
               <th class="sortable px-4 py-3 text-left" data-col="player_name">球員</th>
+              <th class="sortable px-4 py-3 text-left" data-col="team">球隊</th>
               <th class="sortable px-4 py-3 text-right" data-col="pa">PA</th>
               <th class="sortable px-4 py-3 text-right" data-col="avg">AVG</th>
               <th class="sortable px-4 py-3 text-right" data-col="obp">OBP</th>
@@ -180,9 +189,9 @@
             wOBA 根據每種進攻事件（BB、HBP、1B、2B、3B、HR）對得分的貢獻程度賦予不同權重，
             比 OBP 更準確地反映打者的進攻價值。權重來自 linear weights，代表每種事件平均帶來的額外得分期望值。
           </p>
-          <div class="formula-block">wOBA = (0.690×BB + 0.722×HBP + 0.888×1B + 1.271×2B + 1.616×3B + 2.101×HR)
+          <div class="formula-block">wOBA = (0.690×BB + 0.722×HBP + 0.888×1B + 1.22×2B + 1.56×3B + 1.95×HR)
          ÷ (AB + BB - IBB + SF + HBP)</div>
-          <p class="text-gray-600 text-xs mt-2">* 權重為 FanGraphs 2024 MLB 近似值</p>
+          <p class="text-gray-600 text-xs mt-2">* 本系統實際使用之權重（來自 JSON meta）。FanGraphs 2024 MLB 標準值為 1.271×2B、1.616×3B、2.101×HR，因 CPBL 環境調整後採用較保守估計。</p>
         </div>
 
         <!-- wRC+ -->
@@ -238,6 +247,7 @@
     let allRows = [];
     let sortCol = 'wrc_plus';
     let sortDir = 'desc';
+    let activeTeam = '';
 
     // --- Helpers ---
     function stripPrefix(name) {
@@ -263,6 +273,7 @@
     function getField(row, col) {
       const aliases = {
         player_name: ['name_zh', 'player_name', 'name'],
+        team:        ['team', 'team_name', 'teamName'],
         pa:          ['pa', 'PA'],
         avg:         ['avg', 'AVG'],
         obp:         ['obp', 'OBP'],
@@ -284,6 +295,7 @@
     // --- Build one table row using safe DOM methods ---
     function buildTr(row, rank) {
       const name   = stripPrefix(row.name_zh || row.player_name || row.name || '');
+      const team   = row.team || row.team_name || row.teamName || '—';
       const wrcRaw = row.wrc_plus ?? row.wrcPlus ?? row['wRC+'];
       const pa     = row.pa ?? row.PA;
       const avg    = row.avg ?? row.AVG;
@@ -305,6 +317,7 @@
 
       tr.appendChild(makeTd(String(rank), 'text-gray-500 stat-num'));
       tr.appendChild(makeTd(name, 'font-medium text-white'));
+      tr.appendChild(makeTd(team, 'text-gray-300'));
       tr.appendChild(makeTd(pa != null ? String(pa) : '—', 'text-right stat-num text-gray-300'));
       tr.appendChild(makeTd(fmt3(avg), 'text-right stat-num text-gray-300'));
       tr.appendChild(makeTd(fmt3(obp), 'text-right stat-num text-gray-300'));
@@ -333,7 +346,10 @@
     function sortAndRender() {
       const col = sortCol;
       const dir = sortDir;
-      const sorted = [...allRows].sort((a, b) => {
+      const filtered = activeTeam
+        ? allRows.filter(function(r) { return (r.team || r.team_name || r.teamName || '') === activeTeam; })
+        : allRows;
+      const sorted = [...filtered].sort((a, b) => {
         let va = getField(a, col);
         let vb = getField(b, col);
         if (va == null) va = dir === 'desc' ? -Infinity : Infinity;
@@ -360,6 +376,12 @@
         th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
         sortAndRender();
       });
+    });
+
+    // --- Team filter ---
+    document.getElementById('teamFilter').addEventListener('change', function() {
+      activeTeam = this.value;
+      sortAndRender();
     });
 
     // --- Load data ---
@@ -398,6 +420,20 @@
 
         document.getElementById('qualifiedCount').textContent =
           '合格打席（PA \u2265 ' + MIN_PA + '）：' + allRows.length + ' 人';
+
+        // Populate team filter dropdown
+        const teams = [...new Set(
+          allRows.map(function(r) { return r.team || r.team_name || r.teamName || ''; })
+            .filter(function(t) { return t && t !== '—'; })
+        )].sort(function(a, b) { return a.localeCompare(b, 'zh-TW'); });
+
+        const sel = document.getElementById('teamFilter');
+        teams.forEach(function(t) {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          sel.appendChild(opt);
+        });
 
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('tableContainer').classList.remove('hidden');
