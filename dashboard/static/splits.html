@@ -255,7 +255,13 @@
 
     function updateChart(rows) {
       if (!chart) return;
-      var top = rows.slice(0, 25);
+      // Take top 12 positive + top 12 negative ΔwOBA for diverging chart
+      var sorted = rows.slice().sort(function(a, b) { return b.delta.woba - a.delta.woba; });
+      var positive = sorted.filter(function(d) { return d.delta.woba > 0; }).slice(0, 12);
+      var negative = sorted.filter(function(d) { return d.delta.woba < 0; }).slice(-12);
+      // ECharts yAxis category renders bottom-to-top, so reverse:
+      // negative (worst at bottom) then positive (best at top)
+      var top = [].concat(negative.reverse(), positive.reverse());
       var names = top.map(function(d) { return stripPrefix(d.name_zh); });
       var deltas = top.map(function(d) { return d.delta.woba; });
 
