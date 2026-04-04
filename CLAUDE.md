@@ -17,7 +17,8 @@
 | 視覺化 | ECharts 5.4.3（靜態 HTML dashboard）|
 | 測試 | pytest + coverage |
 | 容器 | Docker + docker-compose |
-| CI | GitHub Actions（lint + test + build）|
+| CI | GitHub Actions（ci.yml: lint + test + build）|
+| 自動更新 | GitHub Actions（daily-update.yml: 每天 UTC 22:00 抓資料 → commit → 觸發 CF Pages 部署）|
 | Linter | ruff |
 | Type Check | mypy（strict mode）|
 
