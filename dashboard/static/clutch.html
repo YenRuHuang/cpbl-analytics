@@ -383,10 +383,13 @@
       });
 
       const top15 = sorted.slice(0, 15);
-      const bottom15 = sorted.slice(-15).reverse();
+      const bottom15 = sorted.slice(-15);
+      // ECharts yAxis category renders bottom-to-top, so array order = bottom-to-top
+      // We want: top of chart = most clutch, bottom = most choke
+      // So array order: [most choke ... least choke, least clutch ... most clutch]
       const combined = [];
       const seen = new Set();
-      [...bottom15, ...top15].forEach(p => {
+      [...bottom15.reverse(), ...top15.reverse()].forEach(p => {
         if (!seen.has(p.player_name)) {
           seen.add(p.player_name);
           combined.push(p);

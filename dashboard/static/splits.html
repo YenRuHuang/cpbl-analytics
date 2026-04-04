@@ -120,12 +120,14 @@
         </div>
         <div class="flex flex-wrap gap-2 items-center">
           <label class="text-xs text-gray-400 shrink-0">比較球員：</label>
-          <select id="rollingPlayerSelect" multiple
-            class="bg-surface border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand"
-            style="min-width:180px;max-height:120px;">
+          <select id="rollingPlayerAdd"
+            class="bg-surface-card border border-surface-border text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand"
+            style="min-width:180px;">
+            <option value="">+ 選擇球員</option>
           </select>
-          <span class="text-xs text-gray-600">（Ctrl/Cmd 多選）</span>
+          <span class="text-xs text-gray-600">（最多 5 位）</span>
         </div>
+        <div id="rollingSelectedTags" class="flex flex-wrap gap-2 mt-2"></div>
       </div>
       <div id="rollingChart" style="width:100%;height:400px;"></div>
     </div>
@@ -477,18 +479,59 @@
       };
     }
 
+    var rollingSelected = []; // array of player_ids
+
     function renderRollingChart() {
-      var sel = document.getElementById('rollingPlayerSelect');
-      var selected = [];
-      for (var i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].selected) selected.push(sel.options[i].value);
-      }
-      if (selected.length > 5) selected = selected.slice(0, 5);
       if (!rollingChart) {
         rollingChart = echarts.init(document.getElementById('rollingChart'));
         window.addEventListener('resize', function() { rollingChart.resize(); });
       }
-      rollingChart.setOption(buildRollingOptions(selected), true);
+      rollingChart.setOption(buildRollingOptions(rollingSelected), true);
+    }
+
+    function addRollingPlayer(pid) {
+      if (!pid || rollingSelected.indexOf(pid) !== -1 || rollingSelected.length >= 5) return;
+      rollingSelected.push(pid);
+      renderRollingTags();
+      renderRollingChart();
+    }
+
+    function removeRollingPlayer(pid) {
+      rollingSelected = rollingSelected.filter(function(id) { return id !== pid; });
+      renderRollingTags();
+      renderRollingChart();
+    }
+
+    function renderRollingTags() {
+      var container = document.getElementById('rollingSelectedTags');
+      while (container.firstChild) container.removeChild(container.firstChild);
+      rollingSelected.forEach(function(pid, idx) {
+        var player = null;
+        for (var i = 0; i < rollingData.length; i++) {
+          if (rollingData[i].player_id === pid) { player = rollingData[i]; break; }
+        }
+        if (!player) return;
+        var tag = document.createElement('span');
+        tag.className = 'inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium';
+        tag.style.backgroundColor = ROLLING_COLORS[idx % ROLLING_COLORS.length] + '22';
+        tag.style.color = ROLLING_COLORS[idx % ROLLING_COLORS.length];
+        tag.style.border = '1px solid ' + ROLLING_COLORS[idx % ROLLING_COLORS.length] + '44';
+
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = stripPrefix(player.name_zh);
+        tag.appendChild(nameSpan);
+
+        var closeBtn = document.createElement('button');
+        closeBtn.textContent = '\u00D7';
+        closeBtn.className = 'ml-1 hover:opacity-70';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.addEventListener('click', (function(id) {
+          return function() { removeRollingPlayer(id); };
+        })(pid));
+        tag.appendChild(closeBtn);
+
+        container.appendChild(tag);
+      });
     }
 
     async function loadRollingData() {
@@ -498,60 +541,38 @@
         var json = await res.json();
         rollingData = json.players || [];
 
-        // Populate select options — will be sorted after splits data loads
-        var sel = document.getElementById('rollingPlayerSelect');
-        while (sel.firstChild) sel.removeChild(sel.firstChild);
-        rollingData.forEach(function(p) {
+        // Populate dropdown
+        var sel = document.getElementById('rollingPlayerAdd');
+        while (sel.options.length > 1) sel.remove(1);
+        // Sort by total_pa desc for better UX
+        var sorted = rollingData.slice().sort(function(a, b) { return b.total_pa - a.total_pa; });
+        sorted.forEach(function(p) {
           var opt = document.createElement('option');
           opt.value = p.player_id;
           opt.textContent = stripPrefix(p.name_zh) + '（' + p.team + '）';
           sel.appendChild(opt);
         });
 
-        // Default: top 3 wRC+ batters from splits data (by highest first-half wOBA as proxy)
-        // We wait briefly for allData to be populated, then auto-select
-        function autoSelectDefault() {
-          if (allData.length === 0) {
-            setTimeout(autoSelectDefault, 100);
-            return;
+        sel.addEventListener('change', function() {
+          if (this.value) {
+            addRollingPlayer(this.value);
+            this.value = '';
           }
-          // Sort splits allData by average wOBA desc
-          var sorted = allData.slice().sort(function(a, b) {
-            var wa = ((a.first_half.woba || 0) + (a.second_half.woba || 0)) / 2;
-            var wb = ((b.first_half.woba || 0) + (b.second_half.woba || 0)) / 2;
-            return wb - wa;
-          });
-          var topNames = sorted.slice(0, 3).map(function(d) {
-            return stripPrefix(d.name_zh);
-          });
+        });
 
-          // Match to rolling player_ids
-          var matched = [];
-          for (var i = 0; i < sel.options.length; i++) {
-            var optName = stripPrefix(sel.options[i].value);
-            if (topNames.indexOf(stripPrefix(sel.options[i].textContent.replace(/（.*）$/, ''))) !== -1) {
-              matched.push(sel.options[i].value);
-            }
-          }
-          // Fallback: just pick first 3 rolling players
-          if (matched.length === 0) {
-            for (var j = 0; j < Math.min(3, sel.options.length); j++) {
-              matched.push(sel.options[j].value);
-            }
-          }
-
-          for (var k = 0; k < sel.options.length; k++) {
-            sel.options[k].selected = matched.indexOf(sel.options[k].value) !== -1;
-          }
-
-          renderRollingChart();
+        // Auto-select top 3 by wOBA from rolling data
+        var byWoba = rollingData.slice().sort(function(a, b) {
+          var lastA = a.series.length > 0 ? a.series[a.series.length - 1].woba : 0;
+          var lastB = b.series.length > 0 ? b.series[b.series.length - 1].woba : 0;
+          return lastB - lastA;
+        });
+        for (var i = 0; i < Math.min(3, byWoba.length); i++) {
+          rollingSelected.push(byWoba[i].player_id);
         }
-        autoSelectDefault();
-
-        sel.addEventListener('change', function() { renderRollingChart(); });
+        renderRollingTags();
+        renderRollingChart();
 
       } catch (e) {
-        // Rolling data not available — hide section gracefully
         var section = document.getElementById('rollingChart');
         if (section && section.parentElement) {
           section.parentElement.parentElement.style.display = 'none';
