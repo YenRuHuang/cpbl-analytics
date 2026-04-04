@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wRC+ 打者排行 — 2025 CPBL</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .stat-num { font-variant-numeric: tabular-nums; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: #93c5fd; }
+    th.sort-asc::after { content: ' ▲'; font-size: 0.65rem; color: #3b82f6; }
+    th.sort-desc::after { content: ' ▼'; font-size: 0.65rem; color: #3b82f6; }
+    .wrc-elite   { color: #4ade80; font-weight: 600; }
+    .wrc-above   { color: #f9fafb; }
+    .wrc-below   { color: #fbbf24; }
+    .wrc-poor    { color: #f87171; }
+    tbody tr:hover { background-color: rgba(59,130,246,0.06); }
+    .spinner {
+      width: 2.5rem; height: 2.5rem;
+      border: 3px solid rgba(59,130,246,0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .formula-block {
+      background: #0d1117;
+      border: 1px solid #2d3748;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 0.8rem;
+      color: #93c5fd;
+      overflow-x: auto;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="architecture.html" class="hover:text-white transition-colors font-medium text-gray-300">Architecture</a>
+        <a href="api-docs.html" class="hover:text-white transition-colors font-medium text-gray-300">API Docs</a>
+        <span class="text-surface-border">|</span>
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">Fatigue</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">Clutch</a>
+        <a href="counts.html" class="hover:text-white transition-colors">Counts</a>
+        <a href="wrc-plus.html" class="text-orange-400 font-semibold">wRC+</a>
+      </div>
+      <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+        &#9776;
+      </button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="architecture.html" class="block py-1 hover:text-white font-medium text-gray-300">Architecture</a>
+      <a href="api-docs.html" class="block py-1 hover:text-white font-medium text-gray-300">API Docs</a>
+      <div class="border-t border-surface-border my-1"></div>
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">Fatigue</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">Clutch</a>
+      <a href="counts.html" class="block py-1 hover:text-white">Counts</a>
+      <a href="wrc-plus.html" class="block py-1 text-orange-400 font-semibold">wRC+</a>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <header class="max-w-6xl mx-auto px-4 pt-12 pb-6">
+    <div class="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-1 text-orange-400 text-xs mb-5">
+      進攻指標 · 2025 賽季
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-3">
+      wRC+ 打者排行 — 2025 CPBL
+    </h1>
+    <p class="text-gray-400 max-w-2xl text-sm leading-relaxed">
+      加權得分創造指數（Weighted Runs Created Plus）— 以 100 為聯盟平均，綜合評價打者的進攻貢獻
+    </p>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-20">
+
+    <!-- League Stats Banner -->
+    <div id="leagueBanner" class="grid grid-cols-3 gap-4 mb-6 hidden">
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+        <div class="stat-num text-xl font-bold text-white" id="meta-lgwOBA">—</div>
+        <div class="text-xs text-gray-500 mt-1">聯盟 lgwOBA</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+        <div class="stat-num text-xl font-bold text-white" id="meta-lgRPA">—</div>
+        <div class="text-xs text-gray-500 mt-1">聯盟 R/PA</div>
+      </div>
+      <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+        <div class="stat-num text-xl font-bold text-white" id="meta-wOBAscale">—</div>
+        <div class="text-xs text-gray-500 mt-1">wOBA Scale</div>
+      </div>
+    </div>
+
+    <!-- Data Note -->
+    <div class="flex items-start gap-2 bg-yellow-500/5 border border-yellow-500/20 rounded-lg px-4 py-3 mb-6 text-xs text-yellow-300/80">
+      <span class="mt-0.5 text-yellow-400">&#9888;</span>
+      <span>使用 FanGraphs 2024 MLB linear weights 近似值，未含 Park Factor 調整</span>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="flex flex-col items-center justify-center py-20 gap-4">
+      <div class="spinner"></div>
+      <p class="text-gray-500 text-sm">載入資料中...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden text-center py-20">
+      <p class="text-red-400 text-sm" id="errorMsg">資料載入失敗</p>
+    </div>
+
+    <!-- Table -->
+    <div id="tableContainer" class="hidden">
+      <!-- Legend -->
+      <div class="flex flex-wrap items-center gap-4 mb-4 text-xs text-gray-500">
+        <span class="text-gray-400 font-medium">wRC+ 色彩：</span>
+        <span><span class="wrc-elite">&#9632;</span> &gt;120 菁英</span>
+        <span><span class="wrc-above">&#9632;</span> 100–120 高於平均</span>
+        <span><span class="wrc-below">&#9632;</span> 80–99 低於平均</span>
+        <span><span class="wrc-poor">&#9632;</span> &lt;80 顯著低於平均</span>
+        <span class="ml-auto text-gray-600" id="qualifiedCount"></span>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-surface-border">
+        <table class="w-full text-sm">
+          <thead class="bg-surface text-gray-400 text-xs uppercase tracking-wider">
+            <tr>
+              <th class="sortable px-4 py-3 text-left" data-col="rank">排名</th>
+              <th class="sortable px-4 py-3 text-left" data-col="player_name">球員</th>
+              <th class="sortable px-4 py-3 text-right" data-col="pa">PA</th>
+              <th class="sortable px-4 py-3 text-right" data-col="avg">AVG</th>
+              <th class="sortable px-4 py-3 text-right" data-col="obp">OBP</th>
+              <th class="sortable px-4 py-3 text-right" data-col="slg">SLG</th>
+              <th class="sortable px-4 py-3 text-right" data-col="ops">OPS</th>
+              <th class="sortable px-4 py-3 text-right" data-col="woba">wOBA</th>
+              <th class="sortable px-4 py-3 text-right sort-desc" data-col="wrc_plus">wRC+</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody" class="divide-y divide-surface-border">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- wRC+ Formula Explainer -->
+    <div class="mt-14 bg-surface-card border border-surface-border rounded-xl p-6 sm:p-8">
+      <h2 class="text-lg font-bold text-white mb-1">wRC+ 公式說明</h2>
+      <p class="text-gray-500 text-xs mb-6">這些指標的計算邏輯與限制</p>
+
+      <div class="space-y-8">
+
+        <!-- wOBA -->
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">wOBA — 加權上壘率</h3>
+          <p class="text-gray-500 text-xs leading-relaxed mb-3">
+            wOBA 根據每種進攻事件（BB、HBP、1B、2B、3B、HR）對得分的貢獻程度賦予不同權重，
+            比 OBP 更準確地反映打者的進攻價值。權重來自 linear weights，代表每種事件平均帶來的額外得分期望值。
+          </p>
+          <div class="formula-block">wOBA = (0.690×BB + 0.722×HBP + 0.888×1B + 1.271×2B + 1.616×3B + 2.101×HR)
+         ÷ (AB + BB - IBB + SF + HBP)</div>
+          <p class="text-gray-600 text-xs mt-2">* 權重為 FanGraphs 2024 MLB 近似值</p>
+        </div>
+
+        <!-- wRC+ -->
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">wRC+ — 加權得分創造指數</h3>
+          <p class="text-gray-500 text-xs leading-relaxed mb-3">
+            wRC+ 將打者的 wOBA 轉換為「相對聯盟平均的進攻指數」，100 為聯盟平均。
+            110 代表比聯盟平均進攻好 10%，85 代表差 15%。因為已標準化，跨季、跨球場都可比較。
+          </p>
+          <div class="formula-block">wRC+ = [ (wOBA - lgwOBA) / wOBAscale + lgR/PA ] ÷ lgR/PA × 100</div>
+          <p class="text-gray-600 text-xs mt-2">* lgwOBA、wOBAscale、lgR/PA 從當季數據計算</p>
+        </div>
+
+        <!-- Limitations -->
+        <div>
+          <h3 class="text-sm font-semibold text-gray-300 mb-2">本實作的限制</h3>
+          <ul class="space-y-2 text-gray-500 text-xs leading-relaxed">
+            <li class="flex items-start gap-2">
+              <span class="text-yellow-400 shrink-0 mt-0.5">·</span>
+              <span><span class="text-gray-400 font-medium">MLB linear weights</span>：使用 FanGraphs 2024 MLB 權重值。CPBL 的各事件得分期望值與 MLB 可能有差異，理論上需用 CPBL 自身數據重新計算。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-yellow-400 shrink-0 mt-0.5">·</span>
+              <span><span class="text-gray-400 font-medium">無 Park Factor 調整</span>：wRC+ 標準公式應加入球場因子（Park Factor）調整，目前版本未含。主場優勢/劣勢未被校正。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-yellow-400 shrink-0 mt-0.5">·</span>
+              <span><span class="text-gray-400 font-medium">IBB 未區分</span>：資料來源無法完全區分故意四壞（IBB）與一般四壞（BB），計算時一律歸入 BB。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-yellow-400 shrink-0 mt-0.5">·</span>
+              <span><span class="text-gray-400 font-medium">樣本量</span>：CPBL 每季約 120 場，需至少 100 打席（PA ≥ 100）才納入排行，排除小樣本雜訊。</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data (ODC-By License) + CPBL 官網公開資料 | Murs 開發
+  </footer>
+
+  <script>
+    'use strict';
+
+    const DATA_URL = 'api/analysis/wrc_plus_2025.json';
+    const MIN_PA = 100;
+
+    let allRows = [];
+    let sortCol = 'wrc_plus';
+    let sortDir = 'desc';
+
+    // --- Helpers ---
+    function stripPrefix(name) {
+      if (!name) return '';
+      return String(name).replace(/^cpbl_/, '');
+    }
+
+    function fmt3(v) {
+      if (v == null || Number.isNaN(v)) return '—';
+      return Number(v).toFixed(3);
+    }
+
+    function wrcClass(v) {
+      if (v == null || Number.isNaN(v)) return 'stat-num text-gray-300';
+      if (v > 120) return 'stat-num wrc-elite';
+      if (v >= 100) return 'stat-num wrc-above';
+      if (v >= 80)  return 'stat-num wrc-below';
+      return 'stat-num wrc-poor';
+    }
+
+    function getField(row, col) {
+      const aliases = {
+        player_name: ['player_name', 'name'],
+        pa:          ['pa', 'PA'],
+        avg:         ['avg', 'AVG'],
+        obp:         ['obp', 'OBP'],
+        slg:         ['slg', 'SLG'],
+        ops:         ['ops', 'OPS'],
+        woba:        ['woba', 'wOBA'],
+        wrc_plus:    ['wrc_plus', 'wrcPlus', 'wRC+'],
+      };
+      const keys = aliases[col] || [col];
+      for (const k of keys) {
+        if (row[k] != null) {
+          if (col === 'player_name') return stripPrefix(row[k]);
+          return row[k];
+        }
+      }
+      return null;
+    }
+
+    // --- Build one table row using safe DOM methods ---
+    function buildTr(row, rank) {
+      const name   = stripPrefix(row.player_name || row.name || '');
+      const wrcRaw = row.wrc_plus ?? row.wrcPlus ?? row['wRC+'];
+      const pa     = row.pa ?? row.PA;
+      const avg    = row.avg ?? row.AVG;
+      const obp    = row.obp ?? row.OBP;
+      const slg    = row.slg ?? row.SLG;
+      const ops    = row.ops ?? row.OPS ?? ((obp != null && slg != null) ? obp + slg : null);
+      const woba   = row.woba ?? row.wOBA;
+      const wrcVal = wrcRaw != null ? Math.round(wrcRaw) : null;
+
+      function makeTd(text, extraClasses) {
+        const td = document.createElement('td');
+        td.className = 'px-4 py-3 ' + (extraClasses || '');
+        td.textContent = text;
+        return td;
+      }
+
+      const tr = document.createElement('tr');
+      tr.className = 'bg-surface-card';
+
+      tr.appendChild(makeTd(String(rank), 'text-gray-500 stat-num'));
+      tr.appendChild(makeTd(name, 'font-medium text-white'));
+      tr.appendChild(makeTd(pa != null ? String(pa) : '—', 'text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(avg), 'text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(obp), 'text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(slg), 'text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(ops), 'text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(woba), 'text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(wrcVal != null ? String(wrcVal) : '—', 'text-right ' + wrcClass(wrcRaw)));
+
+      return tr;
+    }
+
+    // --- Render table ---
+    function renderTable(rows) {
+      const tbody = document.getElementById('leaderboardBody');
+      // Clear existing rows safely
+      while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+      }
+      const fragment = document.createDocumentFragment();
+      rows.forEach((row, idx) => {
+        fragment.appendChild(buildTr(row, idx + 1));
+      });
+      tbody.appendChild(fragment);
+    }
+
+    function sortAndRender() {
+      const col = sortCol;
+      const dir = sortDir;
+      const sorted = [...allRows].sort((a, b) => {
+        let va = getField(a, col);
+        let vb = getField(b, col);
+        if (va == null) va = dir === 'desc' ? -Infinity : Infinity;
+        if (vb == null) vb = dir === 'desc' ? -Infinity : Infinity;
+        if (typeof va === 'string') return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        return dir === 'asc' ? va - vb : vb - va;
+      });
+      renderTable(sorted);
+    }
+
+    // --- Sort header clicks ---
+    document.querySelectorAll('th.sortable').forEach(function(th) {
+      th.addEventListener('click', function() {
+        const col = th.dataset.col;
+        if (sortCol === col) {
+          sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+        } else {
+          sortCol = col;
+          sortDir = col === 'player_name' ? 'asc' : 'desc';
+        }
+        document.querySelectorAll('th.sortable').forEach(function(t) {
+          t.classList.remove('sort-asc', 'sort-desc');
+        });
+        th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        sortAndRender();
+      });
+    });
+
+    // --- Load data ---
+    async function loadData() {
+      try {
+        const res = await fetch(DATA_URL);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+
+        // Support { meta, batters } or flat array
+        let meta = null;
+        let rawRows = [];
+        if (Array.isArray(json)) {
+          rawRows = json;
+        } else {
+          meta = json.meta || null;
+          rawRows = json.batters || json.data || json.players || [];
+        }
+
+        // Show league meta banner
+        if (meta) {
+          const lgwOBA    = meta.lgwOBA    ?? meta.lg_woba   ?? meta.lgwoba;
+          const lgRPA     = meta.lgRPA     ?? meta.lg_r_pa   ?? meta['lgR/PA'];
+          const wOBAscale = meta.wOBAscale ?? meta.woba_scale;
+          if (lgwOBA    != null) document.getElementById('meta-lgwOBA').textContent    = Number(lgwOBA).toFixed(3);
+          if (lgRPA     != null) document.getElementById('meta-lgRPA').textContent     = Number(lgRPA).toFixed(4);
+          if (wOBAscale != null) document.getElementById('meta-wOBAscale').textContent = Number(wOBAscale).toFixed(3);
+          document.getElementById('leagueBanner').classList.remove('hidden');
+        }
+
+        // Filter to qualified batters
+        allRows = rawRows.filter(function(r) {
+          const pa = r.pa ?? r.PA;
+          return pa != null && pa >= MIN_PA;
+        });
+
+        document.getElementById('qualifiedCount').textContent =
+          '合格打席（PA \u2265 ' + MIN_PA + '）：' + allRows.length + ' 人';
+
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('tableContainer').classList.remove('hidden');
+
+        sortAndRender();
+      } catch (err) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorMsg').textContent = '資料載入失敗：' + err.message;
+        document.getElementById('errorState').classList.remove('hidden');
+      }
+    }
+
+    loadData();
+  </script>
+
+</body>
+</html>

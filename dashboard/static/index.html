@@ -40,6 +40,7 @@
         <a href="fatigue.html" class="hover:text-white transition-colors">Fatigue</a>
         <a href="clutch.html" class="hover:text-white transition-colors">Clutch</a>
         <a href="counts.html" class="hover:text-white transition-colors">Counts</a>
+        <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
       </div>
       <button id="menuBtn" class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
         &#9776;
@@ -53,6 +54,7 @@
       <a href="fatigue.html" class="block py-1 hover:text-white">Fatigue</a>
       <a href="clutch.html" class="block py-1 hover:text-white">Clutch</a>
       <a href="counts.html" class="block py-1 hover:text-white">Counts</a>
+      <a href="wrc-plus.html" class="block py-1 hover:text-white">wRC+</a>
     </div>
   </nav>
 
@@ -103,9 +105,38 @@
 
   <main class="max-w-6xl mx-auto px-4 pb-20">
 
-    <!-- Analytics Modules (top priority - shows domain knowledge) -->
+    <!-- wRC+ Feature Card -->
+    <a href="wrc-plus.html"
+       class="module-card block bg-surface-card border border-orange-500/30 rounded-xl p-6 mb-8 transition-all duration-200 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <span class="bg-orange-500/10 border border-orange-500/30 rounded-full px-3 py-0.5 text-orange-400 text-xs font-semibold">NEW</span>
+            <h2 class="text-xl font-bold text-white">wRC+ 打者排行 — 2025 CPBL</h2>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">加權得分創造指數，以 100 為聯盟平均。用我們 DB 的 2025 全季資料實算，86 位合格打者完整排名。</p>
+        </div>
+        <div class="flex items-center gap-6 text-center shrink-0">
+          <div>
+            <div class="text-2xl font-bold text-orange-400">139.8</div>
+            <div class="text-xs text-gray-500">林安可</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-orange-400">139.8</div>
+            <div class="text-xs text-gray-500">魔鷹</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-orange-400">133.2</div>
+            <div class="text-xs text-gray-500">張育成</div>
+          </div>
+          <div class="text-orange-400 text-xs font-semibold">查看完整排行 &rarr;</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Analytics Modules -->
     <h3 class="text-lg font-bold text-white mb-1">棒球知識：分析模組</h3>
-    <p class="text-gray-500 text-sm mb-4">4 個進階數據分析模組，展示對棒球賽伯計量學的理解與應用。</p>
+    <p class="text-gray-500 text-sm mb-4">5 個進階數據分析模組，展示對棒球賽伯計量學的理解與應用。</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
       <a href="lob.html"
@@ -154,7 +185,7 @@
         <a href="article-fatigue-2025.html"
            class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10">
           <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
-            <span class="bg-yellow-500/10 border border-yellow-500/30 rounded-full px-2 py-0.5 text-yellow-400 font-semibold">Fatigue</span>
+            <span class="bg-yellow-500/10 border border-yellow-500/30 rounded-full px-2 py-0.5 text-yellow-400 font-semibold">疲勞曲線</span>
           </div>
           <h4 class="text-white font-bold mb-2">投手第幾球開始崩盤？疲勞曲線分析</h4>
           <p class="text-gray-400 text-sm leading-relaxed">38 位先發的疲勞閾值，從 16 球到 106 球差異巨大。</p>
@@ -163,7 +194,7 @@
         <a href="article-clutch-2025.html"
            class="module-card block bg-surface-card border border-surface-border rounded-xl p-6 transition-all duration-200 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10">
           <div class="flex items-center gap-2 text-xs text-gray-500 mb-2">
-            <span class="bg-green-500/10 border border-green-500/30 rounded-full px-2 py-0.5 text-green-400 font-semibold">Clutch</span>
+            <span class="bg-green-500/10 border border-green-500/30 rounded-full px-2 py-0.5 text-green-400 font-semibold">關鍵時刻</span>
           </div>
           <h4 class="text-white font-bold mb-2">關鍵時刻誰最可靠？Clutch 打者排行</h4>
           <p class="text-gray-400 text-sm leading-relaxed">62 位打者在高壓情境下的表現差異 — 以及為什麼不該太相信。</p>
