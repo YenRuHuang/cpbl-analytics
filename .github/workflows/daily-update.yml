@@ -6,6 +6,9 @@ on:
     - cron: "0 22 * * *"
   workflow_dispatch: # 手動觸發
 
+permissions:
+  contents: write
+
 jobs:
   seed-and-export:
     runs-on: ubuntu-latest
