@@ -109,7 +109,9 @@ class TestCalcBabipRegression:
         assert "meta" in result
         assert "batters" in result
 
-    def test_unqualified_batters_excluded(self, babip_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_unqualified_batters_excluded(
+        self, babip_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         import scripts.calc_babip_regression as mod
 
         monkeypatch.setattr(mod, "DB_PATH", str(babip_db))
@@ -133,7 +135,9 @@ class TestCalcBabipRegression:
             assert "r_squared" in reg
             assert 0 <= reg["r_squared"] <= 1
 
-    def test_avg_change_is_second_minus_first(self, babip_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_avg_change_is_second_minus_first(
+        self, babip_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         import scripts.calc_babip_regression as mod
 
         monkeypatch.setattr(mod, "DB_PATH", str(babip_db))
@@ -156,7 +160,9 @@ class TestCalcBabipRegression:
         data = json.loads(out.read_text())
         assert data["meta"]["year"] == 2025
 
-    def test_sorted_by_first_half_babip_desc(self, babip_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_sorted_by_first_half_babip_desc(
+        self, babip_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         import scripts.calc_babip_regression as mod
 
         monkeypatch.setattr(mod, "DB_PATH", str(babip_db))

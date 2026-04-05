@@ -10,7 +10,6 @@ import pytest
 
 from scripts.calc_half_splits import calc_half_stats
 
-
 # ─────────────────────────────────────────────────────────────────
 # calc_half_stats — unit tests (pure function, no DB needed)
 # ─────────────────────────────────────────────────────────────────
@@ -173,7 +172,9 @@ class TestCalcHalfSplits:
         assert "ops" in batter["delta"]
         assert "avg" in batter["delta"]
 
-    def test_delta_is_second_minus_first(self, splits_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_delta_is_second_minus_first(
+        self, splits_db: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         import scripts.calc_half_splits as mod
 
         monkeypatch.setattr(mod, "DB_PATH", str(splits_db))
