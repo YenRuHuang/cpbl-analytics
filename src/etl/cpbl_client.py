@@ -273,8 +273,8 @@ class CpblClient:
             lines.append(BattingLine(
                 player_name=row.get("HitterName", ""),
                 team=team,
-                ab=int(row.get("HittingCnt", 0) or 0),
-                h=int(row.get("HitCnt", 0) or 0),
+                ab=int(row.get("HitCnt", 0) or 0),
+                h=int(row.get("HittingCnt", 0) or 0),
                 hr=int(row.get("HomeRunCnt", 0) or 0),
                 rbi=int(row.get("RunBattedINCnt", 0) or 0),
                 bb=int(row.get("BasesONBallsCnt", 0) or 0),
