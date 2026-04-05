@@ -140,12 +140,12 @@
               <th class="px-3 py-3 text-right text-blue-400">1H wOBA</th>
               <th class="px-3 py-3 text-right text-orange-400">2H wOBA</th>
               <th class="sortable px-3 py-3 text-right sort-desc" data-col="dwoba">ΔwOBA</th>
-              <th class="px-3 py-3 text-right text-blue-400">1H OPS</th>
-              <th class="px-3 py-3 text-right text-orange-400">2H OPS</th>
-              <th class="sortable px-3 py-3 text-right" data-col="dops">ΔOPS</th>
-              <th class="px-3 py-3 text-right text-blue-400">1H AVG</th>
-              <th class="px-3 py-3 text-right text-orange-400">2H AVG</th>
-              <th class="sortable px-3 py-3 text-right" data-col="davg">ΔAVG</th>
+              <th class="hidden sm:table-cell px-3 py-3 text-right text-blue-400">1H OPS</th>
+              <th class="hidden sm:table-cell px-3 py-3 text-right text-orange-400">2H OPS</th>
+              <th class="hidden sm:table-cell sortable px-3 py-3 text-right" data-col="dops">ΔOPS</th>
+              <th class="hidden sm:table-cell px-3 py-3 text-right text-blue-400">1H AVG</th>
+              <th class="hidden sm:table-cell px-3 py-3 text-right text-orange-400">2H AVG</th>
+              <th class="hidden sm:table-cell sortable px-3 py-3 text-right" data-col="davg">ΔAVG</th>
             </tr>
           </thead>
           <tbody id="tableBody" class="divide-y divide-surface-border"></tbody>
@@ -222,12 +222,12 @@
         tr.appendChild(makeTd(fmt4(d.first_half.woba), 'text-right stat-num text-gray-300'));
         tr.appendChild(makeTd(fmt4(d.second_half.woba), 'text-right stat-num text-gray-300'));
         tr.appendChild(makeTd(fmtDelta(d.delta.woba), 'text-right stat-num ' + deltaColor(d.delta.woba)));
-        tr.appendChild(makeTd(fmt3(d.first_half.ops), 'text-right stat-num text-gray-300'));
-        tr.appendChild(makeTd(fmt3(d.second_half.ops), 'text-right stat-num text-gray-300'));
-        tr.appendChild(makeTd(fmtDelta3(d.delta.ops), 'text-right stat-num ' + deltaColor(d.delta.ops * 3)));
-        tr.appendChild(makeTd(fmt3(d.first_half.avg), 'text-right stat-num text-gray-300'));
-        tr.appendChild(makeTd(fmt3(d.second_half.avg), 'text-right stat-num text-gray-300'));
-        tr.appendChild(makeTd(fmtDelta3(d.delta.avg), 'text-right stat-num ' + deltaColor(d.delta.avg * 3)));
+        tr.appendChild(makeTd(fmt3(d.first_half.ops), 'hidden sm:table-cell text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmt3(d.second_half.ops), 'hidden sm:table-cell text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmtDelta3(d.delta.ops), 'hidden sm:table-cell text-right stat-num ' + deltaColor(d.delta.ops * 3)));
+        tr.appendChild(makeTd(fmt3(d.first_half.avg), 'hidden sm:table-cell text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmt3(d.second_half.avg), 'hidden sm:table-cell text-right stat-num text-gray-300'));
+        tr.appendChild(makeTd(fmtDelta3(d.delta.avg), 'hidden sm:table-cell text-right stat-num ' + deltaColor(d.delta.avg * 3)));
         frag.appendChild(tr);
       });
       tbody.appendChild(frag);
@@ -338,7 +338,7 @@
           textStyle: { color: '#e5e7eb' },
           axisPointer: { type: 'shadow' }
         },
-        grid: { left: 100, right: 30, top: 60, bottom: 20 },
+        grid: { left: '28%', right: 30, top: 60, bottom: 20 },
         xAxis: {
           type: 'value',
           axisLabel: { color: '#9ca3af', formatter: function(v) { return (v >= 0 ? '+' : '') + v.toFixed(3); } },

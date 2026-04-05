@@ -123,7 +123,7 @@
   <main class="max-w-6xl mx-auto px-4 pb-20">
 
     <!-- League Stats Banner -->
-    <div id="leagueBanner" class="grid grid-cols-3 gap-4 mb-6 hidden">
+    <div id="leagueBanner" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 hidden">
       <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
         <div class="stat-num text-xl font-bold text-white" id="meta-lgwOBA">—</div>
         <div class="text-xs text-gray-500 mt-1">聯盟 lgwOBA</div>
@@ -215,10 +215,10 @@
               <th class="sortable px-4 py-3 text-left" data-col="player_name">球員</th>
               <th class="sortable px-4 py-3 text-left" data-col="team">球隊</th>
               <th class="sortable px-4 py-3 text-right" data-col="pa">PA</th>
-              <th class="sortable px-4 py-3 text-right" data-col="avg">AVG</th>
-              <th class="sortable px-4 py-3 text-right" data-col="obp">OBP</th>
-              <th class="sortable px-4 py-3 text-right" data-col="slg">SLG</th>
-              <th class="sortable px-4 py-3 text-right" data-col="ops">OPS</th>
+              <th class="hidden sm:table-cell sortable px-4 py-3 text-right" data-col="avg">AVG</th>
+              <th class="hidden sm:table-cell sortable px-4 py-3 text-right" data-col="obp">OBP</th>
+              <th class="hidden sm:table-cell sortable px-4 py-3 text-right" data-col="slg">SLG</th>
+              <th class="hidden sm:table-cell sortable px-4 py-3 text-right" data-col="ops">OPS</th>
               <th class="sortable px-4 py-3 text-right" data-col="woba">wOBA</th>
               <th class="sortable px-4 py-3 text-right sort-desc" data-col="wrc_plus">wRC+</th>
             </tr>
@@ -373,10 +373,10 @@
       tr.appendChild(makeTd(name, 'font-medium text-white'));
       tr.appendChild(makeTd(team, 'text-gray-300'));
       tr.appendChild(makeTd(pa != null ? String(pa) : '—', 'text-right stat-num text-gray-300'));
-      tr.appendChild(makeTd(fmt3(avg), 'text-right stat-num text-gray-300'));
-      tr.appendChild(makeTd(fmt3(obp), 'text-right stat-num text-gray-300'));
-      tr.appendChild(makeTd(fmt3(slg), 'text-right stat-num text-gray-300'));
-      tr.appendChild(makeTd(fmt3(ops), 'text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(avg), 'hidden sm:table-cell text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(obp), 'hidden sm:table-cell text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(slg), 'hidden sm:table-cell text-right stat-num text-gray-300'));
+      tr.appendChild(makeTd(fmt3(ops), 'hidden sm:table-cell text-right stat-num text-gray-300'));
       tr.appendChild(makeTd(fmt3(woba), 'text-right stat-num text-gray-300'));
       tr.appendChild(makeTd(wrcVal != null ? String(wrcVal) : '—', 'text-right ' + wrcClass(wrcRaw)));
 

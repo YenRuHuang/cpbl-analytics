@@ -107,7 +107,7 @@
 
     <!-- Player Detail Panel -->
     <div id="playerDetail" class="hidden mb-4 bg-brand/10 border border-brand/30 rounded-xl px-5 py-4">
-      <div class="flex items-start justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <p class="text-xs text-brand mb-1">選取球員</p>
           <p id="detailName" class="text-lg font-bold text-white"></p>
@@ -406,7 +406,7 @@
           top: 8,
           textStyle: { color: '#f3f4f6', fontSize: 14, fontWeight: 'bold' },
         },
-        grid: { top: 48, right: 100, bottom: 40, left: 20, containLabel: true },
+        grid: { top: 48, right: '25%', bottom: 40, left: 20, containLabel: true },
         tooltip: {
           trigger: 'axis',
           axisPointer: { type: 'none' },
