@@ -243,7 +243,7 @@
             wOBA 根據每種進攻事件（BB、HBP、1B、2B、3B、HR）對得分的貢獻程度賦予不同權重，
             比 OBP 更準確地反映打者的進攻價值。權重來自 linear weights，代表每種事件平均帶來的額外得分期望值。
           </p>
-          <div class="formula-block">wOBA = (0.690×BB + 0.722×HBP + 0.888×1B + 1.22×2B + 1.56×3B + 1.95×HR)
+          <div class="formula-block">wOBA = (0.690×BB + 0.722×HBP + 0.87×1B + 1.22×2B + 1.56×3B + 1.95×HR)
          ÷ (AB + BB - IBB + SF + HBP)</div>
           <p class="text-gray-600 text-xs mt-2">* 本系統實際使用之權重（來自 JSON meta）。FanGraphs 2024 MLB 標準值為 1.271×2B、1.616×3B、2.101×HR，因 CPBL 環境調整後採用較保守估計。</p>
         </div>
@@ -255,8 +255,8 @@
             wRC+ 將打者的 wOBA 轉換為「相對聯盟平均的進攻指數」，100 為聯盟平均。
             110 代表比聯盟平均進攻好 10%，85 代表差 15%。因為已標準化，跨季、跨球場都可比較。
           </p>
-          <div class="formula-block">wRC+ = [ (wOBA - lgwOBA) / wOBAscale + lgR/PA ] ÷ lgR/PA × 100</div>
-          <p class="text-gray-600 text-xs mt-2">* lgwOBA、wOBAscale、lgR/PA 從當季數據計算</p>
+          <div class="formula-block">wRC+ = [ (wOBA - lgwOBA) / wOBAscale + lgR/PA + (lgR/PA - PF×lgR/PA) / PF ] ÷ lgR/PA × 100</div>
+          <p class="text-gray-600 text-xs mt-2">* lgwOBA、wOBAscale、lgR/PA 從當季數據計算；PF = 球場因子（Park Factor）</p>
         </div>
 
         <!-- Limitations -->

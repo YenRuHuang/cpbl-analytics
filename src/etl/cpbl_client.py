@@ -300,13 +300,13 @@ class CpblClient:
             # Parse IP: "5.2" means 5 and 2/3 innings
             ip_raw = row.get("InningPitchedCnt", 0) or 0
             ip_div3 = row.get("InningPitchedDiv3Cnt", 0) or 0
-            ip = float(ip_raw) + float(ip_div3) / 3.0
+            ip = round(float(ip_raw) + float(ip_div3) / 3.0, 4)
 
             lines.append(PitchingLine(
                 player_name=row.get("PitcherName", ""),
                 team=team,
-                ip=round(ip, 1),
-                h=int(row.get("HitCnt", 0) or 0),
+                ip=ip,
+                h=int(row.get("HittingCnt", 0) or 0),
                 r=int(row.get("RunCnt", 0) or 0),
                 er=int(row.get("EarnedRunCnt", 0) or 0),
                 bb=int(row.get("BasesONBallsCnt", 0) or 0),
