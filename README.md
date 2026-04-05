@@ -1,12 +1,12 @@
 # CPBL Analytics — 後端工程 Portfolio
 
 [![CI](https://github.com/YenRuHuang/cpbl-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/YenRuHuang/cpbl-analytics/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-129%20passed-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-84.78%25-brightgreen)
+![Tests](https://img.shields.io/badge/tests-168%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-84.11%25-brightgreen)
 
 **Live → [cpblanalysis.mursfoto.com](https://cpblanalysis.mursfoto.com)**
 
-從零打造的 CPBL 棒球數據系統。整合 [Rebas Open Data](https://github.com/rebas-tw/rebas.tw-open-data)（ODC-By License）與 CPBL 官網公開資料，涵蓋 ETL 資料管線、資料庫設計、RESTful API、互動式 Dashboard、自動化 CI/CD。
+從零打造的 CPBL 棒球數據分析系統。整合 [Rebas Open Data](https://github.com/rebas-tw/rebas.tw-open-data)（ODC-By License）與 CPBL 官網公開資料，涵蓋 ETL 資料管線、資料庫設計、RESTful API、進階統計分析、互動式 Dashboard、自動化 CI/CD。
 
 | 指標 | |
 |------|---|
@@ -14,7 +14,9 @@
 | 打席 | 27,974 |
 | 逐球事件 | 109,897 |
 | API Endpoints | 17 |
-| 測試 | 129 個 / 84.78% coverage |
+| 分析模組 | 10 個 |
+| 圖表類型 | 7 種（Savant / FanGraphs 風格）|
+| 測試 | 168 個 / 84% coverage |
 | 更新頻率 | GitHub Actions 每日自動 |
 
 ---
@@ -44,7 +46,7 @@ CPBL 官網公開 API ────────┘                               
 | ORM | SQLAlchemy 2.0 |
 | 資料庫 | SQLite（WAL mode）/ 8 tables / 15+ indexes |
 | 前端 | ECharts 5.4.3 + Tailwind CSS 3.4.1 |
-| 測試 | pytest + pytest-cov |
+| 測試 | pytest + pytest-cov（168 tests, 84% coverage）|
 | 容器 | Docker multi-stage build + docker-compose |
 | CI/CD | GitHub Actions（lint + test + coverage + daily cron ETL）|
 | Lint / Type | ruff + mypy（strict） |
@@ -60,7 +62,7 @@ CPBL 官網公開 API ────────┘                               
 - 球員名稱模糊比對（處理改名、交易）
 - Rate limiting（2s 間隔、30/min）
 - 冪等載入（skip existing games）
-- 磁碟快取 raw JSON
+- Daily cron 自動更新（UTC 22:00 → 抓資料 → export → push → 自動部署）
 
 ### 資料庫設計
 - 8 張表：games / plate_appearances / pitch_events / batter_box / pitcher_box / analysis_cache / player_mapping / run_expectancy_matrix
@@ -73,27 +75,43 @@ CPBL 官網公開 API ────────┘                               
 - CORS + Health check
 - 完整文件：**[API Docs 頁面](https://cpblanalysis.mursfoto.com/api-docs.html)**
 
-### CI/CD
-- Push 觸發：ruff lint → pytest → coverage report → deploy
-- Daily cron（UTC 22:00）：seed data → export static JSON → git push → auto deploy
+### 測試策略
+- 168 個測試（unit + integration）
+- 84% code coverage
+- 純函數 unit test（`calc_half_stats`、`_calc_lob_pct` 等）
+- Integration test 使用 in-memory SQLite + monkeypatch 隔離
+- CI 每次 push 自動跑 lint + test + coverage gate
 
 ---
 
-## 分析模組
+## 分析模組（10 個）
 
-基於資料管線之上的 4 個棒球分析模組：
+### 核心分析
 
-| 模組 | 說明 |
-|------|------|
-| **LOB%** | 殘壘率 — 投手運氣成分，預測 ERA 回歸 |
-| **Clutch / LI** | 基於 RE24 矩陣的高壓情境表現 |
-| **Count Splits** | 不同球數下的打擊/投球表現差異 |
-| **Pitcher Fatigue** | 每 15 球追蹤衰退曲線，自動偵測疲勞臨界點 |
+| 模組 | 說明 | 圖表類型 |
+|------|------|---------|
+| **LOB%** | 殘壘率 — 投手運氣成分，預測 ERA 回歸 | Scatter Plot |
+| **Clutch / LI** | 基於 RE24 矩陣的高壓情境表現 | Scatter + Diverging Bar |
+| **Count Splits** | 不同球數下的打擊/投球表現差異 | Table + Heat Map Grid |
+| **Pitcher Fatigue** | 每 15 球追蹤衰退曲線，自動偵測疲勞臨界點 | Line Chart |
 
-分析文章：
-- [LOB% 解密](https://cpblanalysis.mursfoto.com/article-lob-2025.html)
-- [投手疲勞曲線](https://cpblanalysis.mursfoto.com/article-fatigue-2025.html)
-- [Clutch 打者排行](https://cpblanalysis.mursfoto.com/article-clutch-2025.html)
+### 進階分析
+
+| 模組 | 說明 | 圖表類型 |
+|------|------|---------|
+| **wRC+** | Park Factor 調整的加權得分創造力指數 | Savant Percentile Bars + Radar Chart |
+| **Park Factor** | Team-based + Venue-based 主場優勢量化 | Bar Chart + Tables |
+| **BABIP Regression** | 上半季 BABIP vs 下半季打擊率變化，展示均值回歸 | Scatter + Regression Line |
+| **Half-Season Splits** | 上下半季 wOBA/OPS/AVG 差異，爆發與崩盤偵測 | Diverging Bar + Rolling wOBA Line |
+
+### 圖表多樣性（7 種 Savant / FanGraphs 風格）
+1. **Savant Percentile Bars** — 六維百分位橫條（wRC+ 頁）
+2. **Radar Chart** — 兩人比較雷達圖（wRC+ 頁）
+3. **Heat Map Grid** — 4×3 球數色溫矩陣（Count Splits 頁）
+4. **Diverging Bar Chart** — 綠/紅正負對照（Clutch + Splits 頁）
+5. **Rolling Line Chart** — 50PA 滾動 wOBA 走勢（Splits 頁）
+6. **Scatter + Regression** — BABIP 回歸分析（BABIP 頁）
+7. **Multi-Series Line** — 投手疲勞曲線（Fatigue 頁）
 
 ---
 
@@ -110,8 +128,15 @@ cp .env.example .env
 
 # 匯入資料
 uv run python scripts/seed_rebas.py
-uv run python scripts/seed_cpbl.py --year 2026
+uv run python scripts/seed_cpbl.py --year 2025
 uv run python scripts/build_re_matrix.py
+
+# 進階分析（新增）
+uv run python scripts/calc_wrc_plus.py
+uv run python scripts/calc_park_factors.py
+uv run python scripts/calc_babip_regression.py
+uv run python scripts/calc_half_splits.py
+uv run python scripts/calc_rolling_woba.py
 
 # 啟動 API
 uv run uvicorn src.api.app:create_app --factory --reload --port 8000
@@ -119,6 +144,17 @@ uv run uvicorn src.api.app:create_app --factory --reload --port 8000
 
 # Docker
 docker compose up --build
+```
+
+---
+
+## 開發指令
+
+```bash
+uv run pytest -v --cov=src      # 測試 + 覆蓋率（168 tests, 84%）
+uv run ruff check src/ tests/   # Lint
+uv run mypy src/                 # Type check
+uv run python scripts/export_static.py  # 匯出靜態 JSON
 ```
 
 ---
@@ -131,27 +167,17 @@ cpbl-analytics/
 │   ├── config/         # pydantic-settings 環境管理
 │   ├── db/             # SQLAlchemy ORM + engine + migrations
 │   ├── etl/            # Rebas + CPBL 資料整合
-│   ├── analysis/       # 4 個分析模組
+│   ├── analysis/       # 4 個核心分析模組（LOB% / Clutch / Counts / Fatigue）
 │   ├── api/            # FastAPI app + routes + schemas
 │   └── utils/          # RE24 矩陣、常數
-├── tests/              # pytest（129 tests, 84.78% coverage）
-├── scripts/            # seed / export / build 腳本
-├── dashboard/static/   # ECharts Dashboard + 分析文章 + Architecture + API Docs
+├── scripts/            # seed / export / 6 個進階分析腳本
+├── tests/              # pytest（168 tests, 84% coverage）
+├── dashboard/static/   # ECharts Dashboard（15 頁）+ 分析文章
 ├── data/               # 原始資料（git-ignored）
+├── .github/workflows/  # CI (ci.yml) + Daily Cron (daily-update.yml)
 ├── Dockerfile
 ├── docker-compose.yml
 └── pyproject.toml
-```
-
----
-
-## 開發指令
-
-```bash
-uv run pytest -v --cov=src      # 測試 + 覆蓋率
-uv run ruff check src/ tests/   # Lint
-uv run mypy src/                 # Type check
-uv run python scripts/export_static.py  # 匯出靜態 JSON
 ```
 
 ---

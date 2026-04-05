@@ -331,17 +331,6 @@
         ]
       });
 
-      // Add zero line
-      chart.setOption({
-        yAxis: {
-          splitLine: { lineStyle: { color: '#2d3748', type: 'dashed' } }
-        },
-        series: [
-          chart.getOption().series[0],
-          chart.getOption().series[1],
-        ]
-      });
-
       window.addEventListener('resize', function() { chart.resize(); });
 
       // Table
