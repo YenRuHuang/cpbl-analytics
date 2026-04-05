@@ -155,11 +155,17 @@ class CpblClient:
         return self._parse_game(raw, game_sno)
 
     def fetch_season(
-        self, year: int, kind_code: str = "A", max_empty: int = 3
+        self, year: int, kind_code: str = "A", max_empty: int = 3,
+        max_unplayed: int = 5,
     ) -> list[GameData]:
-        """Fetch all games for a season. Stops after max_empty consecutive empty results."""
+        """Fetch all games for a season.
+
+        Stops after max_empty consecutive non-existent SNOs,
+        or max_unplayed consecutive unplayed future games.
+        """
         games: list[GameData] = []
         empty_streak = 0
+        unplayed_streak = 0
 
         for sno in range(1, 500):
             game = self.fetch_game(year, sno, kind_code)
@@ -169,9 +175,23 @@ class CpblClient:
                     break
                 continue
             empty_streak = 0
-            games.append(game)
-            if len(games) % 10 == 0:
-                print(f"  {len(games)} games fetched...")
+
+            # Check if game has actually been played
+            is_played = (
+                game.detail.home_score > 0
+                or game.detail.away_score > 0
+                or game.detail.status == "final"
+            )
+            if is_played:
+                unplayed_streak = 0
+                games.append(game)
+                if len(games) % 10 == 0:
+                    print(f"  {len(games)} games fetched...")
+            else:
+                unplayed_streak += 1
+                if unplayed_streak >= max_unplayed:
+                    print(f"  Reached {max_unplayed} consecutive unplayed games at sno={sno}, stopping.")
+                    break
 
         return games
 
