@@ -96,15 +96,39 @@ class CpblClient:
             time.sleep(self.rate_limit - elapsed)
         self._last_request_time = time.time()
 
+    def _is_game_final(self, raw: dict) -> bool:
+        """Check if a game has been played (non-zero scores or has play-by-play)."""
+        detail = raw.get("CurtGameDetailJson")
+        if isinstance(detail, str):
+            try:
+                detail = json.loads(detail)
+            except json.JSONDecodeError:
+                return False
+        if not detail:
+            return False
+        home = int(detail.get("HomeScore", 0) or 0)
+        away = int(detail.get("VisitingScore", 0) or 0)
+        if home > 0 or away > 0:
+            return True
+        # 0-0 could be a real game — check if play-by-play exists
+        live_log = raw.get("LiveLogJson", "[]")
+        if isinstance(live_log, str):
+            return len(live_log) > 10  # non-empty JSON array
+        return bool(live_log)
+
     def fetch_game(self, year: int, game_sno: int, kind_code: str = "A") -> GameData | None:
         """Fetch a single game's data. Returns None if game doesn't exist."""
         # Check disk cache first
         cache_path = self.cache_dir / f"{year}_{kind_code}_{game_sno}.json"
         if cache_path.exists():
             raw = json.loads(cache_path.read_text())
-            if raw.get("Success"):
+            if raw.get("Success") and self._is_game_final(raw):
                 return self._parse_game(raw, game_sno)
-            return None
+            if raw.get("Success") and not self._is_game_final(raw):
+                # Cached but not yet played — re-fetch to check for updates
+                cache_path.unlink()
+            elif not raw.get("Success"):
+                return None
 
         # Fetch from CPBL
         self._rate_limit_wait()
@@ -120,8 +144,11 @@ class CpblClient:
         except (httpx.HTTPError, json.JSONDecodeError):
             return None
 
-        # Cache to disk
-        cache_path.write_text(json.dumps(raw, ensure_ascii=False))
+        # Only cache if game is final — don't cache unplayed future games
+        if raw.get("Success") and self._is_game_final(raw):
+            cache_path.write_text(json.dumps(raw, ensure_ascii=False))
+        elif not raw.get("Success"):
+            cache_path.write_text(json.dumps(raw, ensure_ascii=False))
 
         if not raw.get("Success"):
             return None
