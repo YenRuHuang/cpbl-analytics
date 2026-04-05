@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>大巨蛋真的壓制打擊嗎？2025 CPBL 球場因子全解析 — CPBL Analytics</title>
+  <meta name="description" content="用 Park Factor 量化 7 座球場對打擊的影響 — 樂天桃園 PF=1.15 是打者天堂，大巨蛋 PF=0.86 壓制最強。" />
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+        surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+      }}}
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .prose h2 { scroll-margin-top: 5rem; }
+    .highlight-yellow { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-red { background: rgba(248, 113, 113, 0.1); border-left: 3px solid #f87171; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-green { background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; border-bottom: 1px solid #2d3748; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 0.875rem; }
+    .data-table tr:hover { background: rgba(255,255,255,0.02); }
+    .td-r { text-align: right; font-family: ui-monospace, monospace; }
+    .badge-hitter { background: rgba(74, 222, 128, 0.15); color: #4ade80; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-neutral { background: rgba(156, 163, 175, 0.15); color: #9ca3af; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-pitcher { background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .toc a { transition: color 0.15s; }
+    .toc a:hover { color: #3b82f6; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
+        <a href="park-factors.html" class="text-emerald-400 font-semibold">Park Factor</a>
+        <a href="babip.html" class="hover:text-white transition-colors">BABIP</a>
+        <a href="splits.html" class="hover:text-white transition-colors">半季分割</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="wrc-plus.html" class="block py-1 hover:text-white">wRC+</a>
+      <a href="park-factors.html" class="block py-1 text-emerald-400 font-semibold">Park Factor</a>
+      <a href="babip.html" class="block py-1 hover:text-white">BABIP</a>
+      <a href="splits.html" class="block py-1 hover:text-white">半季分割</a>
+    </div>
+  </nav>
+
+  <article class="max-w-3xl mx-auto px-4 py-12">
+
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <span class="bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3 py-0.5 text-emerald-400 font-semibold">數據分析</span>
+        <span>2026.04.06</span>
+        <span>&middot;</span>
+        <span>閱讀時間約 5 分鐘</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
+        大巨蛋真的壓制打擊嗎？<br class="hidden sm:block" />2025 CPBL 球場因子全解析
+      </h1>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        用 Park Factor 量化 7 座球場對打擊的影響 — 樂天桃園 PF=1.15 是打者天堂，大巨蛋 PF=0.86 壓制最強。
+      </p>
+    </header>
+
+    <!-- TOC -->
+    <div class="toc bg-surface-card border border-surface-border rounded-xl p-5 mb-10 text-sm">
+      <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">目錄</div>
+      <ol class="space-y-1.5 text-gray-400 list-decimal list-inside">
+        <li><a href="#what-is-pf">什麼是 Park Factor？</a></li>
+        <li><a href="#venue-ranking">球場排行：打者天堂 vs 投手樂園</a></li>
+        <li><a href="#dome-effect">大巨蛋效應：為什麼富邦打者的數據被壓制</a></li>
+        <li><a href="#taoyuan-vs-intercontinental">洲際 vs 樂天桃園：中部打擊狂潮</a></li>
+        <li><a href="#team-vs-venue">Team-based vs Venue-based：兩種算法的差異</a></li>
+        <li><a href="#wrc-correction">對球員評價的影響：wRC+ 如何用 PF 修正</a></li>
+        <li><a href="#methodology">方法論與限制</a></li>
+      </ol>
+    </div>
+
+    <div class="prose space-y-8 text-gray-300 leading-relaxed">
+
+      <section id="what-is-pf">
+        <h2 class="text-2xl font-bold text-white mb-4">1. 什麼是 Park Factor？</h2>
+        <p>
+          同一位打者在樂天桃園主場打出 .320，在大巨蛋客場只打 .265 — 這個差距，有多少是打者本人的問題，又有多少是「球場」造成的？<strong class="text-white">Park Factor（球場因子，PF）</strong>就是用來量化這個差距的工具。
+        </p>
+        <p>計算邏輯很直觀：</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-400">
+          <li>比較同一支球隊在<strong class="text-white">主場</strong>和<strong class="text-white">客場</strong>的每場得分（RPG）</li>
+          <li>PF = 主場 RPG &divide; 客場 RPG</li>
+          <li>PF &gt; 1.00 表示主場比客場更容易得分（打者友善）；PF &lt; 1.00 表示主場壓制打擊（投手友善）</li>
+        </ul>
+        <div class="highlight-green">
+          <strong class="text-emerald-400">白話翻譯：</strong>PF=1.15 代表在這個球場打球，每場比賽會多產生 15% 的得分；PF=0.86 代表每場會少 14% 的得分。這對球員的打擊數據詮釋至關重要。
+        </div>
+      </section>
+
+      <section id="venue-ranking">
+        <h2 class="text-2xl font-bold text-white mb-4">2. 球場排行：打者天堂 vs 投手樂園</h2>
+        <p>2025 年賽季，7 座 CPBL 球場的 Park Factor 如下（最低門檻 10 場）：</p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="venueChart" style="height:320px;"></div>
+        </div>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>球場</th>
+                <th class="td-r">PF</th>
+                <th class="td-r">平均 RPG</th>
+                <th class="td-r">場次</th>
+                <th>類型</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">樂天桃園</td>
+                <td class="td-r text-green-400 font-semibold">1.152</td>
+                <td class="td-r">9.19</td>
+                <td class="td-r text-gray-400">48</td>
+                <td><span class="badge-hitter">打者天堂</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">洲際</td>
+                <td class="td-r text-green-400 font-semibold">1.137</td>
+                <td class="td-r">9.07</td>
+                <td class="td-r text-gray-400">45</td>
+                <td><span class="badge-hitter">打者天堂</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">澄清湖</td>
+                <td class="td-r text-gray-400 font-semibold">0.987</td>
+                <td class="td-r">7.88</td>
+                <td class="td-r text-gray-400">65</td>
+                <td><span class="badge-neutral">中性</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">天母</td>
+                <td class="td-r text-gray-400 font-semibold">0.967</td>
+                <td class="td-r">7.72</td>
+                <td class="td-r text-gray-400">39</td>
+                <td><span class="badge-neutral">中性</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">新莊</td>
+                <td class="td-r text-gray-400 font-semibold">0.965</td>
+                <td class="td-r">7.70</td>
+                <td class="td-r text-gray-400">57</td>
+                <td><span class="badge-neutral">中性</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">台南</td>
+                <td class="td-r text-yellow-400 font-semibold">0.916</td>
+                <td class="td-r">7.30</td>
+                <td class="td-r text-gray-400">23</td>
+                <td><span class="badge-pitcher">投手優勢</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">大巨蛋</td>
+                <td class="td-r text-red-400 font-semibold">0.856</td>
+                <td class="td-r">6.83</td>
+                <td class="td-r text-gray-400">66</td>
+                <td><span class="badge-pitcher">投手優勢</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid grid-cols-3 gap-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-400">2</div>
+            <div class="text-xs text-gray-500 mt-1">打者天堂（PF &ge; 1.10）</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-gray-400">3</div>
+            <div class="text-xs text-gray-500 mt-1">中性球場（0.95–1.05）</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-red-400">2</div>
+            <div class="text-xs text-gray-500 mt-1">投手優勢（PF &lt; 0.93）</div>
+          </div>
+        </div>
+        <p>
+          聯盟平均每場得分（RPG）為 <strong class="text-white">7.978</strong>。樂天桃園和洲際的每場得分均超過 9 分，比聯盟平均高出 15% 左右。大巨蛋則只有 6.83，<strong class="text-white">比聯盟平均低了整整 1.15 分</strong>。
+        </p>
+      </section>
+
+      <section id="dome-effect">
+        <h2 class="text-2xl font-bold text-white mb-4">3. 大巨蛋效應：為什麼富邦打者的數據被壓制</h2>
+        <p>
+          台北大巨蛋是 CPBL 史上第一座室內球場，2024 年啟用後就引發廣泛討論：<strong class="text-white">大巨蛋真的壓制打擊嗎？</strong>數據給出了明確答案。
+        </p>
+        <p>
+          PF=0.856 是七座球場中最低，代表在大巨蛋打球，每場得分比聯盟平均<strong class="text-white">少了 14.4%</strong>。以全季 66 場計算，相當於整季少了大約 76 分的得分機會。
+        </p>
+        <div class="highlight-red">
+          <strong class="text-red-400">實際影響：</strong>富邦悍將的主場 Team PF 只有 0.917，是六隊倒數第二。在大巨蛋打主場的打者，整季打擊數據系統性地被壓低。如果你在比較富邦悍將打者和其他球隊打者的原始打擊率，需要先做球場修正，否則會低估富邦打者的真實能力。
+        </div>
+        <p>
+          大巨蛋的壓制因素可能來自多個方向：室內空調對球路的影響、人工草皮的球速特性、球場尺寸（左右中外野距離）。由於資料限制，目前無法進一步拆分，但整體壓制效果已相當明確。
+        </p>
+      </section>
+
+      <section id="taoyuan-vs-intercontinental">
+        <h2 class="text-2xl font-bold text-white mb-4">4. 洲際 vs 樂天桃園：中部打擊狂潮</h2>
+        <p>
+          台中洲際和桃園樂天桃園是 CPBL 兩個最友善打者的球場，PF 分別為 1.137 和 1.152，兩者差距僅 0.015，幾乎並列。
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="topTwoChart" style="height:260px;"></div>
+        </div>
+        <p>
+          樂天桃園的 RPG=9.19，是七球場之冠。桃園球場的外野距離相對較短，加上當地氣候（溫暖潮濕）對球的飛行距離有一定助益。樂天桃猿的 Team PF 達到 <strong class="text-white">1.121</strong>，是六隊最高，主客場得分差異最懸殊。
+        </p>
+        <p>
+          洲際以台中為主場的中信兄弟，Team PF=1.090，同樣受惠於球場加成。<strong class="text-white">如果你在評估樂天或中信的打者，他們的主場打擊成績需要向下修正</strong>，才能和在大巨蛋打主場的富邦打者做公平比較。
+        </p>
+      </section>
+
+      <section id="team-vs-venue">
+        <h2 class="text-2xl font-bold text-white mb-4">5. Team-based vs Venue-based：兩種算法的差異</h2>
+        <p>
+          Park Factor 有兩種常見算法，結果有時會不一致：
+        </p>
+        <ul class="list-disc list-inside space-y-2 text-gray-400 mb-4">
+          <li><strong class="text-white">Venue-based PF</strong>：以特定球場為單位，分析所有在該球場比賽（不論哪隊主客）的得分率。</li>
+          <li><strong class="text-white">Team-based PF</strong>：以球隊為單位，比較該隊主場場次與客場場次的得分率。</li>
+        </ul>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>球隊</th>
+                <th class="td-r">Team PF</th>
+                <th class="td-r">主場 RPG</th>
+                <th class="td-r">客場 RPG</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">樂天桃猿</td>
+                <td class="td-r text-green-400 font-semibold">1.121</td>
+                <td class="td-r">8.48</td>
+                <td class="td-r text-gray-400">7.57</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">中信兄弟</td>
+                <td class="td-r text-green-400 font-semibold">1.090</td>
+                <td class="td-r">—</td>
+                <td class="td-r text-gray-400">—</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">味全龍</td>
+                <td class="td-r text-yellow-400 font-semibold">1.054</td>
+                <td class="td-r">—</td>
+                <td class="td-r text-gray-400">—</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">統一獅</td>
+                <td class="td-r text-yellow-400 font-semibold">0.945</td>
+                <td class="td-r">—</td>
+                <td class="td-r text-gray-400">—</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">富邦悍將</td>
+                <td class="td-r text-yellow-400 font-semibold">0.917</td>
+                <td class="td-r">—</td>
+                <td class="td-r text-gray-400">—</td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">台鋼雄鷹</td>
+                <td class="td-r text-red-400 font-semibold">0.894</td>
+                <td class="td-r">—</td>
+                <td class="td-r text-gray-400">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          台鋼雄鷹的 Team PF 只有 0.894，但台南球場的 Venue PF 是 0.916。兩者接近但不完全相同，差異來自台鋼客場的構成（主要在大巨蛋或洲際客場的次數不同會影響客場基準值）。在一個聯盟只有六隊、總場次較少的環境下，<strong class="text-white">兩種算法互相參照會比單獨使用更可靠</strong>。
+        </p>
+      </section>
+
+      <section id="wrc-correction">
+        <h2 class="text-2xl font-bold text-white mb-4">6. 對球員評價的影響：wRC+ 如何用 PF 修正</h2>
+        <p>
+          wRC+（Weighted Runs Created Plus）是 CPBL Analytics 計算的核心指標之一，它在公式裡已內建球場修正：
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-5 my-6 font-mono text-sm text-gray-300">
+          <div class="text-xs text-gray-500 uppercase tracking-wide mb-3">wRC+ 球場修正邏輯（簡化）</div>
+          <div>wRC+ = (wRC / PA ÷ 聯盟平均 wRC/PA) &times; 100</div>
+          <div class="mt-2 text-gray-500">其中 wRC 已用球場因子修正</div>
+          <div class="mt-1 text-gray-500">修正後 wRC+ 100 = 聯盟平均，&gt;100 優於平均，&lt;100 低於平均</div>
+        </div>
+        <p>
+          具體影響舉例：假設富邦悍將某位打者整季 wOBA = .330（和聯盟平均相當），但他全季主場都在大巨蛋（PF=0.856）打球。未修正版本會說他只是「聯盟平均」，修正後他的 wRC+ 會接近 <strong class="text-white">110-115</strong>，因為他是在壓制性球場達到這個數字的。
+        </p>
+        <div class="space-y-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-emerald-400 text-lg leading-none mt-0.5">1</span>
+            <div>
+              <div class="text-white font-semibold text-sm">球場加成球員（樂天/中信打者）</div>
+              <div class="text-gray-400 text-sm mt-1">原始數據看起來更好，但 wRC+ 修正後會比原始數字低。不修正就高估他們的能力。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-emerald-400 text-lg leading-none mt-0.5">2</span>
+            <div>
+              <div class="text-white font-semibold text-sm">球場壓制球員（富邦/台鋼打者）</div>
+              <div class="text-gray-400 text-sm mt-1">原始數據被壓低，wRC+ 修正後會高於原始印象。不修正就低估他們的能力。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-emerald-400 text-lg leading-none mt-0.5">3</span>
+            <div>
+              <div class="text-white font-semibold text-sm">交易評估與自由球員</div>
+              <div class="text-gray-400 text-sm mt-1">球員換隊後打擊數據可能因球場改變而大幅波動，Park Factor 是讀取真實能力的關鍵濾鏡。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="methodology">
+        <h2 class="text-2xl font-bold text-white mb-4">7. 方法論與限制</h2>
+        <p>
+          <strong class="text-white">計算方式：</strong>Venue-based PF = 該球場所有比賽的每場總得分（主客雙方合計）&divide; 聯盟平均每場總得分。Team-based PF = 球隊主場 RPG &divide; 球隊客場 RPG。最低門檻：Venue-based 10 場，Team-based 完整賽季。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">重要限制：</strong>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-400 mt-2">
+            <li>CPBL 每支球隊只有一個主場，樣本量遠小於 MLB（一季 120 場 vs MLB 162 場）。單賽季 PF 波動性較大，建議多年平均更穩定。</li>
+            <li>台南球場樣本僅 23 場，PF 0.916 的信心區間較寬，解讀需保守。</li>
+            <li>未控制「主場球隊投手陣容強弱」對 PF 的影響。投手強的主場球隊會人為壓低主場 RPG，導致 Team PF 偏低。</li>
+            <li>球場物理改造（如草皮更換、外野圍牆調整）會改變 PF，歷史數據不能直接套用未來。</li>
+          </ul>
+        </div>
+        <p>
+          完整互動式球場因子圖表請見 <a href="park-factors.html" class="text-brand hover:underline">Park Factor 分析頁面</a>。
+        </p>
+      </section>
+
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-surface-border">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <div class="text-white font-bold">CPBL Analytics</div>
+          <div class="text-sm text-gray-500">以賽伯計量學方法解讀中華職棒數據</div>
+        </div>
+        <div class="flex gap-3">
+          <a href="park-factors.html" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">互動式球場因子圖表</a>
+          <a href="index.html" class="bg-surface-card border border-surface-border hover:border-gray-600 text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">所有分析模組</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    function renderVenueChart() {
+      const venues = ['大巨蛋', '台南', '新莊', '天母', '澄清湖', '洲際', '樂天桃園'];
+      const values = [0.856, 0.916, 0.965, 0.967, 0.987, 1.137, 1.152];
+      const colors = values.map(v =>
+        v >= 1.10 ? '#4ade80' :
+        v >= 0.95 ? '#9ca3af' :
+        v >= 0.90 ? '#f59e0b' : '#f87171'
+      );
+      const chart = echarts.init(document.getElementById('venueChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 10, right: 80, bottom: 30, left: 100 },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' },
+          formatter: p => `${p[0].name}<br/>Park Factor: <strong>${p[0].value}</strong>`
+        },
+        xAxis: {
+          type: 'value',
+          min: 0.80, max: 1.20,
+          axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        yAxis: {
+          type: 'category', data: venues,
+          axisLabel: { color: '#d1d5db', fontSize: 11 },
+          axisLine: { show: false }, axisTick: { show: false }
+        },
+        series: [{
+          type: 'bar',
+          data: values.map((v, i) => ({ value: v, itemStyle: { color: colors[i], borderRadius: [0, 4, 4, 0] } })),
+          barWidth: 24,
+          label: {
+            show: true, position: 'right',
+            formatter: p => p.value.toFixed(3),
+            color: '#d1d5db', fontSize: 11
+          },
+          markLine: {
+            silent: true,
+            lineStyle: { color: '#4b5563', type: 'dashed' },
+            data: [{ xAxis: 1.0, label: { formatter: '聯盟均值 1.00', color: '#6b7280', fontSize: 10 } }]
+          }
+        }],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderTopTwoChart() {
+      const chart = echarts.init(document.getElementById('topTwoChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 20, bottom: 30, left: 60 },
+        legend: { top: 5, textStyle: { color: '#9ca3af', fontSize: 11 } },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' }
+        },
+        xAxis: {
+          type: 'category',
+          data: ['Park Factor', '平均 RPG', '場次數 (÷10)'],
+          axisLabel: { color: '#9ca3af', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } }
+        },
+        series: [
+          {
+            name: '樂天桃園', type: 'bar', barWidth: 36,
+            data: [1.152, 9.19, 4.8],
+            itemStyle: { color: '#34d399', borderRadius: [4, 4, 0, 0] },
+            label: { show: true, position: 'top', color: '#34d399', fontSize: 10,
+              formatter: (p) => ['1.152', '9.19', '48場'][p.dataIndex] }
+          },
+          {
+            name: '洲際', type: 'bar', barWidth: 36,
+            data: [1.137, 9.07, 4.5],
+            itemStyle: { color: '#60a5fa', borderRadius: [4, 4, 0, 0] },
+            label: { show: true, position: 'top', color: '#60a5fa', fontSize: 10,
+              formatter: (p) => ['1.137', '9.07', '45場'][p.dataIndex] }
+          },
+        ],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    renderVenueChart();
+    renderTopTwoChart();
+  </script>
+</body>
+</html>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>運氣還是實力？2025 CPBL BABIP 回歸分析 — CPBL Analytics</title>
+  <meta name="description" content="74 位打者的上半季 BABIP vs 下半季打擊率變化 — 高 BABIP 打者真的在下半季回歸了嗎？" />
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+        surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+      }}}
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .prose h2 { scroll-margin-top: 5rem; }
+    .highlight-green { background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-red { background: rgba(248, 113, 113, 0.1); border-left: 3px solid #f87171; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-yellow { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; border-bottom: 1px solid #2d3748; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 0.875rem; }
+    .data-table tr:hover { background: rgba(255,255,255,0.02); }
+    .td-r { text-align: right; font-family: ui-monospace, monospace; }
+    .toc a { transition: color 0.15s; }
+    .toc a:hover { color: #a855f7; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
+        <a href="park-factors.html" class="hover:text-white transition-colors">Park Factor</a>
+        <a href="babip.html" class="text-purple-400 font-semibold">BABIP</a>
+        <a href="splits.html" class="hover:text-white transition-colors">半季分割</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="wrc-plus.html" class="block py-1 hover:text-white">wRC+</a>
+      <a href="park-factors.html" class="block py-1 hover:text-white">Park Factor</a>
+      <a href="babip.html" class="block py-1 text-purple-400 font-semibold">BABIP</a>
+      <a href="splits.html" class="block py-1 hover:text-white">半季分割</a>
+    </div>
+  </nav>
+
+  <article class="max-w-3xl mx-auto px-4 py-12">
+
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <span class="bg-purple-500/10 border border-purple-500/30 rounded-full px-3 py-0.5 text-purple-400 font-semibold">數據分析</span>
+        <span>2026.04.06</span>
+        <span>&middot;</span>
+        <span>約 6 分鐘</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
+        運氣還是實力？<br class="hidden sm:block" />2025 CPBL BABIP 回歸分析
+      </h1>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        74 位打者的上半季 BABIP vs 下半季打擊率變化 — 高 BABIP 打者真的在下半季回歸了嗎？
+      </p>
+    </header>
+
+    <div class="toc bg-surface-card border border-surface-border rounded-xl p-5 mb-10 text-sm">
+      <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">目錄</div>
+      <ol class="space-y-1.5 text-gray-400 list-decimal list-inside">
+        <li><a href="#what-is-babip">什麼是 BABIP？聯絡安打的本質</a></li>
+        <li><a href="#regression">均值回歸：上半季運氣好，下半季打回原形</a></li>
+        <li><a href="#slope">回歸斜率 -0.49：CPBL 的回歸比 MLB 更強？</a></li>
+        <li><a href="#wang-case">王順和案例：.435 BABIP 到底有多誇張</a></li>
+        <li><a href="#resist-regression">抗回歸打者：胡金龍為什麼沒掉</a></li>
+        <li><a href="#r-squared">R²=0.27 的意思：運氣 vs 實力的比例</a></li>
+        <li><a href="#methodology">方法論與限制</a></li>
+      </ol>
+    </div>
+
+    <div class="prose space-y-8 text-gray-300 leading-relaxed">
+
+      <section id="what-is-babip">
+        <h2 class="text-2xl font-bold text-white mb-4">1. 什麼是 BABIP？聯絡安打的本質</h2>
+        <p>
+          <strong class="text-white">BABIP（Batting Average on Balls In Play）</strong>是「在場內球情境下的打擊率」— 只計算打到場內（不含全壘打和三振）的結果。
+        </p>
+        <div class="bg-surface border border-surface-border rounded-lg p-4 font-mono text-sm text-center my-4">
+          BABIP = (H &minus; HR) &divide; (AB &minus; K &minus; HR + SF)
+        </div>
+        <p>
+          一個打者的 BABIP 由三個力量共同決定：<strong class="text-white">打球品質</strong>（打線速度、仰角）、<strong class="text-white">守備表現</strong>（對方守備好不好）、以及<strong class="text-white">運氣</strong>（球落在哪裡）。
+        </p>
+        <p>
+          MLB 研究顯示，長期 BABIP 的聯盟均值約在 .295–.305 之間，2025 CPBL 的上半季聯盟平均為 <strong class="text-white">.304</strong>，與 MLB 歷史數據高度吻合。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">為什麼 BABIP 很重要？</strong>當一個打者的 BABIP 明顯高於聯盟平均，有兩種可能：他真的是菁英打者（高打線速度 + 好擊球角度），或者他這段時間特別幸運。BABIP 回歸分析的目的，就是拆分這兩個成因。
+        </div>
+      </section>
+
+      <section id="regression">
+        <h2 class="text-2xl font-bold text-white mb-4">2. 均值回歸：上半季運氣好，下半季打回原形</h2>
+        <p>
+          均值回歸（Mean Reversion）的概念很直觀：如果一個打者的表現有一部分由運氣驅動，那麼隨著打席數增加，運氣成分會逐漸抵消，最終回歸到真實能力值。
+        </p>
+        <p>
+          我們分析 74 位達到資格打席數的打者，比較他們的<strong class="text-white">上半季 BABIP</strong>與<strong class="text-white">下半季打擊率變化（ΔAVG）</strong>。
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="scatterChart" style="height:360px;"></div>
+        </div>
+        <p>
+          散點圖的趨勢線斜率為 <strong class="text-white">-0.4946</strong>，R²=0.2652。這代表：上半季 BABIP 每高出聯盟均值 .100，預計下半季打擊率會下滑約 <strong class="text-white">.049</strong>。
+        </p>
+        <div class="highlight-red">
+          <strong class="text-red-400">高 BABIP 打者下半季表現（被高估風險）</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th class="td-r">上半季 BABIP</th>
+                  <th class="td-r">ΔAVG（下半季）</th>
+                  <th>解讀</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">王順和</td>
+                  <td class="td-r text-red-400 font-semibold">.435</td>
+                  <td class="td-r text-red-400 font-semibold">&minus;.136</td>
+                  <td class="text-gray-400 text-sm">大幅回歸</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">林智平</td>
+                  <td class="td-r text-red-400">.387</td>
+                  <td class="td-r text-red-400">&minus;.045</td>
+                  <td class="text-gray-400 text-sm">明顯回歸</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">吳念庭</td>
+                  <td class="td-r text-red-400">.381</td>
+                  <td class="td-r text-red-400">&minus;.033</td>
+                  <td class="text-gray-400 text-sm">小幅回歸</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">胡金龍</td>
+                  <td class="td-r text-red-400">.379</td>
+                  <td class="td-r text-green-400">+.013</td>
+                  <td class="text-gray-400 text-sm">抗住了！</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">宋嘉翔</td>
+                  <td class="td-r text-red-400">.370</td>
+                  <td class="td-r">+.002</td>
+                  <td class="text-gray-400 text-sm">幾乎持平</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="highlight-green">
+          <strong class="text-green-400">低 BABIP 打者下半季反彈（被低估機會）</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th class="td-r">上半季 BABIP</th>
+                  <th class="td-r">ΔAVG（下半季）</th>
+                  <th>解讀</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">馬傑森</td>
+                  <td class="td-r text-green-400 font-semibold">.188</td>
+                  <td class="td-r text-green-400 font-semibold">+.029</td>
+                  <td class="text-gray-400 text-sm">如期反彈</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">曾昱磬</td>
+                  <td class="td-r text-green-400">.203</td>
+                  <td class="td-r text-green-400">+.060</td>
+                  <td class="text-gray-400 text-sm">強力反彈</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">曾聖安</td>
+                  <td class="td-r text-green-400">.222</td>
+                  <td class="td-r text-green-400">+.059</td>
+                  <td class="text-gray-400 text-sm">強力反彈</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">林子豪</td>
+                  <td class="td-r text-green-400">.227</td>
+                  <td class="td-r text-red-400">&minus;.006</td>
+                  <td class="text-gray-400 text-sm">未反彈（例外）</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">李宗賢</td>
+                  <td class="td-r text-green-400">.235</td>
+                  <td class="td-r text-green-400">+.040</td>
+                  <td class="text-gray-400 text-sm">明顯反彈</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="slope">
+        <h2 class="text-2xl font-bold text-white mb-4">3. 回歸斜率 -0.49：CPBL 的回歸比 MLB 更強？</h2>
+        <p>
+          在 MLB 的同類研究中，BABIP 的半年回歸斜率通常落在 -0.2 到 -0.35 之間。CPBL 的 <strong class="text-white">-0.4946</strong> 明顯更高 — 上半季的幸運成分在下半季被「糾正」得更徹底。
+        </p>
+        <p>
+          有幾個可能的解釋：
+        </p>
+        <div class="space-y-4 my-4">
+          <div class="bg-surface-card border border-surface-border rounded-xl p-4">
+            <div class="text-white font-semibold text-sm mb-1">① 樣本量效應</div>
+            <div class="text-gray-400 text-sm">CPBL 一季約 120 場，每個半季的打席數更少。在小樣本中，運氣成分對 BABIP 的影響比 MLB 更大，因此「修正」也更強。</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-xl p-4">
+            <div class="text-white font-semibold text-sm mb-1">② 守備調整速度</div>
+            <div class="text-gray-400 text-sm">CPBL 球隊在下半季可能針對上半季 BABIP 高的打者做出守位調整，加速了回歸。</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-xl p-4">
+            <div class="text-white font-semibold text-sm mb-1">③ 天氣與場地因素</div>
+            <div class="text-gray-400 text-sm">台灣夏季（上半季）與秋季（下半季）的場地條件差異（人工草皮濕度、風向）可能放大半年 BABIP 波動。</div>
+          </div>
+        </div>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">注意：</strong>BABIP 不完全是運氣。打線速度高的打者（快節奏強拉打）和高打球角度的打者，長期確實能維持高於聯盟平均的 BABIP。這是打者的真實技能，不應全部歸因於運氣。
+        </div>
+      </section>
+
+      <section id="wang-case">
+        <h2 class="text-2xl font-bold text-white mb-4">4. 王順和案例：.435 BABIP 到底有多誇張</h2>
+        <p>
+          <strong class="text-white">王順和</strong>的上半季 BABIP .435 是 74 位資格打者中的最高值，比聯盟均值 .304 高出整整 <strong class="text-white">.131</strong>。
+        </p>
+        <p>
+          為了讓這個數字有感，可以這樣理解：他每 10 顆打到場內的球，有 4.35 顆變安打。即使是 MLB 中靠速度出名的打者，長期 BABIP 維持在 .370 以上都極為罕見。
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="wangChart" style="height:280px;"></div>
+        </div>
+        <p>
+          下半季，王順和的打擊率下滑了 <strong class="text-white">.136</strong>，是整個分析中最大的單一降幅。即使是模型預測的 -0.49 斜率，對 .435 的 BABIP 也只預測 -0.064 的 ΔAVG，實際回歸幅度幾乎是模型預測的兩倍。
+        </p>
+        <p>
+          這可能反映了一個複合效應：<strong class="text-white">運氣回歸 + 打擊技術問題</strong>（可能是對手針對性調整了配球策略）的雙重打擊。
+        </p>
+      </section>
+
+      <section id="resist-regression">
+        <h2 class="text-2xl font-bold text-white mb-4">5. 抗回歸打者：胡金龍為什麼沒掉</h2>
+        <p>
+          <strong class="text-white">胡金龍</strong>的上半季 BABIP .379 是前五高，但下半季打擊率非但沒有下滑，反而上升了 <strong class="text-white">+.013</strong>。這是一個統計上的顯著例外。
+        </p>
+        <p>
+          抗回歸通常對應以下真實能力：
+        </p>
+        <div class="space-y-3 my-4">
+          <div class="flex gap-3">
+            <span class="text-purple-400 font-bold mt-0.5 shrink-0">→</span>
+            <div><span class="text-white font-semibold">高打線速度：</span><span class="text-gray-400">球被打得夠硬，守備來不及反應，BABIP 高是實力而非運氣。</span></div>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-purple-400 font-bold mt-0.5 shrink-0">→</span>
+            <div><span class="text-white font-semibold">精準反打：</span><span class="text-gray-400">能夠將球打向守備薄弱的方向，是可重複的技能。</span></div>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-purple-400 font-bold mt-0.5 shrink-0">→</span>
+            <div><span class="text-white font-semibold">腳程優勢：</span><span class="text-gray-400">跑得快的打者在內野滾地球上的安打率本就高於平均，這是客觀存在的技能加成。</span></div>
+          </div>
+        </div>
+        <div class="highlight-green">
+          <strong class="text-green-400">胡金龍案例的意義：</strong>當我們看到高 BABIP 打者時，不能直接標記為「幸運」然後等他回歸。需要先問：這個打者有沒有能支撐高 BABIP 的真實技能？如果有，他可能根本不會回歸。
+        </div>
+      </section>
+
+      <section id="r-squared">
+        <h2 class="text-2xl font-bold text-white mb-4">6. R²=0.27 的意思：運氣 vs 實力的比例</h2>
+        <p>
+          R²（決定係數）= 0.2652，代表上半季 BABIP 能解釋下半季打擊率變化的 <strong class="text-white">26.5%</strong>。剩下的 73.5% 由其他因素決定（打擊技術改變、傷病、對手調整、賽程等）。
+        </p>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="r2Chart" style="height:240px;"></div>
+        </div>
+        <p>
+          這個數字的解讀應該是：<strong class="text-white">BABIP 是一個有意義但不完整的預測信號</strong>。它能告訴我們打者有多少「運氣成分」需要修正，但不能單獨作為預測下半季表現的工具。
+        </p>
+        <div class="space-y-4 my-4">
+          <div class="bg-surface-card border border-surface-border rounded-xl p-4">
+            <div class="text-sm font-semibold text-purple-400 mb-1">R² 的直觀理解</div>
+            <div class="text-gray-400 text-sm">想像 10 個高 BABIP 打者，按照 R²=0.27 的解釋力，大約 <strong class="text-white">7–8 人</strong>會在下半季出現打擊率下滑（符合回歸預測），但 <strong class="text-white">2–3 人</strong>不會（由非 BABIP 因素主導）。這與我們觀察到的胡金龍等案例一致。</div>
+          </div>
+        </div>
+        <p>
+          更好的預測模型應該同時納入：Barrel Rate（優質擊球率）、Exit Velocity（出棒速度）、Sprint Speed（跑速）— 但這些數據在 CPBL 目前尚未公開，這也是我們只能以 BABIP 作為 proxy 的根本原因。
+        </p>
+      </section>
+
+      <section id="methodology">
+        <h2 class="text-2xl font-bold text-white mb-4">7. 方法論與限制</h2>
+        <p>
+          <strong class="text-white">資格標準：</strong>上半季達到最低打席門檻的 74 位打者。同時要求下半季有足夠打席數，確保 ΔAVG 有統計意義。
+        </p>
+        <p>
+          <strong class="text-white">BABIP 計算：</strong>使用標準公式 (H - HR) / (AB - K - HR + SF)。資料來源為 Rebas Open Data 逐打席記錄（PA 表）。
+        </p>
+        <p>
+          <strong class="text-white">回歸模型：</strong>OLS 線性回歸，以上半季 BABIP 為自變數，下半季打擊率變化（ΔAVG = 下半季 AVG - 上半季 AVG）為因變數。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">主要限制：</strong>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-400 mt-2">
+            <li>CPBL 樣本量小（一季約 120 場），統計顯著性受限</li>
+            <li>缺乏 Exit Velocity 和 Launch Angle 數據，無法直接分離「技能性高 BABIP」與「運氣性高 BABIP」</li>
+            <li>上下半季的守備陣容可能不同，影響 BABIP 但難以量化</li>
+            <li>傷病和體能因素未納入控制變數</li>
+            <li>2025 年僅一季資料，跨年驗證待後續累積</li>
+          </ul>
+        </div>
+        <p>
+          完整互動式 BABIP 圖表與所有 74 位打者的詳細數據請見 <a href="babip.html" class="text-purple-400 hover:underline">BABIP 分析頁面</a>。
+        </p>
+      </section>
+
+    </div>
+
+    <div class="mt-16 pt-8 border-t border-surface-border">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <div class="text-white font-bold">CPBL Analytics</div>
+          <div class="text-sm text-gray-500">以賽伯計量學方法解讀中華職棒數據</div>
+        </div>
+        <div class="flex gap-3">
+          <a href="babip.html" class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">互動式 BABIP 圖表</a>
+          <a href="index.html" class="bg-surface-card border border-surface-border hover:border-gray-600 text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">所有分析模組</a>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    function renderScatterChart() {
+      const players = ['王順和','林智平','吳念庭','胡金龍','宋嘉翔','馬傑森','曾昱磬','曾聖安','林子豪','李宗賢'];
+      const babipData = [0.435, 0.387, 0.381, 0.379, 0.370, 0.188, 0.203, 0.222, 0.227, 0.235];
+      const deltaData = [-0.136, -0.045, -0.033, 0.013, 0.002, 0.029, 0.060, 0.059, -0.006, 0.040];
+      const scatterPoints = babipData.map((b, i) => ({
+        value: [b, deltaData[i]],
+        name: players[i],
+        itemStyle: { color: deltaData[i] >= 0 ? '#4ade80' : '#f87171' }
+      }));
+
+      // trend line from slope=-0.4946, intercept ~ 0.4946*0.304 ≈ 0.1504 → at x=0.188: y=0.150-0.4946*0.188=0.057; at x=0.435: y=0.150-0.4946*0.435=-0.065
+      const intercept = 0.4946 * 0.304; // ≈ 0.1504
+      const trendStart = [0.175, intercept - 0.4946 * 0.175];
+      const trendEnd = [0.450, intercept - 0.4946 * 0.450];
+
+      const chart = echarts.init(document.getElementById('scatterChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 30, bottom: 50, left: 60 },
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' },
+          formatter: p => `${p.name}<br/>上半季 BABIP: ${p.value[0].toFixed(3)}<br/>ΔAVG: ${p.value[1] >= 0 ? '+' : ''}${p.value[1].toFixed(3)}`
+        },
+        xAxis: {
+          type: 'value', name: '上半季 BABIP', nameLocation: 'middle', nameGap: 30,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          min: 0.15, max: 0.46,
+          axisLabel: { color: '#6b7280', fontSize: 10, formatter: v => v.toFixed(3) },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        yAxis: {
+          type: 'value', name: 'ΔAVG（下半季）', nameLocation: 'middle', nameGap: 45,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { color: '#6b7280', fontSize: 10, formatter: v => (v >= 0 ? '+' : '') + v.toFixed(3) },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        series: [
+          {
+            type: 'scatter', data: scatterPoints, symbolSize: 10,
+            label: { show: true, position: 'right', formatter: p => p.name, color: '#d1d5db', fontSize: 9 },
+          },
+          {
+            type: 'line',
+            data: [trendStart, trendEnd],
+            smooth: false,
+            lineStyle: { color: '#a855f7', width: 1.5, type: 'dashed' },
+            symbol: 'none',
+            tooltip: { show: false },
+            label: {
+              show: true, position: 'end',
+              formatter: 'slope=-0.49\nR²=0.27',
+              color: '#a855f7', fontSize: 9
+            }
+          },
+          {
+            type: 'line',
+            markLine: {
+              silent: true, symbol: 'none',
+              lineStyle: { color: '#4b5563', type: 'solid', width: 1 },
+              label: { show: false },
+              data: [{ yAxis: 0 }, { xAxis: 0.304 }]
+            }
+          }
+        ]
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderWangChart() {
+      const chart = echarts.init(document.getElementById('wangChart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 30, right: 30, bottom: 30, left: 60 },
+        tooltip: { trigger: 'axis', backgroundColor: '#252e3e', borderColor: '#2d3748', textStyle: { color: '#f3f4f6' } },
+        xAxis: {
+          type: 'category',
+          data: ['聯盟均值', '回歸預測值', '王順和實際'],
+          axisLabel: { color: '#9ca3af', fontSize: 11 }, axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        yAxis: {
+          type: 'value', min: 0.25, max: 0.45,
+          axisLabel: { color: '#6b7280', fontSize: 10, formatter: v => v.toFixed(3) },
+          splitLine: { lineStyle: { color: '#1e2530' } }
+        },
+        series: [{
+          type: 'bar',
+          data: [
+            { value: 0.304, itemStyle: { color: '#6b7280', borderRadius: [4,4,0,0] } },
+            { value: 0.435 - 0.064, itemStyle: { color: '#f59e0b', borderRadius: [4,4,0,0] } },
+            { value: 0.435 - 0.136, itemStyle: { color: '#f87171', borderRadius: [4,4,0,0] } }
+          ],
+          barWidth: 60,
+          label: {
+            show: true, position: 'top', color: '#d1d5db', fontSize: 11, fontFamily: 'monospace',
+            formatter: p => p.value.toFixed(3)
+          }
+        }]
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderR2Chart() {
+      const chart = echarts.init(document.getElementById('r2Chart'));
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { show: false },
+        series: [{
+          type: 'pie',
+          radius: ['45%', '70%'],
+          center: ['50%', '55%'],
+          data: [
+            { value: 26.5, name: 'BABIP 解釋（運氣成分）', itemStyle: { color: '#a855f7' } },
+            { value: 73.5, name: '其他因素', itemStyle: { color: '#2d3748' } }
+          ],
+          label: {
+            show: true, color: '#d1d5db', fontSize: 11,
+            formatter: p => `${p.name}\n${p.value}%`
+          },
+          labelLine: { lineStyle: { color: '#4b5563' } }
+        }]
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    renderScatterChart();
+    renderWangChart();
+    renderR2Chart();
+  </script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>誰是 2025 CPBL 最強打者？wRC+ 完整排行解析 — CPBL Analytics</title>
+  <meta name="description" content="用 Park Factor 調整的 wRC+ 重新評價 86 位打者 — 台鋼雄鷹的低 PF 讓魔鷹的 151.7 更有價值。" />
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            orange: { DEFAULT: '#f97316', dark: '#ea580c' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .prose h2 { scroll-margin-top: 5rem; }
+    .highlight-green { background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-red { background: rgba(248, 113, 113, 0.1); border-left: 3px solid #f87171; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-yellow { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; border-bottom: 1px solid #2d3748; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 0.875rem; }
+    .data-table tr:hover { background: rgba(255,255,255,0.02); }
+    .td-r { text-align: right; font-family: ui-monospace, monospace; }
+    .badge-over { background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-under { background: rgba(74, 222, 128, 0.15); color: #4ade80; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-normal { background: rgba(107, 114, 128, 0.15); color: #9ca3af; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .toc a { transition: color 0.15s; }
+    .toc a:hover { color: #f97316; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="wrc-plus.html" class="text-orange-DEFAULT font-semibold" style="color:#f97316;">wRC+</a>
+        <a href="park-factors.html" class="hover:text-white transition-colors">Park Factor</a>
+        <a href="babip.html" class="hover:text-white transition-colors">BABIP</a>
+        <a href="splits.html" class="hover:text-white transition-colors">半季分割</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="wrc-plus.html" class="block py-1 font-semibold" style="color:#f97316;">wRC+</a>
+      <a href="park-factors.html" class="block py-1 hover:text-white">Park Factor</a>
+      <a href="babip.html" class="block py-1 hover:text-white">BABIP</a>
+      <a href="splits.html" class="block py-1 hover:text-white">半季分割</a>
+    </div>
+  </nav>
+
+  <!-- Article -->
+  <article class="max-w-3xl mx-auto px-4 py-12">
+
+    <!-- Header -->
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <span class="rounded-full px-3 py-0.5 font-semibold" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);color:#f97316;">打者分析</span>
+        <span>2026.04.06</span>
+        <span>&middot;</span>
+        <span>閱讀時間約 6 分鐘</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
+        誰是 2025 CPBL 最強打者？<br class="hidden sm:block" />wRC+ 完整排行解析
+      </h1>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        用 Park Factor 調整的 wRC+ 重新評價 86 位打者 — 台鋼雄鷹的低 PF 讓魔鷹的 151.7 更有價值。
+      </p>
+    </header>
+
+    <!-- TOC -->
+    <div class="toc bg-surface-card border border-surface-border rounded-xl p-5 mb-10 text-sm">
+      <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">目錄</div>
+      <ol class="space-y-1.5 text-gray-400 list-decimal list-inside">
+        <li><a href="#what-is-wrc">什麼是 wRC+？為什麼比 OPS 更好</a></li>
+        <li><a href="#park-factor">Park Factor 的影響：同樣 .388 wOBA，魔鷹 vs 林安可</a></li>
+        <li><a href="#top10">Top 10 排行分析</a></li>
+        <li><a href="#overrated">被高估的打者：在樂天桃園打的高 OPS 打者</a></li>
+        <li><a href="#underrated">被低估的打者：台鋼 / 統一的打者</a></li>
+        <li><a href="#methodology">方法論與限制</a></li>
+      </ol>
+    </div>
+
+    <!-- Body -->
+    <div class="prose space-y-8 text-gray-300 leading-relaxed">
+
+      <!-- Section 1 -->
+      <section id="what-is-wrc">
+        <h2 class="text-2xl font-bold text-white mb-4">1. 什麼是 wRC+？為什麼比 OPS 更好</h2>
+        <p>
+          OPS（On-base Plus Slugging）是台灣球迷最熟悉的綜合打擊指標，但它有兩個根本缺陷：<strong class="text-white">把上壘率和長打率直接相加（權重不對）</strong>，以及<strong class="text-white">忽略球場因素</strong>。
+        </p>
+        <p>
+          wRC+（Weighted Runs Created Plus）解決了這兩個問題。它的計算分兩步：
+        </p>
+        <div class="bg-surface border border-surface-border rounded-lg p-4 font-mono text-sm my-4 space-y-2">
+          <div><span class="text-gray-500">Step 1 — wOBA（加權上壘率）：</span></div>
+          <div class="text-center">wOBA = (0.69×BB + 0.72×HBP + 0.89×1B + 1.27×2B + 1.62×3B + 2.10×HR) / PA</div>
+          <div class="mt-2"><span class="text-gray-500">Step 2 — wRC+（球場調整後 × 100）：</span></div>
+          <div class="text-center">wRC+ = [( (wOBA &minus; lgwOBA) / wOBAscale + lgR/PA ) / (lgR/PA × PF)] &times; 100</div>
+        </div>
+        <p>
+          最終數字以 100 為基準：<strong class="text-white">wRC+ = 100 代表聯盟平均水準</strong>；150 代表比聯盟平均好 50%；80 代表比聯盟平均差 20%。這個 100 基準讓跨球場、跨年份的比較變得直觀。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">OPS vs wRC+ 的核心差異：</strong>把林安可（統一獅，PF=0.945）和蔡琞傑（中信兄弟，PF=1.090）的 OPS 直接比較，是拿一個在投手球場打出的成績和一個在打者球場打出的成績相比。wRC+ 會根據 Park Factor 修正這個不公平，讓兩人的打擊能力回到同一個尺度。
+        </div>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="park-factor">
+        <h2 class="text-2xl font-bold text-white mb-4">2. Park Factor 的影響：同樣 .388 wOBA，魔鷹 vs 林安可</h2>
+        <p>
+          2025 年聯盟中最有趣的一個對比：<strong class="text-white">魔鷹（台鋼）和林安可（統一）的 wOBA 完全相同，都是 .388</strong>，但 wRC+ 相差 6.1 分。
+        </p>
+        <div class="grid grid-cols-2 gap-4 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full" style="background:#f97316;"></span>
+              <span class="text-white font-bold">魔鷹</span>
+              <span class="text-xs text-gray-500">台鋼雄鷹</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">wOBA</span><span class="text-white font-mono">.388</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Park Factor</span><span class="text-red-400 font-mono font-semibold">0.894</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">wRC+</span><span class="font-mono font-bold text-lg" style="color:#f97316;">151.7</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">球場修正方向</span><span class="text-green-400 text-xs">+（投手球場加成）</span></div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-blue-400"></span>
+              <span class="text-white font-bold">林安可</span>
+              <span class="text-xs text-gray-500">統一獅</span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-400">wOBA</span><span class="text-white font-mono">.388</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">Park Factor</span><span class="text-yellow-400 font-mono font-semibold">0.945</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">wRC+</span><span class="text-blue-400 font-mono font-bold text-lg">145.6</span></div>
+              <div class="flex justify-between"><span class="text-gray-400">球場修正方向</span><span class="text-green-400 text-xs">+（輕微投手球場）</span></div>
+            </div>
+          </div>
+        </div>
+        <p>
+          魔鷹的 wRC+ 更高，是因為他在全聯盟 PF 最低的球場（0.894）打出了 .388 的 wOBA — 這代表他的打擊成就在更惡劣的環境下達成，因此獲得更高的 Park Factor 修正加成。
+        </p>
+        <p>
+          下表整理了 2025 CPBL 六支球隊的 Park Factor：
+        </p>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>球隊</th>
+                <th>主場</th>
+                <th class="td-r">Park Factor</th>
+                <th>性質</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">樂天桃猿</td>
+                <td class="text-gray-400">桃園棒球場</td>
+                <td class="td-r text-red-400 font-semibold font-mono">1.121</td>
+                <td><span class="badge-over">打者球場</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">中信兄弟</td>
+                <td class="text-gray-400">洲際棒球場</td>
+                <td class="td-r text-red-400 font-semibold font-mono">1.090</td>
+                <td><span class="badge-over">打者球場</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">味全龍</td>
+                <td class="text-gray-400">新莊棒球場</td>
+                <td class="td-r text-yellow-400 font-semibold font-mono">1.054</td>
+                <td><span class="badge-normal">略偏打者</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">統一獅</td>
+                <td class="text-gray-400">台南棒球場</td>
+                <td class="td-r font-mono">0.945</td>
+                <td><span class="badge-normal">略偏投手</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">富邦悍將</td>
+                <td class="text-gray-400">新莊棒球場</td>
+                <td class="td-r font-mono">0.917</td>
+                <td><span class="badge-under">投手球場</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">台鋼雄鷹</td>
+                <td class="text-gray-400">澄清湖棒球場</td>
+                <td class="td-r text-green-400 font-semibold font-mono">0.894</td>
+                <td><span class="badge-under">投手球場</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          樂天桃園（1.121）和台鋼澄清湖（0.894）之間相差 0.227 個 PF 單位 — 這是一個巨大的差距。在桃園打出的 .340 wOBA，和在澄清湖打出的 .340 wOBA，對應的打擊能力根本不是同一回事。
+        </p>
+        <!-- Chart -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="pfChart" style="height:280px;"></div>
+        </div>
+        <p class="text-xs text-gray-500 text-center -mt-2 mb-4">
+          六隊 Park Factor 比較。PF &gt; 1.0 為打者球場（紅），PF &lt; 1.0 為投手球場（綠）。
+        </p>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="top10">
+        <h2 class="text-2xl font-bold text-white mb-4">3. Top 10 排行分析</h2>
+        <p>
+          以下是 2025 CPBL <strong class="text-white">PA ≥ 100</strong> 的打者中，wRC+ 前六名完整數據：
+        </p>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>排名</th>
+                <th>球員</th>
+                <th>球隊</th>
+                <th class="td-r">PA</th>
+                <th class="td-r">wOBA</th>
+                <th class="td-r">wRC+</th>
+                <th class="td-r">PF</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-gray-500 font-mono">1</td>
+                <td class="text-white font-medium">魔鷹</td>
+                <td class="text-gray-400">台鋼雄鷹</td>
+                <td class="td-r text-gray-300">—</td>
+                <td class="td-r font-mono">.388</td>
+                <td class="td-r font-mono font-bold" style="color:#f97316;">151.7</td>
+                <td class="td-r font-mono text-green-400">0.894</td>
+              </tr>
+              <tr>
+                <td class="text-gray-500 font-mono">2</td>
+                <td class="text-white font-medium">林安可</td>
+                <td class="text-gray-400">統一獅</td>
+                <td class="td-r text-gray-300">—</td>
+                <td class="td-r font-mono">.388</td>
+                <td class="td-r font-mono font-bold text-blue-400">145.6</td>
+                <td class="td-r font-mono text-yellow-400">0.945</td>
+              </tr>
+              <tr>
+                <td class="text-gray-500 font-mono">3</td>
+                <td class="text-white font-medium">張育成</td>
+                <td class="text-gray-400">富邦悍將</td>
+                <td class="td-r text-gray-300">—</td>
+                <td class="td-r font-mono">.370</td>
+                <td class="td-r font-mono font-bold text-blue-400">142.2</td>
+                <td class="td-r font-mono text-yellow-400">0.917</td>
+              </tr>
+              <tr>
+                <td class="text-gray-500 font-mono">4</td>
+                <td class="text-white font-medium">蔡琞傑</td>
+                <td class="text-gray-400">中信兄弟</td>
+                <td class="td-r text-gray-300">—</td>
+                <td class="td-r font-mono">.405</td>
+                <td class="td-r font-mono font-bold text-gray-300">137.6</td>
+                <td class="td-r font-mono text-red-400">1.090</td>
+              </tr>
+              <tr>
+                <td class="text-gray-500 font-mono">5</td>
+                <td class="text-white font-medium">吳念庭</td>
+                <td class="text-gray-400">台鋼雄鷹</td>
+                <td class="td-r text-gray-300">—</td>
+                <td class="td-r font-mono">.347</td>
+                <td class="td-r font-mono font-bold text-gray-300">136.8</td>
+                <td class="td-r font-mono text-green-400">0.894</td>
+              </tr>
+              <tr>
+                <td class="text-gray-500 font-mono">6</td>
+                <td class="text-white font-medium">張進德</td>
+                <td class="text-gray-400">富邦悍將</td>
+                <td class="td-r text-gray-300">—</td>
+                <td class="td-r font-mono">.352</td>
+                <td class="td-r font-mono font-bold text-gray-300">135.7</td>
+                <td class="td-r font-mono text-yellow-400">0.917</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          最引人注意的是排名 4 的蔡琞傑：他的 wOBA 是前六名中最高的（.405），但 wRC+ 卻排第四，原因是他打在全聯盟 PF 第二高的洲際棒球場（1.090）。wRC+ 的 Park Factor 修正把這個「球場紅利」還原了。
+        </p>
+        <!-- Chart -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="top10Chart" style="height:340px;"></div>
+        </div>
+        <p class="text-xs text-gray-500 text-center -mt-2 mb-4">
+          橘色為 wRC+，藍色為 wOBA（×100 後顯示）。顏色深淺反映 Park Factor 高低。
+          <a href="wrc-plus.html" class="hover:underline" style="color:#f97316;">互動版 &rarr;</a>
+        </p>
+        <p>
+          吳念庭（台鋼，wRC+=136.8）的 wOBA 只有 .347，是前六名最低，但他的 wRC+ 排第五 — 完全是因為在 PF=0.894 的澄清湖打出了這個成績。這正是 wRC+ 想揭示的：<strong class="text-white">同樣的原始數字，在不同球場代表不同的打擊能力</strong>。
+        </p>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="overrated">
+        <h2 class="text-2xl font-bold text-white mb-4">4. 被高估的打者：在樂天桃園打的高 OPS 打者</h2>
+        <p>
+          樂天桃園（PF=1.121）是聯盟最利於打者的球場。在這裡打出的亮眼原始數字，在 wRC+ 的修正下會有明顯縮水：
+        </p>
+        <div class="highlight-red">
+          <strong class="text-red-400">球場紅利最大的環境：樂天桃猿（PF=1.121）</strong>
+          <p class="text-sm text-gray-400 mt-2">
+            在 PF=1.121 的環境下，一個打出 .350 wOBA 的打者，其 wRC+ 會比同樣 .350 wOBA 但打在 PF=0.894 球場的打者低約 <strong class="text-white">15–18 分</strong>。這意味著用 OPS 直接比較這兩人，會對前者產生系統性高估。
+          </p>
+          <p class="text-sm text-gray-400 mt-2">
+            簡單試算：如果某位樂天打者的 wOBA=.350，套入 wRC+ 公式（lgwOBA=0.278, wOBAscale=2.633, PF=1.121），他的 wRC+ 約為 <strong class="text-white">112</strong>；如果他打在台鋼（PF=0.894），同樣 wOBA=.350，wRC+ 則高達 <strong class="text-white">129</strong>。
+          </p>
+          <p class="text-sm text-gray-400 mt-2">
+            這 17 分的差距，完全來自球場環境，打擊能力本身沒有任何不同。
+          </p>
+        </div>
+        <p>
+          中信洲際（PF=1.090）同樣如此。蔡琞傑 wOBA=.405 是前六名最高，但在高 PF 修正後 wRC+=137.6，排名滑落到第四。蔡琞傑仍是頂尖打者，但他部分的原始數字膨脹來自球場環境。
+        </p>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="underrated">
+        <h2 class="text-2xl font-bold text-white mb-4">5. 被低估的打者：台鋼 / 統一的打者</h2>
+        <p>
+          在投手球場打球的打者，用 OPS 評估會被系統性低估：
+        </p>
+        <div class="highlight-green">
+          <strong class="text-green-400">被 wRC+ 還原真實價值的投手球場打者</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th>球隊</th>
+                  <th class="td-r">wOBA</th>
+                  <th class="td-r">wRC+</th>
+                  <th class="td-r">PF</th>
+                  <th>評價</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">魔鷹</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r font-mono">.388</td>
+                  <td class="td-r font-mono font-semibold" style="color:#f97316;">151.7</td>
+                  <td class="td-r font-mono text-green-400">0.894</td>
+                  <td><span class="badge-under">被低估</span></td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">吳念庭</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r font-mono">.347</td>
+                  <td class="td-r font-mono font-semibold text-green-400">136.8</td>
+                  <td class="td-r font-mono text-green-400">0.894</td>
+                  <td><span class="badge-under">被低估</span></td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">林安可</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r font-mono">.388</td>
+                  <td class="td-r font-mono font-semibold text-green-400">145.6</td>
+                  <td class="td-r font-mono text-yellow-400">0.945</td>
+                  <td><span class="badge-under">輕微低估</span></td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">張育成</td>
+                  <td class="text-gray-400">富邦悍將</td>
+                  <td class="td-r font-mono">.370</td>
+                  <td class="td-r font-mono font-semibold text-green-400">142.2</td>
+                  <td class="td-r font-mono text-yellow-400">0.917</td>
+                  <td><span class="badge-under">輕微低估</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-sm text-gray-400 mt-3">
+            特別是台鋼的打者：在 PF=0.894 的澄清湖每打出一分打擊貢獻，都比在桃園球場打出同樣的數字更難。wRC+ 的修正讓這些打者的真實能力得以顯現。
+          </p>
+        </div>
+        <p>
+          吳念庭是這個現象最好的例子。wOBA=.347 在表面數字上看起來平庸，但在全聯盟最難打的球場打出來，wRC+=136.8 告訴我們他是聯盟前五的打者。如果只看 OPS，很容易漏掉他的真實價值。
+        </p>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="methodology">
+        <h2 class="text-2xl font-bold text-white mb-4">6. 方法論與限制</h2>
+        <p>
+          <strong class="text-white">資料來源：</strong>Rebas Open Data（ODC-By License）+ CPBL 官網公開統計。分析基於 2025 年一軍例行賽，共 86 位 PA ≥ 100 的打者。
+        </p>
+        <p>
+          <strong class="text-white">計算方式：</strong>wOBA 使用 FanGraphs 2025 年線性權重係數（BB=0.69, HBP=0.72, 1B=0.89, 2B=1.27, 3B=1.62, HR=2.10）。聯盟參數：lgwOBA=0.278, wOBAscale=2.633。Park Factor 基於各球場 2025 年賽季實際得分環境計算。
+        </p>
+        <p>
+          <strong class="text-white">Park Factor 計算：</strong>使用主客場得分法 — PF = (主場每局得分 / 客場每局得分) × 修正係數，避免球隊打線強弱影響球場本身的評估。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">wRC+ 在 CPBL 的重要限制：</strong>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-400 mt-2">
+            <li>CPBL 每季約 <strong class="text-white">120 場</strong>（MLB 2,430 場）。個人打者 100 PA 大約只有 25–30 場，樣本量非常小，wRC+ 波動幅度遠高於 MLB。</li>
+            <li>CPBL 的線性權重係數尚未有本土版本，本文借用 FanGraphs 2025 MLB 係數作為代理，可能低估 CPBL 的長打價值差異。</li>
+            <li>Park Factor 基於單季數據計算，穩定性不足。MLB 通常使用三年滾動平均；CPBL 因每年球場使用分配略有變動，單季 PF 存在雜訊。</li>
+            <li>本分析未涵蓋守備和跑壘貢獻，wRC+ 僅反映打擊面的能力，不是完整的球員價值評估（WAR）。</li>
+          </ul>
+        </div>
+        <p>
+          完整數據和互動式圖表請見 <a href="wrc-plus.html" class="hover:underline" style="color:#f97316;">wRC+ 分析頁面</a>，可依球隊篩選、調整最低 PA 門檻、切換各指標視角。
+        </p>
+      </section>
+
+    </div>
+
+    <!-- Footer CTA -->
+    <div class="mt-16 pt-8 border-t border-surface-border">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <div class="text-white font-bold">CPBL Analytics</div>
+          <div class="text-sm text-gray-500">以賽伯計量學方法解讀中華職棒數據</div>
+        </div>
+        <div class="flex gap-3">
+          <a href="wrc-plus.html" class="text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors" style="background:#f97316;">
+            互動式 wRC+ 圖表
+          </a>
+          <a href="index.html" class="bg-surface-card border border-surface-border hover:border-gray-600 text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+            所有分析模組
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </article>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    function renderPfChart() {
+      const chart = echarts.init(document.getElementById('pfChart'));
+      const teams = ['台鋼雄鷹', '富邦悍將', '統一獅', '味全龍', '中信兄弟', '樂天桃猿'];
+      const values = [0.894, 0.917, 0.945, 1.054, 1.090, 1.121];
+      const colors = values.map(v => v > 1.0 ? '#f87171' : '#4ade80');
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 20, right: 80, bottom: 30, left: 90 },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6' },
+          formatter: p => `${p[0].name}<br/>Park Factor: <b>${p[0].value.toFixed(3)}</b>`
+        },
+        xAxis: {
+          type: 'value',
+          axisLabel: { formatter: v => v.toFixed(2), color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          min: 0.85, max: 1.15
+        },
+        yAxis: {
+          type: 'category',
+          data: [...teams],
+          axisLabel: { color: '#d1d5db', fontSize: 11 },
+          axisLine: { show: false },
+          axisTick: { show: false }
+        },
+        series: [{
+          type: 'bar',
+          data: values.map((v, i) => ({
+            value: v,
+            itemStyle: { color: colors[i], borderRadius: [0, 4, 4, 0] }
+          })),
+          barWidth: 20,
+          label: {
+            show: true,
+            position: 'right',
+            formatter: p => p.value.toFixed(3),
+            color: '#d1d5db',
+            fontSize: 10
+          },
+          markLine: {
+            silent: true,
+            symbol: 'none',
+            lineStyle: { color: '#f59e0b', type: 'dashed', width: 1 },
+            label: { formatter: 'PF=1.0', position: 'start', color: '#f59e0b', fontSize: 9 },
+            data: [{ xAxis: 1.0 }]
+          },
+        }],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderTop10Chart() {
+      const chart = echarts.init(document.getElementById('top10Chart'));
+      const players = ['張進德', '吳念庭', '蔡琞傑', '張育成', '林安可', '魔鷹'];
+      const wrcPlus = [135.7, 136.8, 137.6, 142.2, 145.6, 151.7];
+      const woba = [35.2, 34.7, 40.5, 37.0, 38.8, 38.8]; // wOBA × 100
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 30, bottom: 30, left: 80 },
+        legend: {
+          top: 5,
+          textStyle: { color: '#9ca3af', fontSize: 11 }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6' },
+          axisPointer: { type: 'shadow' },
+          formatter: params => {
+            const name = params[0].name;
+            const wrc = params.find(p => p.seriesName === 'wRC+')?.value;
+            const wo = params.find(p => p.seriesName === 'wOBA×100')?.value;
+            return `<b>${name}</b><br/>wRC+: ${wrc}<br/>wOBA: .${wo}`;
+          }
+        },
+        xAxis: {
+          type: 'value',
+          axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          min: 30, max: 165
+        },
+        yAxis: {
+          type: 'category',
+          data: players,
+          axisLabel: { color: '#d1d5db', fontSize: 11 },
+          axisLine: { show: false },
+          axisTick: { show: false }
+        },
+        series: [
+          {
+            name: 'wRC+',
+            type: 'bar',
+            data: wrcPlus,
+            barGap: '20%',
+            barWidth: 14,
+            itemStyle: { color: '#f97316', borderRadius: [0, 4, 4, 0] },
+            label: { show: true, position: 'right', formatter: p => p.value, color: '#f97316', fontSize: 10 }
+          },
+          {
+            name: 'wOBA×100',
+            type: 'bar',
+            data: woba,
+            barWidth: 14,
+            itemStyle: { color: '#3b82f6', borderRadius: [0, 4, 4, 0], opacity: 0.7 },
+            label: { show: true, position: 'right', formatter: p => `.${p.value}`, color: '#60a5fa', fontSize: 10 }
+          },
+        ],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    renderPfChart();
+    renderTop10Chart();
+  </script>
+
+</body>
+</html>

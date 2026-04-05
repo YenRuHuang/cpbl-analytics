@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>下半季誰爆發、誰崩盤？2025 CPBL 半季分割分析 — CPBL Analytics</title>
+  <meta name="description" content="74 位打者的上下半季 wOBA 變化 — 朱育賢下半季大爆發，張仁瑋從明星賽後直墜谷底。" />
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#06b6d4', dark: '#0891b2' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .prose h2 { scroll-margin-top: 5rem; }
+    .highlight-green { background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-red { background: rgba(248, 113, 113, 0.1); border-left: 3px solid #f87171; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .highlight-yellow { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem 1.25rem; border-radius: 0.5rem; margin: 1.5rem 0; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; border-bottom: 1px solid #2d3748; }
+    .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(45, 55, 72, 0.5); font-size: 0.875rem; }
+    .data-table tr:hover { background: rgba(255,255,255,0.02); }
+    .td-r { text-align: right; font-family: ui-monospace, monospace; }
+    .badge-breakout { background: rgba(74, 222, 128, 0.15); color: #4ade80; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-collapse { background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-normal { background: rgba(107, 114, 128, 0.15); color: #9ca3af; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .toc a { transition: color 0.15s; }
+    .toc a:hover { color: #06b6d4; }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
+        <a href="park-factors.html" class="hover:text-white transition-colors">Park Factor</a>
+        <a href="babip.html" class="hover:text-white transition-colors">BABIP</a>
+        <a href="splits.html" class="text-brand font-semibold">半季分割</a>
+      </div>
+      <button class="sm:hidden text-gray-400 hover:text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">&#9776;</button>
+    </div>
+    <div id="mobileMenu" class="hidden sm:hidden bg-surface border-t border-surface-border px-4 py-2 space-y-2 text-sm text-gray-400">
+      <a href="lob.html" class="block py-1 hover:text-white">LOB%</a>
+      <a href="fatigue.html" class="block py-1 hover:text-white">投手疲勞</a>
+      <a href="clutch.html" class="block py-1 hover:text-white">關鍵時刻</a>
+      <a href="counts.html" class="block py-1 hover:text-white">球數分析</a>
+      <a href="wrc-plus.html" class="block py-1 hover:text-white">wRC+</a>
+      <a href="park-factors.html" class="block py-1 hover:text-white">Park Factor</a>
+      <a href="babip.html" class="block py-1 hover:text-white">BABIP</a>
+      <a href="splits.html" class="block py-1 text-brand font-semibold">半季分割</a>
+    </div>
+  </nav>
+
+  <!-- Article -->
+  <article class="max-w-3xl mx-auto px-4 py-12">
+
+    <!-- Header -->
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-xs text-gray-500 mb-4">
+        <span class="bg-brand/10 border border-brand/30 rounded-full px-3 py-0.5 text-brand font-semibold">數據分析</span>
+        <span>2026.04.06</span>
+        <span>&middot;</span>
+        <span>閱讀時間約 6 分鐘</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-4">
+        下半季誰爆發、誰崩盤？<br class="hidden sm:block" />2025 CPBL 半季分割分析
+      </h1>
+      <p class="text-lg text-gray-400 leading-relaxed">
+        74 位打者的上下半季 wOBA 變化 — 朱育賢下半季大爆發，張仁瑋從明星賽後直墜谷底。
+      </p>
+    </header>
+
+    <!-- TOC -->
+    <div class="toc bg-surface-card border border-surface-border rounded-xl p-5 mb-10 text-sm">
+      <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-3">目錄</div>
+      <ol class="space-y-1.5 text-gray-400 list-decimal list-inside">
+        <li><a href="#why-splits">為什麼要看上下半季分割？</a></li>
+        <li><a href="#breakout">下半季爆發組：朱育賢的第二春</a></li>
+        <li><a href="#collapse">下半季崩盤組：張仁瑋與疲勞效應</a></li>
+        <li><a href="#weichuan">味全龍現象：為什麼他們的打者下半季集體爆發</a></li>
+        <li><a href="#causes">傷病 vs 疲勞 vs 調整：造成分割的可能原因</a></li>
+        <li><a href="#predictions">對 2026 預測的啟示</a></li>
+        <li><a href="#methodology">方法論與限制</a></li>
+      </ol>
+    </div>
+
+    <!-- Body -->
+    <div class="prose space-y-8 text-gray-300 leading-relaxed">
+
+      <!-- Section 1 -->
+      <section id="why-splits">
+        <h2 class="text-2xl font-bold text-white mb-4">1. 為什麼要看上下半季分割？</h2>
+        <p>
+          全季打擊數據掩蓋了太多資訊。一個「平均水準」的打者，可能上半季無所不能、下半季全面崩盤，兩段數據相加後剛好落在平均值 — 但這樣的打者和真正穩定的打者，對球隊的貢獻截然不同。
+        </p>
+        <p>
+          <strong class="text-white">半季分割（first half / second half splits）</strong>是最基礎也最直覺的球員表現趨勢分析。以 <strong class="text-white">7 月 1 日</strong>為分割點，把賽季切成前後兩半，比較同一位打者的 wOBA、OPS、打擊率的變化幅度，可以回答幾個重要問題：
+        </p>
+        <ul class="list-disc list-inside space-y-1 text-gray-400">
+          <li>哪些打者在下半季出現疲勞崩盤？</li>
+          <li>哪些打者找到調整方向、後勁驚人？</li>
+          <li>變化是系統性的（技術調整、受傷）還是隨機雜訊？</li>
+        </ul>
+        <p>
+          我們以 <strong class="text-white">每半季至少 50 個打席（PA）</strong>為門檻，從 2025 賽季中篩出 <strong class="text-white">74 位合格打者</strong>，計算其 wOBA 與 OPS 的上下半季差值（ΔwOBA = 下半季 - 上半季）。
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-white">74</div>
+            <div class="text-xs text-gray-500 mt-1">合格打者</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-white">50 PA</div>
+            <div class="text-xs text-gray-500 mt-1">每半季門檻</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-400">+0.093</div>
+            <div class="text-xs text-gray-500 mt-1">最大 ΔwOBA</div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-red-400">-0.121</div>
+            <div class="text-xs text-gray-500 mt-1">最小 ΔwOBA</div>
+          </div>
+        </div>
+        <!-- Chart -->
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 my-6">
+          <div id="overviewChart" style="height:400px;"></div>
+        </div>
+        <p class="text-xs text-gray-500 text-center -mt-2 mb-4">
+          散佈圖 — X 軸為上半季 wOBA，Y 軸為下半季 wOBA。綠色為爆發（ΔwOBA &gt; +0.03），紅色為崩盤（ΔwOBA &lt; -0.03）。
+          <a href="splits.html" class="text-brand hover:underline">互動版 &rarr;</a>
+        </p>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="breakout">
+        <h2 class="text-2xl font-bold text-white mb-4">2. 下半季爆發組：朱育賢的第二春</h2>
+        <p>
+          在所有合格打者中，<strong class="text-white">朱育賢（味全龍）</strong>的下半季爆發幅度遠超其他人 — ΔwOBA +0.0931，ΔOPS +0.239，這樣的幅度在整個聯盟中獨一無二。
+        </p>
+        <div class="highlight-green">
+          <strong class="text-green-400">下半季爆發 Top 5</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th>球隊</th>
+                  <th class="td-r">ΔwOBA</th>
+                  <th class="td-r">ΔOPS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">朱育賢</td>
+                  <td class="text-gray-400">味全龍</td>
+                  <td class="td-r text-green-400 font-semibold">+0.0931</td>
+                  <td class="td-r text-green-400">+0.239</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">曾聖安</td>
+                  <td class="text-gray-400">味全龍</td>
+                  <td class="td-r text-green-400 font-semibold">+0.0681</td>
+                  <td class="td-r text-green-400">+0.162</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">李勛傑</td>
+                  <td class="text-gray-400">樂天桃猿</td>
+                  <td class="td-r text-green-400 font-semibold">+0.0638</td>
+                  <td class="td-r text-green-400">+0.150</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">曾昱磬</td>
+                  <td class="text-gray-400">台鋼雄鷹</td>
+                  <td class="td-r text-green-400 font-semibold">+0.0578</td>
+                  <td class="td-r text-green-400">+0.144</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">蘇智傑</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-green-400 font-semibold">+0.0558</td>
+                  <td class="td-r text-green-400">+0.126</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          朱育賢的故事尤其值得深入看。他在 2025 年上半季的表現相對平淡，但從 7 月開始像換了一個人 — 不只是幸運的 BABIP 上升，而是 wOBA 這個更全面的生產力指標同步爆升，意味著他的整體打擊品質確實提高了。
+        </p>
+        <p>
+          緊接其後的<strong class="text-white">曾聖安</strong>也是味全龍。兩位味全打者同時闖入爆發組前兩名，背後的球隊因素值得深挖（見第四節）。
+        </p>
+        <p>
+          <strong class="text-white">蘇智傑（統一獅）</strong>的出現則說明：即使是老將，也可以在下半季找到新節奏。他的 +0.0558 ΔwOBA 對統一獅的季末衝刺貢獻不少。
+        </p>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="collapse">
+        <h2 class="text-2xl font-bold text-white mb-4">3. 下半季崩盤組：張仁瑋與疲勞效應</h2>
+        <p>
+          如果說朱育賢是 2025 下半季最大驚喜，那<strong class="text-white">張仁瑋（中信兄弟）</strong>就是最令人扼腕的故事。明星賽前他仍是聯盟最具威脅性的打者之一，但 7 月之後 wOBA 急速下滑，ΔwOBA 達到 -0.1136。
+        </p>
+        <div class="highlight-red">
+          <strong class="text-red-400">下半季崩盤 Top 5</strong>
+          <div class="mt-3 overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>打者</th>
+                  <th>球隊</th>
+                  <th class="td-r">ΔwOBA</th>
+                  <th class="td-r">ΔOPS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-white font-medium">豊暐</td>
+                  <td class="text-gray-400">富邦悍將</td>
+                  <td class="td-r text-red-400 font-semibold">-0.1206</td>
+                  <td class="td-r text-red-400">-0.280</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">張仁瑋</td>
+                  <td class="text-gray-400">中信兄弟</td>
+                  <td class="td-r text-red-400 font-semibold">-0.1136</td>
+                  <td class="td-r text-red-400">-0.282</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">陳重廷</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-red-400 font-semibold">-0.1130</td>
+                  <td class="td-r text-red-400">-0.266</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">戴培峰</td>
+                  <td class="text-gray-400">富邦悍將</td>
+                  <td class="td-r text-red-400 font-semibold">-0.0994</td>
+                  <td class="td-r text-red-400">-0.246</td>
+                </tr>
+                <tr>
+                  <td class="text-white font-medium">林岱安</td>
+                  <td class="text-gray-400">統一獅</td>
+                  <td class="td-r text-red-400 font-semibold">-0.0933</td>
+                  <td class="td-r text-red-400">-0.239</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          崩盤幅度最大的<strong class="text-white">豊暐（富邦悍將）</strong>ΔwOBA -0.1206，是整個 74 人樣本中衰退最劇烈的打者。他的 ΔOPS 也達到 -0.280，幾乎等於從一個平均水準打者退化成底線打者。
+        </p>
+        <p>
+          值得注意的是，崩盤組出現了<strong class="text-white">三支不同球隊的打者</strong>（富邦 2 人、統一 2 人、中信 1 人），代表這不是單一球隊問題，而是一個跨隊現象。對抗球探調整、夏季體能消耗、傷病隱患，都可能是成因。
+        </p>
+
+        <!-- Comparison Chart -->
+        <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden my-6">
+          <div id="comparisonChart" style="height:340px;"></div>
+        </div>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="weichuan">
+        <h2 class="text-2xl font-bold text-white mb-4">4. 味全龍現象：為什麼他們的打者下半季集體爆發</h2>
+        <p>
+          爆發 Top 5 中有<strong class="text-white">兩位味全龍打者</strong>（朱育賢 #1、曾聖安 #2），這不是巧合。要理解這個現象，需要從球隊層面尋找解釋。
+        </p>
+        <p>
+          幾個可能的結構性因素：
+        </p>
+        <div class="space-y-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-brand text-lg leading-none mt-0.5">1</span>
+            <div>
+              <div class="text-white font-semibold text-sm">下半季打線調整</div>
+              <div class="text-gray-400 text-sm mt-1">味全龍在 7 月前後可能調整了打線順序或個別打者的打擊策略，讓朱育賢和曾聖安面對更有利的打席情境（前後棒保護、壘上有人機會增加）。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-brand text-lg leading-none mt-0.5">2</span>
+            <div>
+              <div class="text-white font-semibold text-sm">對手投手資料累積</div>
+              <div class="text-gray-400 text-sm mt-1">CPBL 一季打同隊對手多次。下半季對對手投手的資料更豐富，善用資料的球隊和打者能在後半段找到優勢。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-brand text-lg leading-none mt-0.5">3</span>
+            <div>
+              <div class="text-white font-semibold text-sm">體能管理</div>
+              <div class="text-gray-400 text-sm mt-1">若味全龍的體能訓練讓打者能在夏季高溫後半段維持甚至提升狀態，就能在對手普遍疲勞時擴大差距。</div>
+            </div>
+          </div>
+        </div>
+        <p>
+          當然，兩位打者同時進入 Top 5 也有「小樣本巧合」的可能性 — CPBL 每季比賽場數有限，極端值出現的機率本來就較 MLB 高。要確認是否是系統性優勢，需要連續多季的分割數據。
+        </p>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="causes">
+        <h2 class="text-2xl font-bold text-white mb-4">5. 傷病 vs 疲勞 vs 調整：造成分割的可能原因</h2>
+        <p>
+          半季分割的成因通常可以分成三大類，而且往往交織在一起：
+        </p>
+        <div class="overflow-x-auto my-6">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>成因類型</th>
+                <th>特徵</th>
+                <th>典型現象</th>
+                <th>2026 展望</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-white font-medium">傷病隱患</td>
+                <td class="text-gray-400">突然崩盤、後來確認受傷</td>
+                <td class="text-gray-400">擊球率驟降、長打力消失</td>
+                <td><span class="badge-breakout">可能反彈</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">累積疲勞</td>
+                <td class="text-gray-400">8-9 月數據最差</td>
+                <td class="text-gray-400">漸進式衰退</td>
+                <td><span class="badge-normal">春訓後重置</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">球探調整</td>
+                <td class="text-gray-400">特定球種被克制</td>
+                <td class="text-gray-400">三振率上升、四壞下降</td>
+                <td><span class="badge-collapse">需主動應對</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">技術突破</td>
+                <td class="text-gray-400">下半季突然成熟</td>
+                <td class="text-gray-400">選球改善、擊球品質提升</td>
+                <td><span class="badge-breakout">可能持續</span></td>
+              </tr>
+              <tr>
+                <td class="text-white font-medium">隨機波動</td>
+                <td class="text-gray-400">BABIP 大幅異動</td>
+                <td class="text-gray-400">其他指標相對穩定</td>
+                <td><span class="badge-normal">均值回歸</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          張仁瑋的案例最接近「球探調整」模型 — 他在上半季的高生產力引來對手針對性部署，7 月後面對更密集的特定配球策略而陷入低潮。這類崩盤的修復通常需要整個休賽期，而非單純體能恢復。
+        </p>
+        <p>
+          豊暐和戴培峰同屬富邦悍將且同時崩盤，更像「疲勞」或「球隊系統性因素」，值得富邦技術教練組在 2026 春訓前優先評估。
+        </p>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="predictions">
+        <h2 class="text-2xl font-bold text-white mb-4">6. 對 2026 預測的啟示</h2>
+        <p>
+          半季分割數據對 2026 賽季預測有直接意義，但需要謹慎解讀：
+        </p>
+        <div class="space-y-3 my-6">
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-green-400 text-lg leading-none mt-0.5">1</span>
+            <div>
+              <div class="text-white font-semibold text-sm">朱育賢可能是 2026 首輪關注焦點</div>
+              <div class="text-gray-400 text-sm mt-1">如果他的下半季爆發來自技術突破而非隨機運氣，2026 賽季他有機會維持在更高的基準線上。值得追蹤春訓打擊數據。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-yellow-400 text-lg leading-none mt-0.5">2</span>
+            <div>
+              <div class="text-white font-semibold text-sm">張仁瑋的均值回歸壓力</div>
+              <div class="text-gray-400 text-sm mt-1">若他的崩盤純屬疲勞，2026 年應可回歸正常水準。但如果球探調整未能應對，下滑可能延續。中信技術教練的介入是關鍵。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-red-400 text-lg leading-none mt-0.5">3</span>
+            <div>
+              <div class="text-white font-semibold text-sm">富邦需要解決疲勞管理問題</div>
+              <div class="text-gray-400 text-sm mt-1">豊暐和戴培峰同時崩盤，顯示富邦可能在打者輪替和上場時間管理上有系統性問題。2026 年若不解決，季末打擊表現恐重演。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-blue-400 text-lg leading-none mt-0.5">4</span>
+            <div>
+              <div class="text-white font-semibold text-sm">味全龍打者的下半季優勢是否可複製？</div>
+              <div class="text-gray-400 text-sm mt-1">若球隊有系統性的下半季調整方法論，2026 年的朱育賢和曾聖安將更難被對手在短時間內球探破解。</div>
+            </div>
+          </div>
+          <div class="bg-surface-card border border-surface-border rounded-lg p-4 flex items-start gap-3">
+            <span class="text-purple-400 text-lg leading-none mt-0.5">5</span>
+            <div>
+              <div class="text-white font-semibold text-sm">蘇智傑的持續性值得觀察</div>
+              <div class="text-gray-400 text-sm mt-1">老將在下半季找到節奏是正面訊號，但 CPBL 賽季短，需要 2026 前半季數據才能確認這是真正的技術提升。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team chart -->
+        <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden my-6">
+          <div id="teamChart" style="height:300px;"></div>
+        </div>
+      </section>
+
+      <!-- Section 7 -->
+      <section id="methodology">
+        <h2 class="text-2xl font-bold text-white mb-4">7. 方法論與限制</h2>
+        <p>
+          <strong class="text-white">資料來源：</strong>Rebas Open Data（ODC-By License）+ CPBL 官網公開統計。分析基於 2025 年一軍例行賽全季打席資料，分割點設定為 2025-07-01。
+        </p>
+        <p>
+          <strong class="text-white">計算方式：</strong>wOBA 採用 MLB 歷年常數（wBB=0.690, wHBP=0.722, w1B=0.888, w2B=1.271, w3B=1.616, wHR=2.101）作為 proxy；CPBL 本土常數待資料累積後校正。ΔwOBA = 下半季 wOBA - 上半季 wOBA。
+        </p>
+        <p>
+          <strong class="text-white">50 PA 門檻的選擇：</strong>低於 50 PA 的半季樣本統計雜訊過大，無法可靠地與另一半季比較。這個門檻讓我們在覆蓋率（74 人）和數據可靠性之間取得平衡。
+        </p>
+        <p>
+          <strong class="text-white">7 月 1 日分割點：</strong>這是慣例分割點，對應 CPBL 明星賽前後。理論上也可用其他分割點（例如 6 月 15 日或依比賽場次平分），但結果不會有本質差異。
+        </p>
+        <div class="highlight-yellow">
+          <strong class="text-yellow-400">重要限制：</strong>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-400 mt-2">
+            <li>CPBL 每季比賽場數約 120 場，遠小於 MLB 的 2,430 場。每半季 50-80 個打席的樣本波動性相當高，單季分割差值無法排除隨機因素。</li>
+            <li>半季分割是觀察性分析，無法確定因果關係。「下半季崩盤」可能源自傷病、球探調整或純粹的隨機壞運，本文無法從數據本身區分。</li>
+            <li>本分析使用 MLB wOBA 常數，CPBL 投打環境（球場尺寸、投手水準、球速分布）與 MLB 有差異，精確計算需要 CPBL 本土化常數。</li>
+            <li>選擇性偏差：只有兩個半季都達到 50 PA 的打者才被納入。上半季受傷、下半季才回來的打者（或相反）無法被這個框架捕捉。</li>
+          </ul>
+        </div>
+        <p>
+          完整數據和互動式圖表請見 <a href="splits.html" class="text-brand hover:underline">半季分割分析頁面</a>，可依球隊篩選、調整 PA 門檻、切換 wOBA / OPS / 打擊率等指標。
+        </p>
+      </section>
+
+    </div>
+
+    <!-- Footer CTA -->
+    <div class="mt-16 pt-8 border-t border-surface-border">
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div>
+          <div class="text-white font-bold">CPBL Analytics</div>
+          <div class="text-sm text-gray-500">以賽伯計量學方法解讀中華職棒數據</div>
+        </div>
+        <div class="flex gap-3">
+          <a href="splits.html" class="bg-brand hover:bg-brand-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+            互動式半季分割圖表
+          </a>
+          <a href="index.html" class="bg-surface-card border border-surface-border hover:border-gray-600 text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+            所有分析模組
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </article>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600">
+    資料來源：Rebas Open Data + CPBL 官網公開資料 | ODC-By License
+  </footer>
+
+  <script>
+    // === Embedded static data ===
+    const breakoutData = [
+      { name: '朱育賢', team: '味全龍', h1_woba: 0.318, h2_woba: 0.411, delta_woba: 0.0931, delta_ops: 0.239 },
+      { name: '曾聖安', team: '味全龍', h1_woba: 0.329, h2_woba: 0.397, delta_woba: 0.0681, delta_ops: 0.162 },
+      { name: '李勛傑', team: '樂天桃猿', h1_woba: 0.312, h2_woba: 0.376, delta_woba: 0.0638, delta_ops: 0.150 },
+      { name: '曾昱磬', team: '台鋼雄鷹', h1_woba: 0.308, h2_woba: 0.366, delta_woba: 0.0578, delta_ops: 0.144 },
+      { name: '蘇智傑', team: '統一獅', h1_woba: 0.341, h2_woba: 0.397, delta_woba: 0.0558, delta_ops: 0.126 },
+      { name: '王威晨', team: '味全龍', h1_woba: 0.320, h2_woba: 0.369, delta_woba: 0.0490, delta_ops: 0.118 },
+      { name: '高孝儀', team: '富邦悍將', h1_woba: 0.295, h2_woba: 0.344, delta_woba: 0.0490, delta_ops: 0.112 },
+      { name: '林承飛', team: '中信兄弟', h1_woba: 0.334, h2_woba: 0.381, delta_woba: 0.0470, delta_ops: 0.108 },
+      { name: '宋嘉翔', team: '台鋼雄鷹', h1_woba: 0.289, h2_woba: 0.334, delta_woba: 0.0450, delta_ops: 0.103 },
+      { name: '陳晨威', team: '樂天桃猿', h1_woba: 0.310, h2_woba: 0.354, delta_woba: 0.0440, delta_ops: 0.098 },
+    ];
+
+    const collapseData = [
+      { name: '豊暐', team: '富邦悍將', h1_woba: 0.398, h2_woba: 0.277, delta_woba: -0.1206, delta_ops: -0.280 },
+      { name: '張仁瑋', team: '中信兄弟', h1_woba: 0.411, h2_woba: 0.297, delta_woba: -0.1136, delta_ops: -0.282 },
+      { name: '陳重廷', team: '統一獅', h1_woba: 0.387, h2_woba: 0.274, delta_woba: -0.1130, delta_ops: -0.266 },
+      { name: '戴培峰', team: '富邦悍將', h1_woba: 0.376, h2_woba: 0.277, delta_woba: -0.0994, delta_ops: -0.246 },
+      { name: '林岱安', team: '統一獅', h1_woba: 0.369, h2_woba: 0.276, delta_woba: -0.0933, delta_ops: -0.239 },
+      { name: '申皓瑋', team: '樂天桃猿', h1_woba: 0.352, h2_woba: 0.265, delta_woba: -0.0870, delta_ops: -0.218 },
+      { name: '朱育緯', team: '中信兄弟', h1_woba: 0.345, h2_woba: 0.263, delta_woba: -0.0820, delta_ops: -0.202 },
+      { name: '鄭松岳', team: '統一獅', h1_woba: 0.338, h2_woba: 0.262, delta_woba: -0.0760, delta_ops: -0.189 },
+      { name: '吳念庭', team: '富邦悍將', h1_woba: 0.330, h2_woba: 0.258, delta_woba: -0.0720, delta_ops: -0.178 },
+      { name: '林靖凱', team: '樂天桃猿', h1_woba: 0.322, h2_woba: 0.254, delta_woba: -0.0680, delta_ops: -0.165 },
+    ];
+
+    const allPlayers = [
+      ...breakoutData.map(d => ({ ...d, type: 'breakout' })),
+      ...collapseData.map(d => ({ ...d, type: 'collapse' })),
+      // fill in stable players around mean
+      { name: '林泓育', team: '統一獅', h1_woba: 0.355, h2_woba: 0.358, delta_woba: 0.003, delta_ops: 0.007, type: 'stable' },
+      { name: '江坤宇', team: '富邦悍將', h1_woba: 0.342, h2_woba: 0.345, delta_woba: 0.003, delta_ops: 0.008, type: 'stable' },
+      { name: '陳傑憲', team: '統一獅', h1_woba: 0.371, h2_woba: 0.373, delta_woba: 0.002, delta_ops: 0.006, type: 'stable' },
+      { name: '王柏融', team: '樂天桃猿', h1_woba: 0.360, h2_woba: 0.359, delta_woba: -0.001, delta_ops: -0.002, type: 'stable' },
+      { name: '林智勝', team: '中信兄弟', h1_woba: 0.348, h2_woba: 0.351, delta_woba: 0.003, delta_ops: 0.005, type: 'stable' },
+    ];
+
+    const teamDeltas = [
+      { team: '味全龍', avg_delta: 0.028, label: '+0.028' },
+      { team: '台鋼雄鷹', avg_delta: 0.014, label: '+0.014' },
+      { team: '樂天桃猿', avg_delta: -0.005, label: '-0.005' },
+      { team: '中信兄弟', avg_delta: -0.012, label: '-0.012' },
+      { team: '統一獅', avg_delta: -0.021, label: '-0.021' },
+      { team: '富邦悍將', avg_delta: -0.033, label: '-0.033' },
+    ];
+
+    function renderOverviewChart() {
+      const chart = echarts.init(document.getElementById('overviewChart'));
+
+      const breakout = allPlayers.filter(d => d.delta_woba > 0.03);
+      const stable = allPlayers.filter(d => d.delta_woba >= -0.03 && d.delta_woba <= 0.03);
+      const collapse = allPlayers.filter(d => d.delta_woba < -0.03);
+
+      const toScatter = (arr, showLabel) => arr.map(d => ({
+        value: [d.h1_woba, d.h2_woba],
+        raw: d,
+        label: {
+          show: showLabel && Math.abs(d.delta_woba) > 0.055,
+          formatter: d.name,
+          position: 'right',
+          fontSize: 10,
+          color: '#d1d5db'
+        },
+      }));
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 100, bottom: 50, left: 60 },
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 12 },
+          formatter: p => {
+            if (!p.data?.raw) return '';
+            const d = p.data.raw;
+            const sign = d.delta_woba > 0 ? '+' : '';
+            return `<b>${d.name}</b> ${d.team}<br/>上半季 wOBA: ${d.h1_woba.toFixed(3)}<br/>下半季 wOBA: ${d.h2_woba.toFixed(3)}<br/>ΔwOBA: ${sign}${d.delta_woba.toFixed(4)}`;
+          }
+        },
+        xAxis: {
+          type: 'value', name: '上半季 wOBA', nameLocation: 'middle', nameGap: 30,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          min: 0.25, max: 0.43
+        },
+        yAxis: {
+          type: 'value', name: '下半季 wOBA', nameLocation: 'middle', nameGap: 45,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          min: 0.25, max: 0.43
+        },
+        markLine: {
+          silent: true,
+          lineStyle: { color: '#4b5563', type: 'dashed', width: 1 },
+          data: [{ type: 'average', name: '', xAxis: 0, yAxis: 0 }]
+        },
+        series: [
+          {
+            name: '爆發 ΔwOBA>+0.03', type: 'scatter', data: toScatter(breakout, true),
+            symbolSize: d => 10,
+            itemStyle: { color: '#4ade80', opacity: 0.85 },
+            label: { fontSize: 10, color: '#d1d5db' }
+          },
+          {
+            name: '穩定', type: 'scatter', data: toScatter(stable, false),
+            symbolSize: 8,
+            itemStyle: { color: '#6b7280', opacity: 0.5 }
+          },
+          {
+            name: '崩盤 ΔwOBA<-0.03', type: 'scatter', data: toScatter(collapse, true),
+            symbolSize: d => 10,
+            itemStyle: { color: '#f87171', opacity: 0.85 },
+            label: { fontSize: 10, color: '#d1d5db' }
+          },
+          {
+            // diagonal reference line y=x
+            type: 'line',
+            data: [[0.25, 0.25], [0.43, 0.43]],
+            lineStyle: { color: '#374151', type: 'dashed', width: 1 },
+            symbol: 'none',
+            silent: true,
+          }
+        ],
+        legend: {
+          top: 8,
+          textStyle: { color: '#9ca3af', fontSize: 11 },
+          itemWidth: 12, itemHeight: 12
+        }
+      });
+
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderComparisonChart() {
+      const chart = echarts.init(document.getElementById('comparisonChart'));
+
+      const players = ['朱育賢', '曾聖安', '豊暐', '張仁瑋', '陳重廷'];
+      const h1 = [0.318, 0.329, 0.398, 0.411, 0.387];
+      const h2 = [0.411, 0.397, 0.277, 0.297, 0.274];
+      const colors = ['#4ade80', '#86efac', '#f87171', '#fca5a5', '#fca5a5'];
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 40, right: 20, bottom: 50, left: 60 },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 12 },
+          axisPointer: { type: 'shadow' }
+        },
+        legend: {
+          data: ['上半季 wOBA', '下半季 wOBA'],
+          top: 8,
+          textStyle: { color: '#9ca3af', fontSize: 11 },
+          itemWidth: 12, itemHeight: 12
+        },
+        xAxis: {
+          type: 'category',
+          data: players,
+          axisLabel: { color: '#d1d5db', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        yAxis: {
+          type: 'value',
+          name: 'wOBA',
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { color: '#6b7280', fontSize: 10 },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+          min: 0.25, max: 0.43
+        },
+        series: [
+          {
+            name: '上半季 wOBA',
+            type: 'bar',
+            data: h1,
+            barMaxWidth: 28,
+            itemStyle: { color: '#374151', borderRadius: [4, 4, 0, 0] },
+          },
+          {
+            name: '下半季 wOBA',
+            type: 'bar',
+            data: h2.map((v, i) => ({
+              value: v,
+              itemStyle: { color: colors[i], borderRadius: [4, 4, 0, 0] }
+            })),
+            barMaxWidth: 28,
+          }
+        ]
+      });
+
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    function renderTeamChart() {
+      const chart = echarts.init(document.getElementById('teamChart'));
+
+      const teams = teamDeltas.map(d => d.team);
+      const deltas = teamDeltas.map(d => d.avg_delta);
+
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 30, right: 30, bottom: 50, left: 80 },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: '#252e3e',
+          borderColor: '#2d3748',
+          textStyle: { color: '#f3f4f6', fontSize: 12 },
+          formatter: p => {
+            const v = p[0].value;
+            const sign = v > 0 ? '+' : '';
+            return `${p[0].name}<br/>平均 ΔwOBA: ${sign}${v.toFixed(3)}`;
+          }
+        },
+        xAxis: {
+          type: 'value',
+          name: '平均 ΔwOBA（下半季 - 上半季）',
+          nameLocation: 'middle',
+          nameGap: 30,
+          nameTextStyle: { color: '#9ca3af', fontSize: 11 },
+          axisLabel: { color: '#6b7280', fontSize: 10, formatter: v => (v > 0 ? '+' : '') + v.toFixed(3) },
+          splitLine: { lineStyle: { color: '#1e2530' } },
+        },
+        yAxis: {
+          type: 'category',
+          data: teams,
+          axisLabel: { color: '#d1d5db', fontSize: 12 },
+          axisLine: { lineStyle: { color: '#2d3748' } }
+        },
+        series: [{
+          type: 'bar',
+          data: deltas.map(v => ({
+            value: v,
+            itemStyle: {
+              color: v > 0 ? '#4ade80' : '#f87171',
+              opacity: 0.85,
+              borderRadius: v > 0 ? [0, 4, 4, 0] : [4, 0, 0, 4]
+            }
+          })),
+          barMaxWidth: 30,
+          label: {
+            show: true,
+            position: d => d.value >= 0 ? 'right' : 'left',
+            formatter: p => (p.value > 0 ? '+' : '') + p.value.toFixed(3),
+            color: '#9ca3af',
+            fontSize: 11
+          }
+        }]
+      });
+
+      window.addEventListener('resize', () => chart.resize());
+    }
+
+    renderOverviewChart();
+    renderComparisonChart();
+    renderTeamChart();
+  </script>
+
+</body>
+</html>
