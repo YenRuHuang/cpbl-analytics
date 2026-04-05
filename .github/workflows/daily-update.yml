@@ -30,6 +30,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
+      - name: Restore CPBL raw data cache
+        uses: actions/cache@v4
+        with:
+          path: data/cpbl_raw
+          key: cpbl-raw-${{ github.run_id }}
+          restore-keys: |
+            cpbl-raw-
+
       - name: Seed latest CPBL data (2025 + 2026)
         env:
           PYTHONPATH: .
