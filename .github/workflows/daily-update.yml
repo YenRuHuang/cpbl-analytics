@@ -66,5 +66,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: daily data update"
+          git stash --include-untracked
           git pull --rebase origin main
+          git stash pop || true
           git push
