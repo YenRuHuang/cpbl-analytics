@@ -4,7 +4,7 @@
 
 「我的背景比較特別 — 我是職業運動攝影師，同時也是三個 Fantasy Baseball 聯盟的重度玩家，對棒球數據不陌生。技術上我不是傳統的後端工程師，我比較像是 builder — 我擅長把各種工具和技術串在一起，快速把一個想法變成可以跑的系統。
 
-這次看到你們的職缺，我直接用 Python + FastAPI 蓋了一套 CPBL 數據系統：兩個資料源的 ETL、8 張表、17 個 API、CI/CD 自動部署，一週內上線。我不只是會寫 code，我還是你們的付費會員，我花了很多時間研究你們每一個功能。」
+這次看到你們的職缺，我直接用 Python + FastAPI 蓋了一套 CPBL 數據系統：兩個資料源的 ETL、9 張表、17 個 API、CI/CD 自動部署，一週內上線。我不只是會寫 code，我還是你們的付費會員，我花了很多時間研究你們每一個功能。」
 
 ---
 
@@ -16,7 +16,7 @@
 
 ### 我每天都泡在 MLB 數據裡
 
-我幾乎每天都在看 Baseball Savant 跟 FanGraphs，也每天看 MLB 比賽，跟朋友討論。三個 Fantasy Baseball 聯盟、169 筆 scout notes。你們在做的事情 — 把 FanGraphs / Savant 等級的分析帶到中職 — 我太清楚那個標準長什麼樣了。
+我幾乎每天都在看 Baseball Savant 跟 FanGraphs，也每天看 MLB 比賽，跟朋友討論。三個 Fantasy Baseball 聯盟、177 筆 scout notes。你們在做的事情 — 把 FanGraphs / Savant 等級的分析帶到中職 — 我太清楚那個標準長什麼樣了。
 
 我知道 Savant 的 percentile ranking 怎麼呈現、FanGraphs 的 Splits 頁怎麼設計、Statcast 的 launch angle + exit velo 搜尋器怎麼用。你們的 Rzone 就是 CPBL 版的 Savant zone chart，你們的 PR 表就是 percentile ranking。我不是只會算 wOBA 的公式，我是每天都在用這些工具的人。這代表我寫出來的功能不只是「數學正確」，還會知道「球迷期待的體驗是什麼」。
 
@@ -120,7 +120,7 @@ Batting Runs + Baserunning Runs + Fielding Runs + 守位調整 + 聯盟調整 + 
 |---------|---------|
 | 1 年+ 後端開發 | 不是傳統後端工程師出身，但這套系統就是完整的後端：ETL + DB + API + CI/CD，從零到部署 |
 | 雲端服務 (GCP/AWS/Azure) | 用過 Cloudflare Pages + Workers + D1。有評估過 GCP，理解雲端服務的概念 |
-| 關聯式資料庫 | SQLite 8 張表、設計過 index 策略、WAL mode。理解 SQL、join、schema design |
+| 關聯式資料庫 | SQLite 9 張表、設計過 index 策略、WAL mode。理解 SQL、join、schema design |
 | NodeJS | 主力是 Python，NodeJS 不算熟但接觸過 npm 生態系。學習新框架對我來說不是障礙 |
 | Git | GitHub Actions CI/CD pipeline，每日 cron job。日常都用 Git |
 | 棒球知識（加分） | 三個 Fantasy 聯盟 + 職業棒球攝影 + 四個分析模組。真的懂棒球 |
@@ -135,7 +135,7 @@ Batting Runs + Baserunning Runs + Fielding Runs + 守位調整 + 聯盟調整 + 
 
 ## 我的 Portfolio 數字
 
-370 場比賽 / 27,974 打席 / 109,897 逐球事件 / 8 張 DB 表 / 17 個 API / 129 個測試 / 85% 覆蓋率 / GitHub Actions 每日自動更新 / Cloudflare Pages 部署
+377 場比賽 / 28,502 打席 / 111,983 逐球事件 / 9 張 DB 表 / 17 個 API / 168 個測試 / 84% 覆蓋率 / GitHub Actions 每日自動更新 / Cloudflare Pages 部署
 
 線上：https://cpblanalysis.mursfoto.com
 

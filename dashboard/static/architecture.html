@@ -200,7 +200,7 @@
           <!-- DB -->
           <div class="flow-box db text-center">
             SQLite DB<br/>
-            <span class="text-xs opacity-70">8 tables, WAL</span>
+            <span class="text-xs opacity-70">9 tables, WAL</span>
           </div>
 
           <span class="arrow mx-1">&#8594;</span>
@@ -376,19 +376,19 @@
           <tbody>
             <tr>
               <td><span class="tname">games</span></td>
-              <td><span class="trows">370</span></td>
+              <td><span class="trows">377</span></td>
               <td><span class="tcols">game_id, game_date, home_team, away_team, season, kind_code</span></td>
               <td class="text-gray-500 text-xs">所有表的主連接鍵。日期、主隊、客隊的複合唯一約束。</td>
             </tr>
             <tr>
               <td><span class="tname">plate_appearances</span></td>
-              <td><span class="trows">27,974</span></td>
+              <td><span class="trows">28,502</span></td>
               <td><span class="tcols">pa_id, game_id, batter_id, pitcher_id, inning, outs, bases, result</span></td>
               <td class="text-gray-500 text-xs">核心事件表。包含 RE24 的槓桿背景（局數、出局數、壘包狀態）。</td>
             </tr>
             <tr>
               <td><span class="tname">pitch_events</span></td>
-              <td><span class="trows">109,897</span></td>
+              <td><span class="trows">111,983</span></td>
               <td><span class="tcols">event_id, pa_id, pitch_seq, pitch_type, result, balls, strikes</span></td>
               <td class="text-gray-500 text-xs">最大的表。用於計數拆分和疲勞曲線分析。</td>
             </tr>
@@ -503,7 +503,7 @@
 
           <div class="mt-5 space-y-2 text-xs text-gray-500">
             <div class="flex gap-2"><span class="text-yellow-400">ruff</span> — 檢查匯入、風格、未使用的變數（取代 flake8 + isort）</div>
-            <div class="flex gap-2"><span class="text-violet-400">pytest</span> — 跨單元 + 整合層的 129 個測試</div>
+            <div class="flex gap-2"><span class="text-violet-400">pytest</span> — 跨單元 + 整合層的 168 個測試</div>
             <div class="flex gap-2"><span class="text-emerald-400">coverage</span> — 如果低於 80% 則失敗，報告作為成品上傳</div>
             <div class="flex gap-2"><span class="text-pink-400">deploy</span> — 只在所有檢查通過後在主分支推送上執行</div>
           </div>

@@ -10,9 +10,9 @@
 
 | 指標 | |
 |------|---|
-| 比賽場數 | 370（2025 全季 + 2026 開季）|
-| 打席 | 27,974 |
-| 逐球事件 | 109,897 |
+| 比賽場數 | 377（2025 全季 + 2026 開季）|
+| 打席 | 28,502 |
+| 逐球事件 | 111,983 |
 | API Endpoints | 17 |
 | 分析模組 | 10 個 |
 | 圖表類型 | 7 種（Savant / FanGraphs 風格）|
@@ -25,7 +25,7 @@
 
 ```
 Rebas Open Data (JSON) ──┐
-                         ├──→ ETL Pipeline ──→ SQLite (8 tables, WAL) ──→ FastAPI (17 endpoints) ──→ Static JSON Export
+                         ├──→ ETL Pipeline ──→ SQLite (9 tables, WAL) ──→ FastAPI (17 endpoints) ──→ Static JSON Export
 CPBL 官網公開 API ────────┘                                                                            ↓
                                                                                          Cloudflare Pages (auto deploy)
                                                                                                        ↑
@@ -44,7 +44,7 @@ CPBL 官網公開 API ────────┘                               
 | 套件管理 | uv |
 | API | FastAPI + Uvicorn |
 | ORM | SQLAlchemy 2.0 |
-| 資料庫 | SQLite（WAL mode）/ 8 tables / 15+ indexes |
+| 資料庫 | SQLite（WAL mode）/ 9 tables / 15+ indexes |
 | 前端 | ECharts 5.4.3 + Tailwind CSS 3.4.1 |
 | 測試 | pytest + pytest-cov（168 tests, 84% coverage）|
 | 容器 | Docker multi-stage build + docker-compose |
@@ -65,7 +65,7 @@ CPBL 官網公開 API ────────┘                               
 - Daily cron 自動更新（UTC 22:00 → 抓資料 → export → push → 自動部署）
 
 ### 資料庫設計
-- 8 張表：games / plate_appearances / pitch_events / batter_box / pitcher_box / analysis_cache / player_mapping / run_expectancy_matrix
+- 9 張表：games / plate_appearances / pitch_events / batter_box / pitcher_box / analysis_cache / player_mapping / players / run_expectancy_matrix
 - WAL mode 支援讀寫分離
 - analysis_cache 做查詢結果快取（TTL-based）
 
