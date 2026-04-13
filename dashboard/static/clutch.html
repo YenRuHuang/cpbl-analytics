@@ -222,6 +222,14 @@
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('json')) throw new Error('此賽季尚無資料');
         const json = await res.json();
+        // Handle early-season sentinel: { _season_status: "accumulating", _note: "...", data: [] }
+        if (json._season_status === 'accumulating') {
+          document.getElementById('loadingState').classList.add('hidden');
+          document.getElementById('errorState').classList.remove('hidden');
+          document.getElementById('errorMsg').textContent = `資料累積中 — ${json._note || '賽季初期打席數不足'}`;
+          document.getElementById('playerCount').textContent = `已賽 ${json._games_played || 0} 場`;
+          return;
+        }
         const raw = json.data || json || [];
         // Filter out entries with no high-leverage data
         allData = raw.filter(d => d.high_li_ba != null);

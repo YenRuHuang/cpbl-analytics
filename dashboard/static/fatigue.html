@@ -174,6 +174,35 @@
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('json')) throw new Error('此賽季尚無資料');
         const json = await res.json();
+        // Handle early-season sentinel: { _season_status: "accumulating", _note: "...", data: [] }
+        if (json._season_status === 'accumulating') {
+          allPitchers = [];
+          const sel = document.getElementById('pitcherSelect');
+          while (sel.options.length > 1) sel.remove(1);
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = `資料累積中（已賽 ${json._games_played || 0} 場）`;
+          opt.disabled = true;
+          sel.appendChild(opt);
+          document.getElementById('analyzeBtn').disabled = true;
+          // Show info in empty state using safe DOM methods
+          const emptyEl = document.getElementById('emptyState');
+          emptyEl.classList.remove('hidden');
+          while (emptyEl.firstChild) emptyEl.removeChild(emptyEl.firstChild);
+          const iconEl = document.createElement('span');
+          iconEl.className = 'text-5xl mb-4';
+          iconEl.textContent = '\u23F2';
+          const titleEl = document.createElement('p');
+          titleEl.className = 'font-medium text-gray-400';
+          titleEl.textContent = '資料累積中';
+          const noteEl = document.createElement('p');
+          noteEl.className = 'text-sm text-gray-600 mt-1';
+          noteEl.textContent = json._note || '賽季初期，局數尚未達到分析門檻';
+          emptyEl.appendChild(iconEl);
+          emptyEl.appendChild(titleEl);
+          emptyEl.appendChild(noteEl);
+          return;
+        }
         allPitchers = json.data || json || [];
 
         // Build team filter

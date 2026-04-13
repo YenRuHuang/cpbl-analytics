@@ -16,6 +16,29 @@ from src.analysis.count_splits import compute_batter_count_splits as compute_bat
 
 OUT = Path("dashboard/static/api")
 
+# 賽季初資料不足時的寬鬆門檻（全年 <60 場比賽時啟用）
+_EARLY_SEASON_GAME_THRESHOLD = 60
+_EARLY_MIN_PA = 20
+_EARLY_MIN_IP = 5.0
+_FULL_MIN_PA = 50
+_FULL_MIN_IP = 20.0
+
+
+def _get_game_count(db, year: int) -> int:
+    row = db.execute(text("SELECT COUNT(*) AS cnt FROM games WHERE year = :y"), {"y": year}).fetchone()
+    return row.cnt if row else 0
+
+
+def _season_status_json(year: int, game_count: int, note: str) -> dict:
+    """空資料時回傳有意義的 sentinel，讓前端顯示「資料累積中」。"""
+    return {
+        "_season_status": "accumulating",
+        "_year": year,
+        "_games_played": game_count,
+        "_note": note,
+        "data": [],
+    }
+
 
 def _write(path: Path, data: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -26,6 +49,14 @@ def _write(path: Path, data: object) -> None:
 def export_year(year: int) -> None:
     print(f"\n=== Exporting {year} ===")
     db = get_db().__enter__()
+
+    game_count = _get_game_count(db, year)
+    is_early_season = game_count < _EARLY_SEASON_GAME_THRESHOLD
+    min_pa = _EARLY_MIN_PA if is_early_season else _FULL_MIN_PA
+    min_ip = _EARLY_MIN_IP if is_early_season else _FULL_MIN_IP
+
+    if is_early_season:
+        print(f"  [early season] {game_count} games played — using min_pa={min_pa}, min_ip={min_ip}")
 
     # 1. LOB% leaderboard
     lob = compute_lob_leaderboard(db, year=year, min_ip=5.0)
@@ -43,7 +74,7 @@ def export_year(year: int) -> None:
     _write(OUT / f"analysis/lob_{year}.json", lob_data)
 
     # 2. Clutch leaderboard — 補 team 欄位（從 batter_box 查）
-    clutch = compute_clutch_leaderboard(db, year=year, min_pa=50)
+    clutch = compute_clutch_leaderboard(db, year=year, min_pa=min_pa)
     team_map = {
         row.player_id: row.team
         for row in db.execute(text("""
@@ -65,10 +96,17 @@ def export_year(year: int) -> None:
         for r in clutch
         if r.high_li_ba is not None
     ]
-    _write(OUT / f"analysis/clutch_{year}.json", clutch_data)
+    if not clutch_data and is_early_season:
+        clutch_out = _season_status_json(
+            year, game_count,
+            f"賽季初期（{game_count} 場），打者尚未累積足夠打席（門檻 {min_pa} PA）",
+        )
+    else:
+        clutch_out = clutch_data
+    _write(OUT / f"analysis/clutch_{year}.json", clutch_out)
 
     # 3. Fatigue leaderboard + individual pitcher data
-    fatigue = compute_fatigue_leaderboard(db, year=year, min_ip=20.0)
+    fatigue = compute_fatigue_leaderboard(db, year=year, min_ip=min_ip)
     fatigue_data = [
         {
             "pitcher_id": r.pitcher_id,
@@ -82,7 +120,14 @@ def export_year(year: int) -> None:
         }
         for r in fatigue
     ]
-    _write(OUT / f"analysis/fatigue_{year}.json", fatigue_data)
+    if not fatigue_data and is_early_season:
+        fatigue_out = _season_status_json(
+            year, game_count,
+            f"賽季初期（{game_count} 場），投手尚未累積足夠局數（門檻 {min_ip} IP）",
+        )
+    else:
+        fatigue_out = fatigue_data
+    _write(OUT / f"analysis/fatigue_{year}.json", fatigue_out)
 
     # Individual pitcher fatigue
     pitcher_ids = {r.pitcher_id for r in fatigue}
