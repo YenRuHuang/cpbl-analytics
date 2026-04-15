@@ -444,6 +444,18 @@
 
     document.getElementById('searchBtn').addEventListener('click', triggerSearch);
 
+    // Auto-load from URL params: ?batter=cpbl_林安可&year=2025
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var batter = params.get('batter');
+      var year = params.get('year');
+      if (year) document.getElementById('yearSelect').value = year;
+      if (batter) {
+        document.getElementById('batterSearch').value = batter;
+        setTimeout(triggerSearch, 300);
+      }
+    })();
+
     // Metric toggle
     document.querySelectorAll('.metric-btn').forEach(btn => {
       btn.addEventListener('click', function() {

@@ -467,7 +467,22 @@
       filterPitcherList();
     });
 
-    loadPitchers();
+    // Auto-load from URL params: ?pitcher=cpbl_黃子鵬&year=2025
+    var autoParams = new URLSearchParams(window.location.search);
+    var autoPitcher = autoParams.get('pitcher');
+    var autoYear = autoParams.get('year');
+    if (autoYear) document.getElementById('yearSelect').value = autoYear;
+
+    loadPitchers().then(function() {
+      if (autoPitcher) {
+        var sel = document.getElementById('pitcherSelect');
+        sel.value = autoPitcher;
+        if (sel.value === autoPitcher) {
+          document.getElementById('analyzeBtn').disabled = false;
+          document.getElementById('analyzeBtn').click();
+        }
+      }
+    });
   </script>
 </body>
 </html>
