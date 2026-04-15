@@ -20,11 +20,89 @@
   <style>
     body { background-color: #141920; }
     .stat-num { font-variant-numeric: tabular-nums; }
-    .status-hot { background: #16a34a15; border-color: #16a34a; color: #4ade80; }
-    .status-stable { background: #2563eb15; border-color: #2563eb; color: #60a5fa; }
-    .status-cold { background: #dc262615; border-color: #dc2626; color: #f87171; }
-    .kpi-card { transition: transform 0.15s; }
-    .kpi-card:hover { transform: translateY(-2px); }
+    .status-hot { background: linear-gradient(135deg, #16a34a18, #16a34a08); border-color: #16a34a60; color: #4ade80; }
+    .status-stable { background: linear-gradient(135deg, #2563eb18, #2563eb08); border-color: #2563eb60; color: #60a5fa; }
+    .status-cold { background: linear-gradient(135deg, #dc262618, #dc262608); border-color: #dc262660; color: #f87171; }
+    .kpi-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-glow {
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 300px;
+      border-radius: 50%;
+      opacity: 0.08;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .section-card {
+      background: linear-gradient(180deg, #252e3e 0%, #1e2530 100%);
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+    }
+    .section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #2d374880;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-header .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .section-body { padding: 20px; }
+    .count-card {
+      background: linear-gradient(135deg, #1e253080, #252e3e);
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+    .count-card:hover { border-color: #4b556380; }
+    .fatigue-bucket {
+      background: linear-gradient(135deg, #1e253080, #252e3e);
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .fatigue-bucket.danger { border-color: #dc262640; }
+    .fatigue-bucket.danger::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #dc2626, #f87171);
+    }
+    .link-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #252e3e;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #d1d5db;
+      transition: all 0.2s;
+    }
+    .link-pill:hover { border-color: #4b5563; color: #fff; transform: translateY(-1px); }
   </style>
 </head>
 <body class="text-gray-100 min-h-screen font-sans">
@@ -49,83 +127,104 @@
     </div>
   </nav>
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
-    <!-- Player Header -->
-    <div id="playerHeader" class="mb-8">
-      <a href="index.html" class="text-xs text-gray-500 hover:text-brand mb-4 inline-block">&larr; 返回首頁</a>
-      <div class="flex items-center gap-4">
-        <div class="w-16 h-16 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center text-3xl font-black text-brand" id="playerInitial">?</div>
+  <main class="max-w-4xl mx-auto px-4 py-8 relative">
+    <!-- Player Header — hero style -->
+    <div id="playerHeader" class="relative mb-10">
+      <div class="hero-glow" id="heroGlow" style="background-color: #3b82f6;"></div>
+      <a href="index.html" class="relative text-xs text-gray-500 hover:text-brand mb-6 inline-flex items-center gap-1 transition-colors">&larr; 返回首頁</a>
+      <div class="relative flex items-start gap-5 mt-2">
+        <div class="w-20 h-20 rounded-2xl bg-surface-card border-2 border-surface-border flex items-center justify-center text-4xl font-black text-brand shrink-0 shadow-lg" id="playerInitial" style="text-shadow: 0 2px 8px rgba(0,0,0,0.3);">?</div>
         <div>
-          <h1 class="text-3xl font-extrabold text-white" id="playerName">載入中...</h1>
-          <div class="flex items-center gap-3 mt-1">
+          <h1 class="text-4xl font-extrabold text-white tracking-tight" id="playerName">載入中...</h1>
+          <div class="flex items-center gap-3 mt-2">
             <span class="text-sm text-gray-400" id="playerTeam"></span>
-            <span id="statusBadge" class="hidden text-xs font-bold px-2.5 py-0.5 rounded-full border"></span>
+            <span id="playerRole" class="hidden text-[10px] font-semibold text-gray-500 uppercase tracking-wider bg-surface-card px-2 py-0.5 rounded-md border border-surface-border"></span>
+            <span id="statusBadge" class="hidden text-xs font-bold px-3 py-1 rounded-full border"></span>
           </div>
+          <div class="text-xs text-gray-600 mt-1.5 font-mono" id="yearLabel"></div>
         </div>
       </div>
     </div>
 
     <!-- KPI Cards -->
-    <div id="kpiSection" class="hidden">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="w-8 h-[3px] rounded bg-blue-500"></div>
-        <h3 class="text-sm font-bold text-gray-300">關鍵數據</h3>
-        <span class="text-xs text-gray-500" id="yearLabel"></span>
+    <div id="kpiSection" class="hidden mb-8">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="dot bg-blue-500"></div>
+          <h3 class="text-sm font-bold text-gray-200">關鍵數據</h3>
+        </div>
+        <div class="section-body">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="kpiGrid"></div>
+        </div>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8" id="kpiGrid"></div>
     </div>
 
     <!-- Count Splits (batters) -->
     <div id="countSection" class="hidden mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="w-8 h-[3px] rounded bg-purple-500"></div>
-        <h3 class="text-sm font-bold text-gray-300">球數情境表現</h3>
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="countGrid"></div>
-      <div class="mt-3">
-        <a id="countLink" href="#" class="text-xs text-brand hover:underline">查看完整球數分析 &rarr;</a>
+      <div class="section-card">
+        <div class="section-header">
+          <div class="dot bg-purple-500"></div>
+          <h3 class="text-sm font-bold text-gray-200">球數情境表現</h3>
+          <span class="text-[10px] text-gray-500 ml-auto">領先 vs 落後 vs 兩好球</span>
+        </div>
+        <div class="section-body">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="countGrid"></div>
+          <div class="mt-4 pt-3 border-t border-surface-border/50">
+            <a id="countLink" href="#" class="text-xs text-brand hover:text-blue-400 transition-colors">查看完整球數分析（含熱圖）&rarr;</a>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Fatigue (pitchers) -->
     <div id="fatigueSection" class="hidden mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="w-8 h-[3px] rounded bg-yellow-500"></div>
-        <h3 class="text-sm font-bold text-gray-300">疲勞分析</h3>
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="fatigueGrid"></div>
-      <div class="mt-3">
-        <a id="fatigueLink" href="#" class="text-xs text-brand hover:underline">查看完整疲勞曲線 &rarr;</a>
+      <div class="section-card">
+        <div class="section-header">
+          <div class="dot bg-yellow-500"></div>
+          <h3 class="text-sm font-bold text-gray-200">疲勞分析</h3>
+          <span class="text-[10px] text-gray-500 ml-auto">每 15 球區間表現</span>
+        </div>
+        <div class="section-body">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="fatigueGrid"></div>
+          <div class="mt-4 pt-3 border-t border-surface-border/50">
+            <a id="fatigueLink" href="#" class="text-xs text-brand hover:text-blue-400 transition-colors">查看完整疲勞曲線 &rarr;</a>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- LOB% (pitchers) -->
     <div id="lobSection" class="hidden mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="w-8 h-[3px] rounded bg-blue-500"></div>
-        <h3 class="text-sm font-bold text-gray-300">殘壘率 LOB%</h3>
+      <div class="section-card">
+        <div class="section-header">
+          <div class="dot bg-cyan-500"></div>
+          <h3 class="text-sm font-bold text-gray-200">殘壘率 LOB%</h3>
+          <span class="text-[10px] text-gray-500 ml-auto">聯盟均值 &asymp; 70%</span>
+        </div>
+        <div class="section-body">
+          <div class="grid grid-cols-3 gap-3" id="lobGrid"></div>
+        </div>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="lobGrid"></div>
     </div>
 
     <!-- Available Analysis Links -->
-    <div id="linksSection" class="hidden">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="w-8 h-[3px] rounded bg-gray-500"></div>
-        <h3 class="text-sm font-bold text-gray-300">相關分析頁面</h3>
+    <div id="linksSection" class="hidden mb-8">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-6 h-[2px] rounded bg-gray-600"></div>
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">深入分析</h3>
       </div>
       <div class="flex flex-wrap gap-2" id="analysisLinks"></div>
     </div>
 
     <!-- No Data State -->
-    <div id="noData" class="hidden text-center py-20">
-      <div class="text-4xl mb-4">&#9918;</div>
-      <p class="text-gray-400">請從網址帶入球員名稱</p>
-      <p class="text-gray-500 text-sm mt-2">例如：<code class="bg-surface-card px-2 py-1 rounded text-brand">player.html?name=林安可</code></p>
+    <div id="noData" class="hidden text-center py-24">
+      <div class="text-5xl mb-4 opacity-30">&#9918;</div>
+      <p class="text-gray-400 text-lg">請從網址帶入球員名稱</p>
+      <p class="text-gray-600 text-sm mt-2">例如：<code class="bg-surface-card px-2 py-1 rounded text-brand text-xs">player.html?name=林安可</code></p>
     </div>
   </main>
 
-  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-500 mt-12">
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-600 mt-12">
     資料來源：Rebas Open Data (ODC-By License) + CPBL 官網公開資料 | Murs 開發
   </footer>
 
@@ -139,18 +238,18 @@
 
     function createKpiCard(label, value, sub, borderColor) {
       var card = document.createElement('div');
-      card.className = 'kpi-card bg-surface-card border border-surface-border rounded-xl p-4 text-center border-t-2 ' + borderColor;
-      var valEl = document.createElement('div');
-      valEl.className = 'stat-num text-2xl font-bold text-white';
-      valEl.textContent = value;
+      card.className = 'kpi-card bg-surface-card border border-surface-border rounded-xl p-5 text-center border-t-2 ' + borderColor;
       var labelEl = document.createElement('div');
-      labelEl.className = 'text-[11px] text-gray-400 mt-1';
+      labelEl.className = 'text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2';
       labelEl.textContent = label;
-      card.appendChild(valEl);
+      var valEl = document.createElement('div');
+      valEl.className = 'stat-num text-2xl font-extrabold text-white';
+      valEl.textContent = value;
       card.appendChild(labelEl);
+      card.appendChild(valEl);
       if (sub) {
         var subEl = document.createElement('div');
-        subEl.className = 'text-[10px] text-gray-500 mt-0.5';
+        subEl.className = 'text-[10px] text-gray-500 mt-1.5';
         subEl.textContent = sub;
         card.appendChild(subEl);
       }
@@ -159,72 +258,75 @@
 
     function createCountCard(label, ba, kPct, color) {
       var card = document.createElement('div');
-      card.className = 'bg-surface-card border border-surface-border rounded-lg p-3';
+      card.className = 'count-card';
 
       var lbl = document.createElement('div');
-      lbl.className = 'text-xs font-semibold mb-2';
+      lbl.className = 'text-[10px] font-bold uppercase tracking-wider mb-3';
       lbl.style.color = color;
       lbl.textContent = label;
 
       var baVal = document.createElement('div');
-      baVal.className = 'stat-num text-lg font-bold text-white';
+      baVal.className = 'stat-num text-2xl font-extrabold text-white';
       baVal.textContent = ba;
 
       var baLbl = document.createElement('div');
-      baLbl.className = 'text-[10px] text-gray-500';
-      baLbl.textContent = 'BA';
+      baLbl.className = 'text-[10px] text-gray-500 mt-0.5 mb-3';
+      baLbl.textContent = '打擊率';
 
-      var kVal = document.createElement('div');
-      kVal.className = 'stat-num text-sm text-gray-300 mt-1';
+      var kRow = document.createElement('div');
+      kRow.className = 'flex items-baseline gap-1.5 pt-2 border-t border-surface-border/50';
+      var kVal = document.createElement('span');
+      kVal.className = 'stat-num text-sm font-bold text-gray-300';
       kVal.textContent = kPct;
-
-      var kLbl = document.createElement('div');
+      var kLbl = document.createElement('span');
       kLbl.className = 'text-[10px] text-gray-500';
       kLbl.textContent = 'K%';
+      kRow.appendChild(kVal);
+      kRow.appendChild(kLbl);
 
       card.appendChild(lbl);
       card.appendChild(baVal);
       card.appendChild(baLbl);
-      card.appendChild(kVal);
-      card.appendChild(kLbl);
+      card.appendChild(kRow);
       return card;
     }
 
     function createFatigueBucket(b) {
       var card = document.createElement('div');
-      card.className = 'bg-surface-card border border-surface-border rounded-lg p-3';
-      if (b.is_fatigue_point) card.className += ' border-t-2 border-t-red-500';
+      card.className = 'fatigue-bucket' + (b.is_fatigue_point ? ' danger' : '');
 
       var lbl = document.createElement('div');
-      lbl.className = 'text-xs font-semibold text-gray-400 mb-2';
-      lbl.textContent = b.pitch_start + '-' + b.pitch_end + ' 球';
+      lbl.className = 'text-[10px] font-bold uppercase tracking-wider mb-3 ' + (b.is_fatigue_point ? 'text-red-400' : 'text-gray-500');
+      lbl.textContent = b.pitch_start + '~' + b.pitch_end + ' 球';
 
       var baVal = document.createElement('div');
-      baVal.className = 'stat-num text-lg font-bold text-white';
+      baVal.className = 'stat-num text-2xl font-extrabold text-white';
       baVal.textContent = b.ba_against.toFixed(3);
 
       var baLbl = document.createElement('div');
-      baLbl.className = 'text-[10px] text-gray-500';
+      baLbl.className = 'text-[10px] text-gray-500 mt-0.5 mb-3';
       baLbl.textContent = '被打擊率';
 
-      var kVal = document.createElement('div');
-      kVal.className = 'stat-num text-sm text-gray-300 mt-1';
+      var kRow = document.createElement('div');
+      kRow.className = 'flex items-baseline gap-1.5 pt-2 border-t border-surface-border/50';
+      var kVal = document.createElement('span');
+      kVal.className = 'stat-num text-sm font-bold text-gray-300';
       kVal.textContent = (b.k_pct * 100).toFixed(1) + '%';
-
-      var kLbl = document.createElement('div');
+      var kLbl = document.createElement('span');
       kLbl.className = 'text-[10px] text-gray-500';
       kLbl.textContent = 'K%';
+      kRow.appendChild(kVal);
+      kRow.appendChild(kLbl);
 
       card.appendChild(lbl);
       card.appendChild(baVal);
       card.appendChild(baLbl);
-      card.appendChild(kVal);
-      card.appendChild(kLbl);
+      card.appendChild(kRow);
 
       if (b.is_fatigue_point) {
         var warn = document.createElement('div');
-        warn.className = 'text-[10px] text-red-400 mt-1 font-semibold';
-        warn.textContent = '\u26A0 疲勞點';
+        warn.className = 'text-[10px] text-red-400 mt-2 font-bold flex items-center gap-1';
+        warn.textContent = '\u26A0 疲勞警戒區';
         card.appendChild(warn);
       }
 
@@ -234,10 +336,9 @@
     function createLink(href, label, dotColor) {
       var a = document.createElement('a');
       a.href = href;
-      a.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-card border border-surface-border rounded-lg text-xs text-gray-300 hover:text-white transition-colors';
+      a.className = 'link-pill';
       var dot = document.createElement('span');
-      dot.className = 'w-1.5 h-1.5 rounded-full';
-      dot.style.backgroundColor = dotColor;
+      dot.style.cssText = 'width:6px;height:6px;border-radius:50%;background:' + dotColor;
       a.appendChild(dot);
       a.appendChild(document.createTextNode(label));
       return a;
@@ -319,7 +420,19 @@
         '樂天桃猿': '#ec4899', '味全龍': '#ef4444', '台鋼雄鷹': '#3b82f6',
       };
       if (teamColors[team]) {
-        document.getElementById('playerInitial').style.color = teamColors[team];
+        var tc = teamColors[team];
+        document.getElementById('playerInitial').style.color = tc;
+        document.getElementById('playerInitial').style.borderColor = tc + '50';
+        document.getElementById('heroGlow').style.backgroundColor = tc;
+      }
+
+      // Role badge
+      var isBatter = !!clutch || !!countData;
+      var isPitcher = !!lob || !!fatigue;
+      var roleEl = document.getElementById('playerRole');
+      if (isBatter || isPitcher) {
+        roleEl.textContent = isPitcher && isBatter ? '投打' : isPitcher ? '投手' : '打者';
+        roleEl.classList.remove('hidden');
       }
 
       // === KPI Section ===
