@@ -27,15 +27,11 @@
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       position: relative;
       overflow: hidden;
+      border-color: #2d3748;
     }
-    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-    .kpi-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 50%);
-      pointer-events: none;
-    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+    /* Override any Tailwind border-t color classes */
+    .kpi-card[class*="border-t-"] { border-top-color: #2d3748 !important; }
     .hero-glow {
       position: absolute;
       top: -80px;
@@ -64,6 +60,18 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      background: #3b82f6;
+    }
+    .insight-banner {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      line-height: 1.6;
     }
     .section-body { padding: 20px; }
     .count-card {
@@ -163,7 +171,7 @@
     <div id="countSection" class="hidden mb-8">
       <div class="section-card">
         <div class="section-header">
-          <div class="dot bg-purple-500"></div>
+          <div class="dot"></div>
           <h3 class="text-sm font-bold text-gray-200">球數情境表現</h3>
           <span class="text-[10px] text-gray-500 ml-auto">領先 vs 落後 vs 兩好球</span>
         </div>
@@ -180,7 +188,7 @@
     <div id="fatigueSection" class="hidden mb-8">
       <div class="section-card">
         <div class="section-header">
-          <div class="dot bg-yellow-500"></div>
+          <div class="dot"></div>
           <h3 class="text-sm font-bold text-gray-200">疲勞分析</h3>
           <span class="text-[10px] text-gray-500 ml-auto">每 15 球區間表現</span>
         </div>
@@ -197,7 +205,7 @@
     <div id="lobSection" class="hidden mb-8">
       <div class="section-card">
         <div class="section-header">
-          <div class="dot bg-cyan-500"></div>
+          <div class="dot"></div>
           <h3 class="text-sm font-bold text-gray-200">殘壘率 LOB%</h3>
           <span class="text-[10px] text-gray-500 ml-auto">聯盟均值 &asymp; 70%</span>
         </div>
@@ -236,9 +244,9 @@
       return new URLSearchParams(window.location.search).get(key);
     }
 
-    function createKpiCard(label, value, sub, borderColor) {
+    function createKpiCard(label, value, sub) {
       var card = document.createElement('div');
-      card.className = 'kpi-card bg-surface-card border border-surface-border rounded-xl p-5 text-center border-t-2 ' + borderColor;
+      card.className = 'kpi-card bg-surface-card border border-surface-border rounded-xl p-5 text-center';
       var labelEl = document.createElement('div');
       labelEl.className = 'text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-2';
       labelEl.textContent = label;
@@ -417,10 +425,9 @@
       return '三振偏少';
     }
 
-    function createInsightBanner(text, color) {
+    function createInsightBanner(text) {
       var div = document.createElement('div');
-      div.className = 'mt-3 px-4 py-2.5 rounded-lg text-xs font-medium';
-      div.style.cssText = 'background:' + color + '10;border:1px solid ' + color + '30;color:' + color;
+      div.className = 'insight-banner';
       div.textContent = text;
       return div;
     }
@@ -489,18 +496,18 @@
       var hasKpi = false;
 
       if (clutch) {
-        kpiGrid.appendChild(createKpiCard('整體打擊率', clutch.overall_ba.toFixed(3), describeBA(clutch.overall_ba) + ' · ' + clutch.total_pa + ' PA', 'border-t-blue-500'));
-        kpiGrid.appendChild(createKpiCard('高壓打擊率', clutch.high_li_ba.toFixed(3), clutch.high_leverage_pa + ' 個高壓打席', 'border-t-green-500'));
-        kpiGrid.appendChild(createKpiCard('Clutch Score', (clutch.clutch_score >= 0 ? '+' : '') + clutch.clutch_score.toFixed(3), describeClutch(clutch.clutch_score), 'border-t-amber-500'));
+        kpiGrid.appendChild(createKpiCard('整體打擊率', clutch.overall_ba.toFixed(3), describeBA(clutch.overall_ba) + ' · ' + clutch.total_pa + ' PA'));
+        kpiGrid.appendChild(createKpiCard('高壓打擊率', clutch.high_li_ba.toFixed(3), clutch.high_leverage_pa + ' 個高壓打席'));
+        kpiGrid.appendChild(createKpiCard('Clutch Score', (clutch.clutch_score >= 0 ? '+' : '') + clutch.clutch_score.toFixed(3), describeClutch(clutch.clutch_score)));
         setStatus(document.getElementById('statusBadge'), clutch.clutch_score);
         hasKpi = true;
       }
 
       if (lob) {
-        kpiGrid.appendChild(createKpiCard('LOB%', (lob.lob_pct * 100).toFixed(1) + '%', describeLob(lob.lob_pct, lob.league_avg), 'border-t-blue-500'));
-        kpiGrid.appendChild(createKpiCard('投球局數', lob.ip.toFixed(1), lob.games + ' 場出賽', 'border-t-cyan-500'));
-        kpiGrid.appendChild(createKpiCard('被安打', String(lob.h), '', 'border-t-rose-500'));
-        kpiGrid.appendChild(createKpiCard('保送', String(lob.bb), '', 'border-t-yellow-500'));
+        kpiGrid.appendChild(createKpiCard('LOB%', (lob.lob_pct * 100).toFixed(1) + '%', describeLob(lob.lob_pct, lob.league_avg)));
+        kpiGrid.appendChild(createKpiCard('投球局數', lob.ip.toFixed(1), lob.games + ' 場出賽'));
+        kpiGrid.appendChild(createKpiCard('被安打', String(lob.h), ''));
+        kpiGrid.appendChild(createKpiCard('保送', String(lob.bb), ''));
 
         var badge = document.getElementById('statusBadge');
         if (lob.is_lucky) {
@@ -516,16 +523,23 @@
       }
 
       if (fatigue) {
-        kpiGrid.appendChild(createKpiCard('疲勞閾值', fatigue.fatigue_threshold_pitch + ' 球', describeFatigue(fatigue.fatigue_threshold_pitch), 'border-t-yellow-500'));
-        kpiGrid.appendChild(createKpiCard('總投球數', String(fatigue.total_pitches), fatigue.games + ' 場出賽', 'border-t-purple-500'));
-        kpiGrid.appendChild(createKpiCard('被打擊率', fatigue.overall_ba_against.toFixed(3), describeBA(1 - fatigue.overall_ba_against).replace('頂尖水準','壓制力極強'), 'border-t-rose-500'));
-        kpiGrid.appendChild(createKpiCard('K%', (fatigue.overall_k_pct * 100).toFixed(1) + '%', describeKpct(fatigue.overall_k_pct), 'border-t-green-500'));
+        // Detect reliever: avg pitches per game < 50 or no fatigue threshold
+        var avgPitchesPerGame = fatigue.total_pitches / Math.max(fatigue.games, 1);
+        var isReliever = avgPitchesPerGame < 50 || !fatigue.fatigue_threshold_pitch;
+
+        if (!isReliever && fatigue.fatigue_threshold_pitch) {
+          kpiGrid.appendChild(createKpiCard('疲勞閾值', fatigue.fatigue_threshold_pitch + ' 球', describeFatigue(fatigue.fatigue_threshold_pitch)));
+        }
+        kpiGrid.appendChild(createKpiCard('場均投球', Math.round(avgPitchesPerGame) + ' 球', isReliever ? '後援型' : '先發型'));
+        kpiGrid.appendChild(createKpiCard('總投球數', String(fatigue.total_pitches), fatigue.games + ' 場出賽'));
+        kpiGrid.appendChild(createKpiCard('被打擊率', fatigue.overall_ba_against.toFixed(3), describeBA(1 - fatigue.overall_ba_against).replace('頂尖水準','壓制力極強')));
+        kpiGrid.appendChild(createKpiCard('K%', (fatigue.overall_k_pct * 100).toFixed(1) + '%', describeKpct(fatigue.overall_k_pct)));
         hasKpi = true;
       }
 
       if (countData) {
-        kpiGrid.appendChild(createKpiCard('總打席', String(countData.total_pa), '', 'border-t-blue-500'));
-        kpiGrid.appendChild(createKpiCard('首球揮擊率', (countData.first_pitch_swing_pct * 100).toFixed(1) + '%', describeSwing(countData.first_pitch_swing_pct), 'border-t-orange-500'));
+        kpiGrid.appendChild(createKpiCard('總打席', String(countData.total_pa), ''));
+        kpiGrid.appendChild(createKpiCard('首球揮擊率', (countData.first_pitch_swing_pct * 100).toFixed(1) + '%', describeSwing(countData.first_pitch_swing_pct)));
         hasKpi = true;
       }
 
@@ -534,10 +548,10 @@
       // === Count Splits ===
       if (countData) {
         var cg = document.getElementById('countGrid');
-        cg.appendChild(createCountCard('領先球數', countData.ahead.ba.toFixed(3), (countData.ahead.k_pct * 100).toFixed(1) + '%', '#4ade80'));
-        cg.appendChild(createCountCard('落後球數', countData.behind.ba.toFixed(3), (countData.behind.k_pct * 100).toFixed(1) + '%', '#f87171'));
-        cg.appendChild(createCountCard('平均球數', countData.even.ba.toFixed(3), (countData.even.k_pct * 100).toFixed(1) + '%', '#60a5fa'));
-        cg.appendChild(createCountCard('兩好球', countData.two_strike.ba.toFixed(3), (countData.two_strike.k_pct * 100).toFixed(1) + '%', '#fbbf24'));
+        cg.appendChild(createCountCard('領先球數', countData.ahead.ba.toFixed(3), (countData.ahead.k_pct * 100).toFixed(1) + '%', '#6ee7b7'));
+        cg.appendChild(createCountCard('落後球數', countData.behind.ba.toFixed(3), (countData.behind.k_pct * 100).toFixed(1) + '%', '#fca5a5'));
+        cg.appendChild(createCountCard('平均球數', countData.even.ba.toFixed(3), (countData.even.k_pct * 100).toFixed(1) + '%', '#93c5fd'));
+        cg.appendChild(createCountCard('兩好球', countData.two_strike.ba.toFixed(3), (countData.two_strike.k_pct * 100).toFixed(1) + '%', '#d1d5db'));
 
         // Insight banner
         var bestSit = 'ahead'; var bestBA = countData.ahead.ba;
@@ -553,7 +567,7 @@
         } else {
           insightText = '各球數情境表現均衡，最強情境為' + sitNames[bestSit] + '（.'+  (bestBA * 1000).toFixed(0) + '）。';
         }
-        cg.parentNode.insertBefore(createInsightBanner(insightText, '#a78bfa'), cg.nextSibling);
+        cg.parentNode.insertBefore(createInsightBanner(insightText), cg.nextSibling);
 
         document.getElementById('countSection').classList.remove('hidden');
         document.getElementById('countLink').href = 'counts.html?batter=' + encodeURIComponent(playerId) + '&year=' + year;
@@ -562,17 +576,30 @@
       // === Fatigue Buckets ===
       if (fatigueDetail && fatigueDetail.buckets) {
         var fg = document.getElementById('fatigueGrid');
-        var buckets = fatigueDetail.buckets.slice(0, 4);
+        var buckets = fatigueDetail.buckets;
+        // Relievers: show all (usually 2-3 buckets). Starters: show first 4.
+        var isRelief2 = (fatigue && fatigue.total_pitches / Math.max(fatigue.games, 1) < 50);
+        if (!isRelief2) buckets = buckets.slice(0, 4);
         buckets.forEach(function(b) { fg.appendChild(createFatigueBucket(b)); });
 
         // Insight banner
         if (fatigue) {
-          var fInsight = '第 ' + fatigue.fatigue_threshold_pitch + ' 球後表現開始下降。';
+          var fInsight = '';
+          var isRelief = (fatigue.total_pitches / Math.max(fatigue.games, 1)) < 50 || !fatigue.fatigue_threshold_pitch;
+
+          if (isRelief) {
+            fInsight = '後援型投手，場均 ' + Math.round(fatigue.total_pitches / Math.max(fatigue.games, 1)) + ' 球。';
+          } else if (fatigue.fatigue_threshold_pitch) {
+            fInsight = '第 ' + fatigue.fatigue_threshold_pitch + ' 球後表現開始下降。';
+          }
+
           if (buckets.length >= 2) {
             var earlyBA = buckets[0].ba_against;
             var lateBA = buckets[buckets.length - 1].ba_against;
             var baDiff = lateBA - earlyBA;
-            if (baDiff > 0.04) {
+            if (isRelief) {
+              fInsight += buckets.length <= 2 ? '投球區間少，樣本有限。' : '';
+            } else if (baDiff > 0.04) {
               fInsight += '後段被打擊率上升 ' + (baDiff * 1000).toFixed(0) + ' 分，建議控制用球數。';
             } else if (baDiff < -0.02) {
               fInsight += '後段反而更穩定，屬耐投型投手。';
@@ -580,7 +607,7 @@
               fInsight += '各區間表現穩定，續航力不錯。';
             }
           }
-          fg.parentNode.insertBefore(createInsightBanner(fInsight, '#eab308'), fg.nextSibling);
+          if (fInsight) fg.parentNode.insertBefore(createInsightBanner(fInsight), fg.nextSibling);
         }
 
         document.getElementById('fatigueSection').classList.remove('hidden');
@@ -593,9 +620,9 @@
         var diff = lob.lob_pct - lob.league_avg;
         var diffStr = (diff >= 0 ? '+' : '') + (diff * 100).toFixed(1) + '%';
         var diffNote = lob.is_lucky ? '偏幸運' : lob.is_unlucky ? '偏不幸' : '正常範圍';
-        lg.appendChild(createKpiCard('LOB%', (lob.lob_pct * 100).toFixed(1) + '%', '', 'border-t-blue-500'));
-        lg.appendChild(createKpiCard('聯盟平均', (lob.league_avg * 100).toFixed(1) + '%', '', 'border-t-gray-500'));
-        lg.appendChild(createKpiCard('差距', diffStr, diffNote, diff >= 0 ? 'border-t-green-500' : 'border-t-red-500'));
+        lg.appendChild(createKpiCard('LOB%', (lob.lob_pct * 100).toFixed(1) + '%', ''));
+        lg.appendChild(createKpiCard('聯盟平均', (lob.league_avg * 100).toFixed(1) + '%', ''));
+        lg.appendChild(createKpiCard('差距', diffStr, diffNote));
         document.getElementById('lobSection').classList.remove('hidden');
       }
 
