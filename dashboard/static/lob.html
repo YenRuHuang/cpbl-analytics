@@ -354,7 +354,15 @@
         statusTd.className = 'px-5 py-3 text-right';
         statusTd.appendChild(statusSpan);
 
-        tr.appendChild(td(d.player_name || '—', 'l', false, '#ffffff'));
+        var nameTd = document.createElement('td');
+        nameTd.className = 'px-5 py-3';
+        var nameLink = document.createElement('a');
+        nameLink.href = 'player.html?name=' + encodeURIComponent(d.player_name) + '&year=' + (document.getElementById('yearSelect') ? document.getElementById('yearSelect').value : '2025');
+        nameLink.className = 'text-white hover:text-blue-400 transition-colors';
+        nameLink.textContent = d.player_name || '—';
+        nameLink.addEventListener('click', function(e) { e.stopPropagation(); });
+        nameTd.appendChild(nameLink);
+        tr.appendChild(nameTd);
         tr.appendChild(td(d.team || '—', 'l', false, '#9ca3af'));
         tr.appendChild(td((lob * 100).toFixed(1) + '%', 'r', true, '#ffffff'));
         tr.appendChild(td(d.ip != null ? d.ip.toFixed(1) : '—', 'r', true, '#d1d5db'));

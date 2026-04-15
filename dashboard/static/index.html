@@ -110,6 +110,29 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2.5: Player Search
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="py-8 border-b border-surface-border">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="accent-line bg-green-500"></div>
+        <h3 class="text-lg font-bold text-white">球員查詢</h3>
+        <span class="text-gray-400 text-sm">輸入球員名稱查看個人分析</span>
+      </div>
+      <div class="relative max-w-md">
+        <input
+          id="playerSearch"
+          type="text"
+          placeholder="輸入球員名稱，例如：林安可"
+          autocomplete="off"
+          class="w-full bg-surface-card border border-surface-border rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand transition-colors"
+        />
+        <div id="searchResults" class="hidden absolute top-full left-0 right-0 mt-1 bg-surface-card border border-surface-border rounded-lg overflow-hidden z-50 max-h-60 overflow-y-auto"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
        SECTION 3: Analysis Modules (投手 + 打者分組)
        ═══════════════════════════════════════════════════════════ -->
   <section class="py-12">
@@ -400,5 +423,83 @@
     資料來源：Rebas Open Data (ODC-By License) + CPBL 官網公開資料 | Murs 開發
   </footer>
 
+  <script>
+    (function() {
+      var searchInput = document.getElementById('playerSearch');
+      var resultsDiv = document.getElementById('searchResults');
+      var players = null;
+      var currentYear = '2025';
+
+      function loadPlayers() {
+        // Load from clutch (batters) + lob (pitchers) to get a full player list
+        Promise.all([
+          fetch('https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/clutch_2025.json').then(function(r) { return r.json(); }).catch(function() { return []; }),
+          fetch('https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/lob_2025.json').then(function(r) { return r.json(); }).catch(function() { return []; }),
+        ]).then(function(results) {
+          var map = {};
+          results[0].forEach(function(p) { map[p.player_name] = { name: p.player_name, team: p.team, role: 'batter' }; });
+          results[1].forEach(function(p) {
+            if (!map[p.player_name]) map[p.player_name] = { name: p.player_name, team: p.team, role: 'pitcher' };
+            else map[p.player_name].role = 'both';
+          });
+          players = Object.values(map).sort(function(a, b) { return a.name.localeCompare(b.name, 'zh-Hant'); });
+        });
+      }
+
+      function renderResults(matches) {
+        while (resultsDiv.firstChild) resultsDiv.removeChild(resultsDiv.firstChild);
+        if (matches.length === 0) {
+          resultsDiv.classList.add('hidden');
+          return;
+        }
+        matches.slice(0, 8).forEach(function(p) {
+          var a = document.createElement('a');
+          a.href = 'player.html?name=' + encodeURIComponent(p.name) + '&year=' + currentYear;
+          a.className = 'flex items-center justify-between px-4 py-2.5 hover:bg-surface text-sm transition-colors cursor-pointer';
+
+          var left = document.createElement('div');
+          var nameSpan = document.createElement('span');
+          nameSpan.className = 'text-white font-medium';
+          nameSpan.textContent = p.name;
+          var teamSpan = document.createElement('span');
+          teamSpan.className = 'text-gray-500 text-xs ml-2';
+          teamSpan.textContent = p.team;
+          left.appendChild(nameSpan);
+          left.appendChild(teamSpan);
+
+          var roleSpan = document.createElement('span');
+          roleSpan.className = 'text-xs text-gray-500';
+          roleSpan.textContent = p.role === 'pitcher' ? '投手' : p.role === 'both' ? '投打' : '打者';
+
+          a.appendChild(left);
+          a.appendChild(roleSpan);
+          resultsDiv.appendChild(a);
+        });
+        resultsDiv.classList.remove('hidden');
+      }
+
+      searchInput.addEventListener('input', function() {
+        var q = searchInput.value.trim();
+        if (!q || !players) { resultsDiv.classList.add('hidden'); return; }
+        var matches = players.filter(function(p) { return p.name.indexOf(q) !== -1; });
+        renderResults(matches);
+      });
+
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          var q = searchInput.value.trim();
+          if (q) window.location.href = 'player.html?name=' + encodeURIComponent(q) + '&year=' + currentYear;
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+          resultsDiv.classList.add('hidden');
+        }
+      });
+
+      loadPlayers();
+    })();
+  </script>
 </body>
 </html>
