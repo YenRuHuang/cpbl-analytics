@@ -257,6 +257,16 @@
       }
     }
 
+    var R2_BASE = 'https://pub-3150871636a642bf8c0929e461759aba.r2.dev';
+
+    // For 2025 data redirected to R2, fetch directly from R2 to avoid CORS issues
+    function resolveUrl(path, year) {
+      if (year === '2025' && path.indexOf('_2025') !== -1) {
+        return R2_BASE + path.replace('/api', '');
+      }
+      return path;
+    }
+
     async function fetchJSON(url) {
       try {
         var res = await fetch(url);
@@ -283,9 +293,9 @@
 
       // Fetch all data in parallel
       var results = await Promise.all([
-        fetchJSON('/api/analysis/clutch_' + year + '.json'),
-        fetchJSON('/api/analysis/lob_' + year + '.json'),
-        fetchJSON('/api/analysis/fatigue_' + year + '.json'),
+        fetchJSON(resolveUrl('/api/analysis/clutch_' + year + '.json', year)),
+        fetchJSON(resolveUrl('/api/analysis/lob_' + year + '.json', year)),
+        fetchJSON(resolveUrl('/api/analysis/fatigue_' + year + '.json', year)),
         fetchJSON('/api/analysis/counts/' + year + '/' + encodeURIComponent(playerId) + '.json'),
         fetchJSON('/api/analysis/fatigue/' + year + '/' + encodeURIComponent(playerId) + '.json'),
       ]);
