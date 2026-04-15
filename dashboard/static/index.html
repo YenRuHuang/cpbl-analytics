@@ -115,7 +115,7 @@
   <section class="py-8 border-b border-surface-border">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center gap-3 mb-4">
-        <div class="accent-line bg-green-500"></div>
+        <div class="accent-line bg-brand"></div>
         <h3 class="text-lg font-bold text-white">球員查詢</h3>
         <span class="text-gray-400 text-sm">輸入球員名稱查看個人分析</span>
       </div>
@@ -138,71 +138,62 @@
   <section class="py-12">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center gap-3 mb-6">
-        <div class="accent-line bg-blue-500"></div>
+        <div class="accent-line bg-brand"></div>
         <h3 class="text-lg font-bold text-white">分析模組</h3>
         <span class="text-gray-400 text-sm">8 個進階數據分析</span>
       </div>
 
       <!-- Row 1: 投手分析 -->
       <div class="mb-3">
-        <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">投手</span>
+        <span class="text-xs text-gray-500 uppercase tracking-wider font-semibold">投手</span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
         <a href="lob.html"
-           class="module-card block bg-surface-card border-l-4 border-l-blue-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
           <h2 class="text-sm font-bold text-white mb-1">LOB% 殘壘率</h2>
-          <p class="text-gray-400 text-xs">投手運氣成分，預測 ERA 回歸</p>
+          <p class="text-gray-500 text-xs">投手運氣成分，預測 ERA 回歸</p>
         </a>
         <a href="fatigue.html"
-           class="module-card block bg-surface-card border-l-4 border-l-yellow-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
           <h2 class="text-sm font-bold text-white mb-1">投手疲勞曲線</h2>
-          <p class="text-gray-400 text-xs">自動偵測衰退臨界點</p>
+          <p class="text-gray-500 text-xs">自動偵測衰退臨界點</p>
         </a>
         <a href="counts.html"
-           class="module-card block bg-surface-card border-l-4 border-l-purple-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
           <h2 class="text-sm font-bold text-white mb-1">球數分析</h2>
-          <p class="text-gray-400 text-xs">不同球數情境下的表現差異</p>
+          <p class="text-gray-500 text-xs">不同球數情境下的表現差異</p>
         </a>
       </div>
 
       <!-- Row 2: 打者分析 -->
       <div class="mb-3">
-        <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">打者</span>
+        <span class="text-xs text-gray-500 uppercase tracking-wider font-semibold">打者</span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <a href="wrc-plus.html"
-           class="module-card block bg-surface-card border-l-4 border-l-orange-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
           <h2 class="text-sm font-bold text-white mb-1">wRC+</h2>
-          <p class="text-gray-400 text-xs">Park Factor 調整打擊力</p>
+          <p class="text-gray-500 text-xs">Park Factor 調整打擊力</p>
         </a>
         <a href="clutch.html"
-           class="module-card block bg-surface-card border-l-4 border-l-green-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
           <h2 class="text-sm font-bold text-white mb-1">關鍵時刻</h2>
-          <p class="text-gray-400 text-xs">高壓打席 Leverage Index</p>
+          <p class="text-gray-500 text-xs">高壓打席 Leverage Index</p>
         </a>
         <a href="park-factors.html"
-           class="module-card block bg-surface-card border-l-4 border-l-emerald-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
-          <div class="flex items-center gap-1.5 mb-1">
-            <span class="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 rounded px-1">NEW</span>
-            <h2 class="text-sm font-bold text-white">Park Factor</h2>
-          </div>
-          <p class="text-gray-400 text-xs">7 座球場因子量化</p>
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
+          <h2 class="text-sm font-bold text-white mb-1">Park Factor</h2>
+          <p class="text-gray-500 text-xs">7 座球場因子量化</p>
         </a>
         <a href="babip.html"
-           class="module-card block bg-surface-card border-l-4 border-l-violet-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
-          <div class="flex items-center gap-1.5 mb-1">
-            <span class="text-[9px] text-violet-400 font-bold bg-violet-500/10 rounded px-1">NEW</span>
-            <h2 class="text-sm font-bold text-white">BABIP 回歸</h2>
-          </div>
-          <p class="text-gray-400 text-xs">均值回歸分析</p>
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
+          <h2 class="text-sm font-bold text-white mb-1">BABIP 回歸</h2>
+          <p class="text-gray-500 text-xs">均值回歸分析</p>
         </a>
         <a href="splits.html"
-           class="module-card block bg-surface-card border-l-4 border-l-cyan-500 border border-surface-border rounded-lg p-4 transition-all duration-200 hover:bg-surface-card/80">
-          <div class="flex items-center gap-1.5 mb-1">
-            <span class="text-[9px] text-cyan-400 font-bold bg-cyan-500/10 rounded px-1">NEW</span>
-            <h2 class="text-sm font-bold text-white">半季分割</h2>
-          </div>
-          <p class="text-gray-400 text-xs">上下半季爆發 vs 崩盤</p>
+           class="module-card block bg-surface-card border border-surface-border rounded-lg p-4 transition-all duration-200 hover:border-gray-500/50">
+          <h2 class="text-sm font-bold text-white mb-1">半季分割</h2>
+          <p class="text-gray-500 text-xs">上下半季爆發 vs 崩盤</p>
         </a>
       </div>
     </div>
@@ -214,66 +205,59 @@
   <section class="section-alt py-12">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center gap-3 mb-6">
-        <div class="accent-line bg-purple-500"></div>
+        <div class="accent-line bg-brand"></div>
         <h3 class="text-lg font-bold text-white">數據分析文章</h3>
-        <span class="text-gray-400 text-sm">7 篇深度解析</span>
+        <span class="text-gray-500 text-sm">7 篇深度解析</span>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <a href="article-wrc-plus-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-orange-500/40">
-          <div class="h-1 bg-orange-500"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a href="article-wrc-plus-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-gray-500/50">
           <div class="p-5">
-            <span class="text-[10px] text-orange-400 font-semibold bg-orange-500/10 rounded px-1.5 py-0.5">wRC+</span>
-            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-orange-300 transition-colors">誰是 2025 最強打者？wRC+ 完整排行</h4>
-            <p class="text-gray-400 text-xs leading-relaxed">Park Factor 調整後的真實打擊力排名。</p>
+            <span class="text-[10px] text-gray-400 font-semibold bg-white/5 rounded px-1.5 py-0.5">wRC+</span>
+            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-brand transition-colors">誰是 2025 最強打者？wRC+ 完整排行</h4>
+            <p class="text-gray-500 text-xs leading-relaxed">Park Factor 調整後的真實打擊力排名。</p>
           </div>
         </a>
-        <a href="article-park-factor-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-emerald-500/40">
-          <div class="h-1 bg-emerald-500"></div>
+        <a href="article-park-factor-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-gray-500/50">
           <div class="p-5">
-            <span class="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 rounded px-1.5 py-0.5">Park Factor</span>
-            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-emerald-300 transition-colors">大巨蛋真的壓制打擊嗎？球場因子全解析</h4>
-            <p class="text-gray-400 text-xs leading-relaxed">7 座球場的打擊環境量化比較。</p>
+            <span class="text-[10px] text-gray-400 font-semibold bg-white/5 rounded px-1.5 py-0.5">Park Factor</span>
+            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-brand transition-colors">大巨蛋真的壓制打擊嗎？球場因子全解析</h4>
+            <p class="text-gray-500 text-xs leading-relaxed">7 座球場的打擊環境量化比較。</p>
           </div>
         </a>
-        <a href="article-babip-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-violet-500/40">
-          <div class="h-1 bg-violet-500"></div>
+        <a href="article-babip-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-gray-500/50">
           <div class="p-5">
-            <span class="text-[10px] text-violet-400 font-semibold bg-violet-500/10 rounded px-1.5 py-0.5">BABIP</span>
-            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-violet-300 transition-colors">運氣還是實力？BABIP 回歸分析</h4>
-            <p class="text-gray-400 text-xs leading-relaxed">74 位打者的均值回歸現象。</p>
+            <span class="text-[10px] text-gray-400 font-semibold bg-white/5 rounded px-1.5 py-0.5">BABIP</span>
+            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-brand transition-colors">運氣還是實力？BABIP 回歸分析</h4>
+            <p class="text-gray-500 text-xs leading-relaxed">74 位打者的均值回歸現象。</p>
           </div>
         </a>
-        <a href="article-splits-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-cyan-500/40">
-          <div class="h-1 bg-cyan-500"></div>
+        <a href="article-splits-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-gray-500/50">
           <div class="p-5">
-            <span class="text-[10px] text-cyan-400 font-semibold bg-cyan-500/10 rounded px-1.5 py-0.5">半季分割</span>
-            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-cyan-300 transition-colors">下半季誰爆發、誰崩盤？</h4>
-            <p class="text-gray-400 text-xs leading-relaxed">朱育賢爆發 +0.093，張仁瑋崩盤 -0.114。</p>
+            <span class="text-[10px] text-gray-400 font-semibold bg-white/5 rounded px-1.5 py-0.5">半季分割</span>
+            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-brand transition-colors">下半季誰爆發、誰崩盤？</h4>
+            <p class="text-gray-500 text-xs leading-relaxed">朱育賢爆發 +0.093，張仁瑋崩盤 -0.114。</p>
           </div>
         </a>
-        <a href="article-lob-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-blue-500/40">
-          <div class="h-1 bg-blue-500"></div>
+        <a href="article-lob-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-gray-500/50">
           <div class="p-5">
-            <span class="text-[10px] text-blue-400 font-semibold bg-blue-500/10 rounded px-1.5 py-0.5">LOB%</span>
-            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-blue-300 transition-colors">誰是最幸運的投手？LOB% 解密</h4>
-            <p class="text-gray-400 text-xs leading-relaxed">77 位投手的運氣成分拆解。</p>
+            <span class="text-[10px] text-gray-400 font-semibold bg-white/5 rounded px-1.5 py-0.5">LOB%</span>
+            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-brand transition-colors">誰是最幸運的投手？LOB% 解密</h4>
+            <p class="text-gray-500 text-xs leading-relaxed">77 位投手的運氣成分拆解。</p>
           </div>
         </a>
-        <a href="article-fatigue-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-yellow-500/40">
-          <div class="h-1 bg-yellow-500"></div>
+        <a href="article-fatigue-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-gray-500/50">
           <div class="p-5">
-            <span class="text-[10px] text-yellow-400 font-semibold bg-yellow-500/10 rounded px-1.5 py-0.5">疲勞曲線</span>
-            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-yellow-300 transition-colors">投手第幾球開始崩盤？</h4>
-            <p class="text-gray-400 text-xs leading-relaxed">38 位先發的疲勞閾值分析。</p>
+            <span class="text-[10px] text-gray-400 font-semibold bg-white/5 rounded px-1.5 py-0.5">疲勞曲線</span>
+            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-brand transition-colors">投手第幾球開始崩盤？</h4>
+            <p class="text-gray-500 text-xs leading-relaxed">38 位先發的疲勞閾值分析。</p>
           </div>
         </a>
-        <a href="article-clutch-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-green-500/40">
-          <div class="h-1 bg-green-500"></div>
+        <a href="article-clutch-2025.html" class="group block bg-surface-card border border-surface-border rounded-xl overflow-hidden transition-all duration-200 hover:border-gray-500/50">
           <div class="p-5">
-            <span class="text-[10px] text-green-400 font-semibold bg-green-500/10 rounded px-1.5 py-0.5">關鍵時刻</span>
-            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-green-300 transition-colors">關鍵時刻誰最可靠？Clutch 排行</h4>
-            <p class="text-gray-400 text-xs leading-relaxed">高壓情境表現差異量化。</p>
+            <span class="text-[10px] text-gray-400 font-semibold bg-white/5 rounded px-1.5 py-0.5">關鍵時刻</span>
+            <h4 class="text-white font-bold mt-2 mb-1.5 text-sm group-hover:text-brand transition-colors">關鍵時刻誰最可靠？Clutch 排行</h4>
+            <p class="text-gray-500 text-xs leading-relaxed">高壓情境表現差異量化。</p>
           </div>
         </a>
       </div>
@@ -286,7 +270,7 @@
   <section class="py-12">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center gap-3 mb-6">
-        <div class="accent-line bg-amber-500"></div>
+        <div class="accent-line bg-brand"></div>
         <h3 class="text-lg font-bold text-white">工程架構</h3>
       </div>
 
