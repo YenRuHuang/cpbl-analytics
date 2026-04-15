@@ -1,12 +1,12 @@
 # Redirect historical (2025) analysis data to Cloudflare R2
 # Keeps the repo lean by offloading 2.8MB of static JSON
 
-/api/analysis/rolling_woba_2025.json   https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/rolling_woba_2025.json  302
-/api/analysis/clutch_2025.json         https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/clutch_2025.json        302
-/api/analysis/fatigue_2025.json        https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/fatigue_2025.json       302
-/api/analysis/lob_2025.json            https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/lob_2025.json           302
-/api/analysis/babip_regression_2025.json https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/babip_regression_2025.json 302
-/api/analysis/half_splits_2025.json    https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/half_splits_2025.json   302
-/api/analysis/wrc_plus_2025.json       https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/wrc_plus_2025.json      302
-/api/analysis/park_factors_2025.json   https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/park_factors_2025.json  302
-/api/analysis/count_heatmap_2025.json  https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/count_heatmap_2025.json 302
+/api/analysis/rolling_woba_2025.json   https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/rolling_woba_2025.json  200
+/api/analysis/clutch_2025.json         https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/clutch_2025.json        200
+/api/analysis/fatigue_2025.json        https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/fatigue_2025.json       200
+/api/analysis/lob_2025.json            https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/lob_2025.json           200
+/api/analysis/babip_regression_2025.json https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/babip_regression_2025.json 200
+/api/analysis/half_splits_2025.json    https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/half_splits_2025.json   200
+/api/analysis/wrc_plus_2025.json       https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/wrc_plus_2025.json      200
+/api/analysis/park_factors_2025.json   https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/park_factors_2025.json  200
+/api/analysis/count_heatmap_2025.json  https://pub-3150871636a642bf8c0929e461759aba.r2.dev/analysis/count_heatmap_2025.json 200

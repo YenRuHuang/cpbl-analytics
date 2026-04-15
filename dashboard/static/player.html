@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>球員分析 — CPBL Analytics</title>
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#3b82f6', dark: '#1d4ed8' },
+            surface: { DEFAULT: '#1e2530', card: '#252e3e', border: '#2d3748' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #141920; }
+    .stat-num { font-variant-numeric: tabular-nums; }
+    .status-hot { background: #16a34a15; border-color: #16a34a; color: #4ade80; }
+    .status-stable { background: #2563eb15; border-color: #2563eb; color: #60a5fa; }
+    .status-cold { background: #dc262615; border-color: #dc2626; color: #f87171; }
+    .kpi-card { transition: transform 0.15s; }
+    .kpi-card:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+
+  <!-- Nav -->
+  <nav class="bg-surface border-b border-surface-border sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl">&#9918;</span>
+        <span class="font-bold text-lg text-white">CPBL Analytics</span>
+      </a>
+      <div class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+        <a href="lob.html" class="hover:text-white transition-colors">LOB%</a>
+        <a href="fatigue.html" class="hover:text-white transition-colors">投手疲勞</a>
+        <a href="clutch.html" class="hover:text-white transition-colors">關鍵時刻</a>
+        <a href="counts.html" class="hover:text-white transition-colors">球數分析</a>
+        <a href="wrc-plus.html" class="hover:text-white transition-colors">wRC+</a>
+        <a href="park-factors.html" class="hover:text-white transition-colors">Park Factor</a>
+        <a href="babip.html" class="hover:text-white transition-colors">BABIP</a>
+        <a href="splits.html" class="hover:text-white transition-colors">半季分割</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Player Header -->
+    <div id="playerHeader" class="mb-8">
+      <a href="index.html" class="text-xs text-gray-500 hover:text-brand mb-4 inline-block">&larr; 返回首頁</a>
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center text-3xl font-black text-brand" id="playerInitial">?</div>
+        <div>
+          <h1 class="text-3xl font-extrabold text-white" id="playerName">載入中...</h1>
+          <div class="flex items-center gap-3 mt-1">
+            <span class="text-sm text-gray-400" id="playerTeam"></span>
+            <span id="statusBadge" class="hidden text-xs font-bold px-2.5 py-0.5 rounded-full border"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div id="kpiSection" class="hidden">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-[3px] rounded bg-blue-500"></div>
+        <h3 class="text-sm font-bold text-gray-300">關鍵數據</h3>
+        <span class="text-xs text-gray-500" id="yearLabel"></span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8" id="kpiGrid"></div>
+    </div>
+
+    <!-- Count Splits (batters) -->
+    <div id="countSection" class="hidden mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-[3px] rounded bg-purple-500"></div>
+        <h3 class="text-sm font-bold text-gray-300">球數情境表現</h3>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="countGrid"></div>
+      <div class="mt-3">
+        <a id="countLink" href="#" class="text-xs text-brand hover:underline">查看完整球數分析 &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Fatigue (pitchers) -->
+    <div id="fatigueSection" class="hidden mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-[3px] rounded bg-yellow-500"></div>
+        <h3 class="text-sm font-bold text-gray-300">疲勞分析</h3>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="fatigueGrid"></div>
+      <div class="mt-3">
+        <a id="fatigueLink" href="#" class="text-xs text-brand hover:underline">查看完整疲勞曲線 &rarr;</a>
+      </div>
+    </div>
+
+    <!-- LOB% (pitchers) -->
+    <div id="lobSection" class="hidden mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-[3px] rounded bg-blue-500"></div>
+        <h3 class="text-sm font-bold text-gray-300">殘壘率 LOB%</h3>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="lobGrid"></div>
+    </div>
+
+    <!-- Available Analysis Links -->
+    <div id="linksSection" class="hidden">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-[3px] rounded bg-gray-500"></div>
+        <h3 class="text-sm font-bold text-gray-300">相關分析頁面</h3>
+      </div>
+      <div class="flex flex-wrap gap-2" id="analysisLinks"></div>
+    </div>
+
+    <!-- No Data State -->
+    <div id="noData" class="hidden text-center py-20">
+      <div class="text-4xl mb-4">&#9918;</div>
+      <p class="text-gray-400">請從網址帶入球員名稱</p>
+      <p class="text-gray-500 text-sm mt-2">例如：<code class="bg-surface-card px-2 py-1 rounded text-brand">player.html?name=林安可</code></p>
+    </div>
+  </main>
+
+  <footer class="border-t border-surface-border text-center py-6 text-xs text-gray-500 mt-12">
+    資料來源：Rebas Open Data (ODC-By License) + CPBL 官網公開資料 | Murs 開發
+  </footer>
+
+  <script>
+    // NOTE: All data displayed comes from pre-computed static JSON files (no user input in URLs/queries).
+    // Player names are sourced from our own controlled dataset, not from external/untrusted input.
+
+    function getParam(key) {
+      return new URLSearchParams(window.location.search).get(key);
+    }
+
+    function createKpiCard(label, value, sub, borderColor) {
+      var card = document.createElement('div');
+      card.className = 'kpi-card bg-surface-card border border-surface-border rounded-xl p-4 text-center border-t-2 ' + borderColor;
+      var valEl = document.createElement('div');
+      valEl.className = 'stat-num text-2xl font-bold text-white';
+      valEl.textContent = value;
+      var labelEl = document.createElement('div');
+      labelEl.className = 'text-[11px] text-gray-400 mt-1';
+      labelEl.textContent = label;
+      card.appendChild(valEl);
+      card.appendChild(labelEl);
+      if (sub) {
+        var subEl = document.createElement('div');
+        subEl.className = 'text-[10px] text-gray-500 mt-0.5';
+        subEl.textContent = sub;
+        card.appendChild(subEl);
+      }
+      return card;
+    }
+
+    function createCountCard(label, ba, kPct, color) {
+      var card = document.createElement('div');
+      card.className = 'bg-surface-card border border-surface-border rounded-lg p-3';
+
+      var lbl = document.createElement('div');
+      lbl.className = 'text-xs font-semibold mb-2';
+      lbl.style.color = color;
+      lbl.textContent = label;
+
+      var baVal = document.createElement('div');
+      baVal.className = 'stat-num text-lg font-bold text-white';
+      baVal.textContent = ba;
+
+      var baLbl = document.createElement('div');
+      baLbl.className = 'text-[10px] text-gray-500';
+      baLbl.textContent = 'BA';
+
+      var kVal = document.createElement('div');
+      kVal.className = 'stat-num text-sm text-gray-300 mt-1';
+      kVal.textContent = kPct;
+
+      var kLbl = document.createElement('div');
+      kLbl.className = 'text-[10px] text-gray-500';
+      kLbl.textContent = 'K%';
+
+      card.appendChild(lbl);
+      card.appendChild(baVal);
+      card.appendChild(baLbl);
+      card.appendChild(kVal);
+      card.appendChild(kLbl);
+      return card;
+    }
+
+    function createFatigueBucket(b) {
+      var card = document.createElement('div');
+      card.className = 'bg-surface-card border border-surface-border rounded-lg p-3';
+      if (b.is_fatigue_point) card.className += ' border-t-2 border-t-red-500';
+
+      var lbl = document.createElement('div');
+      lbl.className = 'text-xs font-semibold text-gray-400 mb-2';
+      lbl.textContent = b.pitch_start + '-' + b.pitch_end + ' 球';
+
+      var baVal = document.createElement('div');
+      baVal.className = 'stat-num text-lg font-bold text-white';
+      baVal.textContent = b.ba_against.toFixed(3);
+
+      var baLbl = document.createElement('div');
+      baLbl.className = 'text-[10px] text-gray-500';
+      baLbl.textContent = '被打擊率';
+
+      var kVal = document.createElement('div');
+      kVal.className = 'stat-num text-sm text-gray-300 mt-1';
+      kVal.textContent = (b.k_pct * 100).toFixed(1) + '%';
+
+      var kLbl = document.createElement('div');
+      kLbl.className = 'text-[10px] text-gray-500';
+      kLbl.textContent = 'K%';
+
+      card.appendChild(lbl);
+      card.appendChild(baVal);
+      card.appendChild(baLbl);
+      card.appendChild(kVal);
+      card.appendChild(kLbl);
+
+      if (b.is_fatigue_point) {
+        var warn = document.createElement('div');
+        warn.className = 'text-[10px] text-red-400 mt-1 font-semibold';
+        warn.textContent = '\u26A0 疲勞點';
+        card.appendChild(warn);
+      }
+
+      return card;
+    }
+
+    function createLink(href, label, dotColor) {
+      var a = document.createElement('a');
+      a.href = href;
+      a.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-card border border-surface-border rounded-lg text-xs text-gray-300 hover:text-white transition-colors';
+      var dot = document.createElement('span');
+      dot.className = 'w-1.5 h-1.5 rounded-full';
+      dot.style.backgroundColor = dotColor;
+      a.appendChild(dot);
+      a.appendChild(document.createTextNode(label));
+      return a;
+    }
+
+    function setStatus(badge, score) {
+      badge.classList.remove('hidden');
+      if (score >= 0.12) {
+        badge.textContent = '狀態火熱';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full border status-hot';
+      } else if (score >= -0.05) {
+        badge.textContent = '狀態穩定';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full border status-stable';
+      } else {
+        badge.textContent = '需要回溫';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full border status-cold';
+      }
+    }
+
+    async function fetchJSON(url) {
+      try {
+        var res = await fetch(url);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) { return null; }
+    }
+
+    async function loadPlayer() {
+      var name = getParam('name');
+      var year = getParam('year') || '2025';
+      var playerId = 'cpbl_' + name;
+
+      if (!name) {
+        document.getElementById('noData').classList.remove('hidden');
+        document.getElementById('playerHeader').classList.add('hidden');
+        return;
+      }
+
+      document.title = name + ' \u2014 CPBL Analytics';
+      document.getElementById('playerName').textContent = name;
+      document.getElementById('playerInitial').textContent = name.charAt(0);
+      document.getElementById('yearLabel').textContent = year + ' 賽季';
+
+      // Fetch all data in parallel
+      var results = await Promise.all([
+        fetchJSON('/api/analysis/clutch_' + year + '.json'),
+        fetchJSON('/api/analysis/lob_' + year + '.json'),
+        fetchJSON('/api/analysis/fatigue_' + year + '.json'),
+        fetchJSON('/api/analysis/counts/' + year + '/' + encodeURIComponent(playerId) + '.json'),
+        fetchJSON('/api/analysis/fatigue/' + year + '/' + encodeURIComponent(playerId) + '.json'),
+      ]);
+
+      var clutchAll = results[0];
+      var lobAll = results[1];
+      var fatigueAll = results[2];
+      var countData = results[3];
+      var fatigueDetail = results[4];
+
+      var clutch = clutchAll ? clutchAll.find(function(p) { return p.player_id === playerId; }) : null;
+      var lob = lobAll ? lobAll.find(function(p) { return p.player_id === playerId; }) : null;
+      var fatigue = fatigueAll ? fatigueAll.find(function(p) { return p.pitcher_id === playerId; }) : null;
+
+      // Set team
+      var team = (clutch && clutch.team) || (lob && lob.team) || (fatigue && fatigue.team) || '';
+      document.getElementById('playerTeam').textContent = team;
+
+      var teamColors = {
+        '中信兄弟': '#eab308', '統一7-ELEVEn獅': '#f97316',
+        '樂天桃猿': '#ec4899', '味全龍': '#ef4444', '台鋼雄鷹': '#3b82f6',
+      };
+      if (teamColors[team]) {
+        document.getElementById('playerInitial').style.color = teamColors[team];
+      }
+
+      // === KPI Section ===
+      var kpiGrid = document.getElementById('kpiGrid');
+      var hasKpi = false;
+
+      if (clutch) {
+        kpiGrid.appendChild(createKpiCard('整體打擊率', clutch.overall_ba.toFixed(3), clutch.total_pa + ' PA', 'border-t-blue-500'));
+        kpiGrid.appendChild(createKpiCard('高壓打擊率', clutch.high_li_ba.toFixed(3), clutch.high_leverage_pa + ' 高壓PA', 'border-t-green-500'));
+        kpiGrid.appendChild(createKpiCard('Clutch Score', (clutch.clutch_score >= 0 ? '+' : '') + clutch.clutch_score.toFixed(3), '高壓 - 整體', 'border-t-amber-500'));
+        setStatus(document.getElementById('statusBadge'), clutch.clutch_score);
+        hasKpi = true;
+      }
+
+      if (lob) {
+        kpiGrid.appendChild(createKpiCard('LOB%', (lob.lob_pct * 100).toFixed(1) + '%', '聯盟均 ' + (lob.league_avg * 100).toFixed(0) + '%', 'border-t-blue-500'));
+        kpiGrid.appendChild(createKpiCard('投球局數', lob.ip.toFixed(1), lob.games + ' 場', 'border-t-cyan-500'));
+        kpiGrid.appendChild(createKpiCard('被安打', String(lob.h), '', 'border-t-rose-500'));
+        kpiGrid.appendChild(createKpiCard('保送', String(lob.bb), '', 'border-t-yellow-500'));
+
+        var badge = document.getElementById('statusBadge');
+        if (lob.is_lucky) {
+          badge.classList.remove('hidden');
+          badge.textContent = '運氣偏好';
+          badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full border status-hot';
+        } else if (lob.is_unlucky) {
+          badge.classList.remove('hidden');
+          badge.textContent = '運氣偏差';
+          badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full border status-cold';
+        }
+        hasKpi = true;
+      }
+
+      if (fatigue) {
+        kpiGrid.appendChild(createKpiCard('疲勞閾值', fatigue.fatigue_threshold_pitch + ' 球', '表現開始下降', 'border-t-yellow-500'));
+        kpiGrid.appendChild(createKpiCard('總投球數', String(fatigue.total_pitches), fatigue.games + ' 場', 'border-t-purple-500'));
+        kpiGrid.appendChild(createKpiCard('被打擊率', fatigue.overall_ba_against.toFixed(3), '', 'border-t-rose-500'));
+        kpiGrid.appendChild(createKpiCard('K%', (fatigue.overall_k_pct * 100).toFixed(1) + '%', '', 'border-t-green-500'));
+        hasKpi = true;
+      }
+
+      if (countData) {
+        kpiGrid.appendChild(createKpiCard('總打席', String(countData.total_pa), '', 'border-t-blue-500'));
+        kpiGrid.appendChild(createKpiCard('首球揮擊率', (countData.first_pitch_swing_pct * 100).toFixed(1) + '%', '', 'border-t-orange-500'));
+        hasKpi = true;
+      }
+
+      if (hasKpi) document.getElementById('kpiSection').classList.remove('hidden');
+
+      // === Count Splits ===
+      if (countData) {
+        var cg = document.getElementById('countGrid');
+        cg.appendChild(createCountCard('領先球數', countData.ahead.ba.toFixed(3), (countData.ahead.k_pct * 100).toFixed(1) + '%', '#4ade80'));
+        cg.appendChild(createCountCard('落後球數', countData.behind.ba.toFixed(3), (countData.behind.k_pct * 100).toFixed(1) + '%', '#f87171'));
+        cg.appendChild(createCountCard('平均球數', countData.even.ba.toFixed(3), (countData.even.k_pct * 100).toFixed(1) + '%', '#60a5fa'));
+        cg.appendChild(createCountCard('兩好球', countData.two_strike.ba.toFixed(3), (countData.two_strike.k_pct * 100).toFixed(1) + '%', '#fbbf24'));
+        document.getElementById('countSection').classList.remove('hidden');
+        document.getElementById('countLink').href = 'counts.html?batter=' + encodeURIComponent(playerId) + '&year=' + year;
+      }
+
+      // === Fatigue Buckets ===
+      if (fatigueDetail && fatigueDetail.buckets) {
+        var fg = document.getElementById('fatigueGrid');
+        fatigueDetail.buckets.slice(0, 4).forEach(function(b) {
+          fg.appendChild(createFatigueBucket(b));
+        });
+        document.getElementById('fatigueSection').classList.remove('hidden');
+        document.getElementById('fatigueLink').href = 'fatigue.html?pitcher=' + encodeURIComponent(playerId) + '&year=' + year;
+      }
+
+      // === LOB Detail ===
+      if (lob) {
+        var lg = document.getElementById('lobGrid');
+        var diff = lob.lob_pct - lob.league_avg;
+        var diffStr = (diff >= 0 ? '+' : '') + (diff * 100).toFixed(1) + '%';
+        var diffNote = lob.is_lucky ? '偏幸運' : lob.is_unlucky ? '偏不幸' : '正常範圍';
+        lg.appendChild(createKpiCard('LOB%', (lob.lob_pct * 100).toFixed(1) + '%', '', 'border-t-blue-500'));
+        lg.appendChild(createKpiCard('聯盟平均', (lob.league_avg * 100).toFixed(1) + '%', '', 'border-t-gray-500'));
+        lg.appendChild(createKpiCard('差距', diffStr, diffNote, diff >= 0 ? 'border-t-green-500' : 'border-t-red-500'));
+        document.getElementById('lobSection').classList.remove('hidden');
+      }
+
+      // === Links ===
+      var linksEl = document.getElementById('analysisLinks');
+      var hasLinks = false;
+      if (clutch) { linksEl.appendChild(createLink('clutch.html', '關鍵時刻排行', '#22c55e')); hasLinks = true; }
+      if (countData) { linksEl.appendChild(createLink('counts.html?batter=' + encodeURIComponent(playerId) + '&year=' + year, '球數分析', '#a855f7')); hasLinks = true; }
+      if (fatigue || fatigueDetail) { linksEl.appendChild(createLink('fatigue.html?pitcher=' + encodeURIComponent(playerId) + '&year=' + year, '疲勞曲線', '#eab308')); hasLinks = true; }
+      if (lob) { linksEl.appendChild(createLink('lob.html', 'LOB% 排行', '#3b82f6')); hasLinks = true; }
+      if (hasLinks) document.getElementById('linksSection').classList.remove('hidden');
+
+      // No data
+      if (!hasKpi && !countData && !fatigueDetail && !lob) {
+        var nd = document.getElementById('noData');
+        nd.classList.remove('hidden');
+        var p1 = document.createElement('div');
+        p1.className = 'text-4xl mb-4';
+        p1.textContent = '\u26BE';
+        var p2 = document.createElement('p');
+        p2.className = 'text-gray-400';
+        p2.textContent = '找不到「' + name + '」的 ' + year + ' 賽季資料';
+        var p3 = document.createElement('p');
+        p3.className = 'text-gray-500 text-sm mt-2';
+        p3.textContent = '可能尚未達到最低打席/投球門檻';
+        nd.textContent = '';
+        nd.appendChild(p1);
+        nd.appendChild(p2);
+        nd.appendChild(p3);
+      }
+    }
+
+    loadPlayer();
+  </script>
+
+</body>
+</html>
