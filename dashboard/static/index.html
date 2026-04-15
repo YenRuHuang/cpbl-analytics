@@ -90,7 +90,7 @@
           <div class="text-xs text-gray-400 mt-0.5">逐球事件</div>
         </div>
         <div class="bg-surface-card border border-surface-border rounded-lg p-3 text-center border-t-2 border-t-cyan-500">
-          <div class="stat-num text-xl font-bold text-white">17</div>
+          <div class="stat-num text-xl font-bold text-white">13</div>
           <div class="text-xs text-gray-400 mt-0.5">API Endpoints</div>
         </div>
         <div class="bg-surface-card border border-surface-border rounded-lg p-3 text-center border-t-2 border-t-green-500">
@@ -267,7 +267,48 @@
         <h3 class="text-lg font-bold text-white">工程架構</h3>
       </div>
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Data Flow (inline) -->
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 mb-6 overflow-x-auto">
+        <div class="flex items-center gap-2 flex-nowrap min-w-max text-xs">
+          <!-- Sources -->
+          <div class="flex flex-col gap-1.5">
+            <div class="border border-green-500/50 text-green-400 rounded-md px-3 py-1.5 bg-green-500/5">Rebas Open Data<br/><span class="text-[10px] opacity-60">JSON / GitHub</span></div>
+            <div class="border border-green-500/50 text-green-400 rounded-md px-3 py-1.5 bg-green-500/5">CPBL 官網 API<br/><span class="text-[10px] opacity-60">POST /getlive</span></div>
+          </div>
+          <span class="text-gray-500 text-lg">→</span>
+          <!-- ETL -->
+          <div class="border border-yellow-500/50 text-yellow-400 rounded-md px-3 py-2 bg-yellow-500/5 text-center">
+            Python ETL<br/><span class="text-[10px] opacity-60">合併 + 驗證 + 冪等寫入</span>
+          </div>
+          <span class="text-gray-500 text-lg">→</span>
+          <!-- DB -->
+          <div class="border border-violet-500/50 text-violet-400 rounded-md px-3 py-2 bg-violet-500/5 text-center">
+            SQLite (WAL)<br/><span class="text-[10px] opacity-60">9 tables / 140K rows</span>
+          </div>
+          <span class="text-gray-500 text-lg">→</span>
+          <!-- Analysis -->
+          <div class="border border-sky-500/50 text-sky-400 rounded-md px-3 py-2 bg-sky-500/5 text-center">
+            分析引擎<br/><span class="text-[10px] opacity-60">4 模組 + 6 計算腳本</span>
+          </div>
+          <span class="text-gray-500 text-lg">→</span>
+          <!-- Static JSON -->
+          <div class="border border-orange-500/50 text-orange-400 rounded-md px-3 py-2 bg-orange-500/5 text-center">
+            242 JSON<br/><span class="text-[10px] opacity-60">靜態匯出</span>
+          </div>
+          <span class="text-gray-500 text-lg">→</span>
+          <!-- CF Pages -->
+          <div class="border border-pink-500/50 text-pink-400 rounded-md px-3 py-2 bg-pink-500/5 text-center">
+            Cloudflare Pages<br/><span class="text-[10px] opacity-60">Global CDN</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-3 text-[10px] text-gray-500">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500/30 border border-emerald-500/50"></span>
+          GitHub Actions 每日 06:00 (台灣) 自動執行完整管線
+        </div>
+      </div>
+
+      <!-- Engineering cards + Tech Decisions -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <a href="architecture.html#etl" class="group block text-center bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-blue-500/40">
           <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">&#128260;</div>
           <h2 class="text-sm font-bold text-white mb-1">ETL 管線</h2>
@@ -276,18 +317,52 @@
         <a href="api-docs.html" class="group block text-center bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-cyan-500/40">
           <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">&#128268;</div>
           <h2 class="text-sm font-bold text-white mb-1">API 設計</h2>
-          <p class="text-gray-400 text-xs">17 RESTful Endpoints</p>
+          <p class="text-gray-400 text-xs">13 RESTful Endpoints</p>
         </a>
         <a href="architecture.html#database" class="group block text-center bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-emerald-500/40">
           <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">&#128451;</div>
           <h2 class="text-sm font-bold text-white mb-1">資料庫</h2>
-          <p class="text-gray-400 text-xs">8 Tables, WAL Mode</p>
+          <p class="text-gray-400 text-xs">9 Tables, WAL Mode</p>
         </a>
         <a href="architecture.html#cicd" class="group block text-center bg-surface-card border border-surface-border rounded-xl p-5 transition-all duration-200 hover:border-amber-500/40">
           <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">&#9881;</div>
           <h2 class="text-sm font-bold text-white mb-1">DevOps</h2>
           <p class="text-gray-400 text-xs">Docker + CI/CD + Daily Cron</p>
         </a>
+      </div>
+
+      <!-- Key Technical Decisions -->
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5">
+        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-4">Key Technical Decisions</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+          <div>
+            <div class="text-white font-semibold text-xs mb-1">為什麼用 SQLite？</div>
+            <p class="text-gray-400 text-xs leading-relaxed">14 萬行資料，SQLite 綽綽有餘且零維護。WAL mode 支持讀寫並行。規模長大後可遷 PostgreSQL。</p>
+          </div>
+          <div>
+            <div class="text-white font-semibold text-xs mb-1">為什麼分 batter_box 和 PA 兩層？</div>
+            <p class="text-gray-400 text-xs leading-relaxed">彙總表（AVG/OPS）和事件表（RE24/Clutch）粒度不同。batter_box 還有來源獨有的 LOB 欄位。</p>
+          </div>
+          <div>
+            <div class="text-white font-semibold text-xs mb-1">雙資料源怎麼合併？</div>
+            <p class="text-gray-400 text-xs leading-relaxed">用 (game_date, home_team, away_team) 做 game-level 對齊。CPBL 缺 player_id，建 player_mapping 表對照。</p>
+          </div>
+          <div>
+            <div class="text-white font-semibold text-xs mb-1">為什麼靜態 JSON 不用即時 API？</div>
+            <p class="text-gray-400 text-xs leading-relaxed">棒球資料每日只更新一次。靜態匯出 = CDN 分發，零伺服器成本，延遲 < 50ms。</p>
+          </div>
+          <div>
+            <div class="text-white font-semibold text-xs mb-1">冪等 ETL 怎麼做？</div>
+            <p class="text-gray-400 text-xs leading-relaxed">INSERT OR IGNORE + UNIQUE constraint。重跑不會產生重複資料，CI/CD 每日安全執行。</p>
+          </div>
+          <div>
+            <div class="text-white font-semibold text-xs mb-1">小樣本怎麼處理？</div>
+            <p class="text-gray-400 text-xs leading-relaxed">CPBL 一季 ~120 場。min_pa/min_ip 動態門檻：賽季初鬆（PA≥20），滿季收緊（PA≥50）。</p>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-surface-border">
+          <a href="architecture.html" class="text-brand text-xs hover:underline">查看完整架構文件 + ER Diagram →</a>
+        </div>
       </div>
     </div>
   </section>
