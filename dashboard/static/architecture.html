@@ -426,7 +426,147 @@
         </table>
       </div>
 
-      <!-- Relationships -->
+      <!-- ER Diagram -->
+      <div class="mt-5 bg-surface-card border border-surface-border rounded-xl p-6">
+        <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-violet-400 inline-block"></span>
+          Entity-Relationship Diagram
+        </h3>
+        <div class="overflow-x-auto">
+          <svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" class="w-full min-w-[700px]" style="font-family: ui-monospace, monospace;">
+            <!-- Relationship lines (drawn first, behind boxes) -->
+            <!-- games → plate_appearances -->
+            <line x1="200" y1="130" x2="200" y2="240" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="208" y="188" fill="#6b7280" font-size="10">1:N</text>
+            <!-- games → batter_box -->
+            <line x1="130" y1="130" x2="50" y2="240" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="72" y="188" fill="#6b7280" font-size="10">1:N</text>
+            <!-- games → pitcher_box -->
+            <line x1="270" y1="130" x2="400" y2="240" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="345" y="188" fill="#6b7280" font-size="10">1:N</text>
+            <!-- plate_appearances → pitch_events -->
+            <line x1="200" y1="340" x2="200" y2="430" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="208" y="388" fill="#6b7280" font-size="10">1:N</text>
+            <!-- players → batter_box -->
+            <line x1="680" y1="100" x2="120" y2="240" stroke="#4b5563" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+            <!-- players → pitcher_box -->
+            <line x1="680" y1="100" x2="440" y2="240" stroke="#4b5563" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+            <!-- players → plate_appearances (batter_id, pitcher_id) -->
+            <line x1="680" y1="120" x2="280" y2="260" stroke="#4b5563" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+            <!-- player_mapping → players -->
+            <line x1="780" y1="240" x2="740" y2="145" stroke="#4b5563" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+
+            <!-- ════ GAMES TABLE ════ -->
+            <g>
+              <rect x="80" y="30" width="240" height="100" rx="8" fill="#252e3e" stroke="#a78bfa" stroke-width="1.5"/>
+              <rect x="80" y="30" width="240" height="28" rx="8" fill="#a78bfa" fill-opacity="0.15"/>
+              <text x="200" y="50" fill="#a78bfa" font-size="13" font-weight="bold" text-anchor="middle">games</text>
+              <text x="92" y="72" fill="#d1d5db" font-size="10">PK game_id</text>
+              <text x="92" y="86" fill="#9ca3af" font-size="10">game_date, home_team, away_team</text>
+              <text x="92" y="100" fill="#9ca3af" font-size="10">year, venue, kind_code, source</text>
+              <text x="92" y="118" fill="#6b7280" font-size="9">UNIQUE(game_date, home_team, away_team)</text>
+            </g>
+
+            <!-- ════ BATTER_BOX ════ -->
+            <g>
+              <rect x="0" y="240" width="200" height="90" rx="8" fill="#252e3e" stroke="#38bdf8" stroke-width="1.5"/>
+              <rect x="0" y="240" width="200" height="28" rx="8" fill="#38bdf8" fill-opacity="0.15"/>
+              <text x="100" y="260" fill="#38bdf8" font-size="13" font-weight="bold" text-anchor="middle">batter_box</text>
+              <text x="12" y="282" fill="#d1d5db" font-size="10">FK game_id, player_id</text>
+              <text x="12" y="296" fill="#9ca3af" font-size="10">ab, h, bb, so, hr, rbi, r, sb</text>
+              <text x="12" y="310" fill="#9ca3af" font-size="10">lob, left_behind_lob</text>
+              <text x="12" y="322" fill="#6b7280" font-size="9">UNIQUE(game_id, player_id)</text>
+            </g>
+
+            <!-- ════ PLATE_APPEARANCES ════ -->
+            <g>
+              <rect x="100" y="240" width="200" height="100" rx="8" fill="#252e3e" stroke="#facc15" stroke-width="1.5" transform="translate(10,100) scale(1,1)"/>
+              <rect x="110" y="240" width="200" height="100" rx="8" fill="#252e3e" stroke="#facc15" stroke-width="1.5"/>
+              <rect x="110" y="240" width="200" height="28" rx="8" fill="#facc15" fill-opacity="0.15"/>
+              <text x="210" y="260" fill="#facc15" font-size="13" font-weight="bold" text-anchor="middle">plate_appearances</text>
+              <text x="122" y="282" fill="#d1d5db" font-size="10">FK game_id</text>
+              <text x="122" y="296" fill="#9ca3af" font-size="10">batter_id, pitcher_id, inning</text>
+              <text x="122" y="310" fill="#9ca3af" font-size="10">outs_before, runners_before</text>
+              <text x="122" y="324" fill="#9ca3af" font-size="10">result, runs_scored, rbi</text>
+            </g>
+
+            <!-- ════ PITCHER_BOX ════ -->
+            <g>
+              <rect x="340" y="240" width="200" height="90" rx="8" fill="#252e3e" stroke="#38bdf8" stroke-width="1.5"/>
+              <rect x="340" y="240" width="200" height="28" rx="8" fill="#38bdf8" fill-opacity="0.15"/>
+              <text x="440" y="260" fill="#38bdf8" font-size="13" font-weight="bold" text-anchor="middle">pitcher_box</text>
+              <text x="352" y="282" fill="#d1d5db" font-size="10">FK game_id, player_id</text>
+              <text x="352" y="296" fill="#9ca3af" font-size="10">ip, pitch_count, h, r, er</text>
+              <text x="352" y="310" fill="#9ca3af" font-size="10">bb, so, hr</text>
+              <text x="352" y="322" fill="#6b7280" font-size="9">UNIQUE(game_id, player_id)</text>
+            </g>
+
+            <!-- ════ PITCH_EVENTS ════ -->
+            <g>
+              <rect x="110" y="430" width="200" height="80" rx="8" fill="#252e3e" stroke="#fb923c" stroke-width="1.5"/>
+              <rect x="110" y="430" width="200" height="28" rx="8" fill="#fb923c" fill-opacity="0.15"/>
+              <text x="210" y="450" fill="#fb923c" font-size="13" font-weight="bold" text-anchor="middle">pitch_events</text>
+              <text x="122" y="472" fill="#d1d5db" font-size="10">FK game_id, pa_seq</text>
+              <text x="122" y="486" fill="#9ca3af" font-size="10">pitch_seq, pitch_result</text>
+              <text x="122" y="500" fill="#9ca3af" font-size="10">balls_before, strikes_before</text>
+            </g>
+
+            <!-- ════ PLAYERS ════ -->
+            <g>
+              <rect x="600" y="50" width="200" height="90" rx="8" fill="#252e3e" stroke="#4ade80" stroke-width="1.5"/>
+              <rect x="600" y="50" width="200" height="28" rx="8" fill="#4ade80" fill-opacity="0.15"/>
+              <text x="700" y="70" fill="#4ade80" font-size="13" font-weight="bold" text-anchor="middle">players</text>
+              <text x="612" y="92" fill="#d1d5db" font-size="10">PK player_id</text>
+              <text x="612" y="106" fill="#9ca3af" font-size="10">name_zh, name_en, team</text>
+              <text x="612" y="120" fill="#9ca3af" font-size="10">position, bats, throws</text>
+            </g>
+
+            <!-- ════ PLAYER_MAPPING ════ -->
+            <g>
+              <rect x="660" y="200" width="220" height="80" rx="8" fill="#252e3e" stroke="#34d399" stroke-width="1.5"/>
+              <rect x="660" y="200" width="220" height="28" rx="8" fill="#34d399" fill-opacity="0.15"/>
+              <text x="770" y="220" fill="#34d399" font-size="13" font-weight="bold" text-anchor="middle">player_mapping</text>
+              <text x="672" y="242" fill="#d1d5db" font-size="10">cpbl_name → rebas_player_id</text>
+              <text x="672" y="256" fill="#9ca3af" font-size="10">confidence score</text>
+              <text x="672" y="270" fill="#6b7280" font-size="9">解決 CPBL 無 player_id 問題</text>
+            </g>
+
+            <!-- ════ RUN_EXPECTANCY ════ -->
+            <g>
+              <rect x="660" y="340" width="220" height="80" rx="8" fill="#252e3e" stroke="#f472b6" stroke-width="1.5"/>
+              <rect x="660" y="340" width="220" height="28" rx="8" fill="#f472b6" fill-opacity="0.15"/>
+              <text x="770" y="360" fill="#f472b6" font-size="13" font-weight="bold" text-anchor="middle">run_expectancy_matrix</text>
+              <text x="672" y="382" fill="#d1d5db" font-size="10">PK (year, base_state, outs)</text>
+              <text x="672" y="396" fill="#9ca3af" font-size="10">expected_runs, sample_size</text>
+              <text x="672" y="410" fill="#6b7280" font-size="9">24 states × RE24 + Leverage</text>
+            </g>
+
+            <!-- ════ ANALYSIS_CACHE ════ -->
+            <g>
+              <rect x="660" y="450" width="220" height="60" rx="8" fill="#252e3e" stroke="#6b7280" stroke-width="1" stroke-dasharray="4,3"/>
+              <rect x="660" y="450" width="220" height="28" rx="8" fill="#6b7280" fill-opacity="0.1"/>
+              <text x="770" y="470" fill="#6b7280" font-size="13" font-weight="bold" text-anchor="middle">analysis_cache</text>
+              <text x="672" y="492" fill="#9ca3af" font-size="10">cache_key, result_json, ttl</text>
+            </g>
+
+            <!-- Legend -->
+            <g transform="translate(400, 440)">
+              <text x="0" y="14" fill="#6b7280" font-size="10" font-weight="bold">LEGEND</text>
+              <line x1="0" y1="28" x2="30" y2="28" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <text x="36" y="32" fill="#6b7280" font-size="10">Foreign Key (1:N)</text>
+              <line x1="0" y1="48" x2="30" y2="48" stroke="#4b5563" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+              <text x="36" y="52" fill="#6b7280" font-size="10">Reference (player lookup)</text>
+            </g>
+          </svg>
+        </div>
+        <p class="text-xs text-gray-500 mt-3">
+          核心資料流：<span class="text-violet-400">games</span> → <span class="text-yellow-400">plate_appearances</span> → <span class="text-orange-400">pitch_events</span>（逐球事件鏈）。
+          <span class="text-sky-400">batter_box</span> / <span class="text-sky-400">pitcher_box</span> 為每場比賽的彙總統計。
+          <span class="text-green-400">player_mapping</span> 解決 CPBL API 缺少 player_id 的問題。
+        </p>
+      </div>
+
+      <!-- Relationships (text version) -->
       <div class="mt-5 bg-surface-card border border-surface-border rounded-xl p-6">
         <h3 class="text-sm font-bold text-gray-300 mb-4">關鍵關係</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">

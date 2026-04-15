@@ -1,6 +1,107 @@
-# Rebas 面試筆記
+# Rebas 面試準備
 
-## 開場怎麼說（30 秒版）
+> 面試官：KJ Chiu（CEO）
+> 時間：2026/04/20-23 擇一（04/16 18:00 前回覆）
+> 地點：台北市大安區和平東路二段 201 號 3 樓（可線上）
+
+---
+
+## 面試結構
+
+| 階段 | 時長 | 主題 |
+|------|------|------|
+| 前半 | 30 min | 情境模擬：地端/雲端/Hybrid 系統設計 + 棒球數據資料庫設計 |
+| 後半 | 30 min | 自我介紹 + 技術實作經歷分享 |
+
+---
+
+# Part 1：情境模擬
+
+## 情境 A：系統架構（地端/雲端/Hybrid）
+
+### 我的實戰經驗
+
+| 架構模式 | 我做過什麼 | 可以延伸的思考 |
+|---------|----------|-------------|
+| **雲端** | Cloudflare Workers + D1 + KV + Pages（CPBL + TPVL 投票） | Serverless 適合流量不穩定的場景 — 球季中 vs 休賽期差 10 倍 |
+| **Hybrid** | 本地 Python ETL → 雲端 D1 儲存 → CDN 前端 | 計算密集（分析）放本地/CI，查詢服務放雲端 |
+| **CI/CD** | GitHub Actions cron（每日 6am 自動更新數據） | 排程 ETL 是 Hybrid 的典型模式 |
+| **快取** | KV 60s TTL 排名快取（TPVL），analysis_cache 表（CPBL） | 不同層級的快取策略：CDN > KV > DB cache > 重新計算 |
+
+### 如果問「幫 Rebas 設計系統架構」
+
+> 前提：球季中每天 1-4 場比賽，每場 ~300 打席 + ~900 投球。非比賽日幾乎零流量。
+
+**資料收集層（地端）**
+- Trackman/影像數據 → 本地處理（球速、轉速、落點需要 GPU 運算）
+- 文字記錄（box score、play-by-play）→ 可以純雲端 API
+
+**儲存層（雲端）**
+- 關聯式 DB（PostgreSQL）存事實表：games / PA / pitch events
+- 球員、球隊、球場等維度表
+- derived tables（wOBA、WAR、Park Factor）→ materialized view
+
+**服務層（雲端）**
+- API Server 提供即時查詢
+- background job：每場結束後重算排行
+- CDN 快取球員頁面（變動頻率低）
+
+**為什麼 Hybrid？**
+- 影像/Trackman 資料量大，處理完再上傳比較省
+- 球場網路不穩定，本地先存保底
+- ML 模型訓練需要 GPU，雲端 GPU 太貴
+
+### 架構關鍵詞
+
+- **Event Sourcing**：逐球事件是不可變的事實流，分析是投影
+- **CQRS**：寫入（ETL）和讀取（API/Dashboard）分離
+- **冪等性**：重跑 ETL 不會產生重複資料（INSERT OR IGNORE + UNIQUE constraint）
+
+---
+
+## 情境 B：棒球數據資料庫設計
+
+### 面試時打開 cpblanalysis.mursfoto.com/architecture.html 秀 ER Diagram
+
+核心設計思路：
+
+```
+games (一場比賽)
+  ├── plate_appearances (每個打席 — 核心事件表)
+  │     └── pitch_events (每一球)
+  ├── batter_box (打者單場彙總)
+  └── pitcher_box (投手單場彙總)
+
+players (球員主檔)
+player_mapping (CPBL 名字 ↔ Rebas ID 對照)
+run_expectancy_matrix (24 states RE24 矩陣)
+```
+
+### 預期追問 & 回答
+
+**Q: batter_box 和 plate_appearances 不是重複嗎？**
+> batter_box 是「彙總統計」（一場幾安幾打幾分），PA 是「逐打席事件」（三局二打席，壘上一三壘，結果二壘打）。前者算 AVG/OPS，後者算 RE24/Clutch/Count Splits。粒度不同，用途不同。
+
+**Q: 為什麼不直接從 PA 算 batter_box？**
+> 可以，但 batter_box 有些欄位是來源直接提供的（LOB、left_behind_lob），不是從 PA 算得出來的。而且做 season aggregate 查詢效能好很多。
+
+**Q: player_mapping 是怎麼回事？**
+> CPBL 官方 API 不給 player_id，只給中文名字。同名球員可能存在。建了對照表把名字對應到 Rebas player_id，有 confidence score，邊界情況手動維護。
+
+**Q: RE24 矩陣怎麼做？**
+> 24 個狀態（0-2 出局 × 8 壘包組合），每個狀態的「預期得分」從歷史 PA 算出。目前用 MLB proxy 因為 CPBL 樣本不夠，等累積 3-5 年後校正。用來算 Leverage Index 和 Clutch Score。
+
+**Q: 加球種/轉速/球速，schema 怎麼改？**
+> pitch_events 加 `pitch_type`、`velocity`、`spin_rate`、`plate_x`、`plate_z`。如果有 Trackman 可能還加 `release_pos_x/y/z`、`break_x/z`。都是 per-pitch 維度，自然延伸，不需要新表。
+
+**Q: 效能考量？**
+> PA 28K 行、pitch_events 112K 行 — SQLite 綽綽有餘。CPBL 5 年歷史 + Trackman 可能到百萬級 → PostgreSQL + partition by season。索引策略：`(game_id, batter_id)` 和 `(pitcher_id, game_id)` 是最常用查詢路徑。
+
+---
+
+# Part 2：自我介紹 + 技術故事
+
+## 開場（30 秒）
 
 「我的背景比較特別 — 我是職業運動攝影師，同時也是三個 Fantasy Baseball 聯盟的重度玩家，對棒球數據不陌生。技術上我不是傳統的後端工程師，我比較像是 builder — 我擅長把各種工具和技術串在一起，快速把一個想法變成可以跑的系統。
 
@@ -8,156 +109,110 @@
 
 ---
 
-## 為什麼要我
+## 技術故事（主力兩個 + 一個備用）
 
-### 我已經在這個產業裡面了
+### ★ 故事 A：雙資料源合併（資料整合）
 
-我本身就是 CPBL / PLG / T1 的現場攝影師，不是從外面看棒球的人。如果以後要跟球團談 Trackman 數據合作或是球場技術整合，我有現成的人脈和場域理解。
+> Rebas 有完整逐球資料但缺 LOB，CPBL API 有 LOB 但缺 play-by-play。
 
-### 我每天都泡在 MLB 數據裡
+**挑戰？** 兩個來源沒有 shared ID。CPBL API 連 player_id 都沒有。
 
-我幾乎每天都在看 Baseball Savant 跟 FanGraphs，也每天看 MLB 比賽，跟朋友討論。三個 Fantasy Baseball 聯盟、177 筆 scout notes。你們在做的事情 — 把 FanGraphs / Savant 等級的分析帶到中職 — 我太清楚那個標準長什麼樣了。
+**怎麼做的？**
+1. 用 `(game_date, home_team, away_team)` 做 game-level 合併
+2. 建 player_mapping 表對照名字 → ID
+3. ETL 設計成冪等 — 重跑安全，不會重複
 
-我知道 Savant 的 percentile ranking 怎麼呈現、FanGraphs 的 Splits 頁怎麼設計、Statcast 的 launch angle + exit velo 搜尋器怎麼用。你們的 Rzone 就是 CPBL 版的 Savant zone chart，你們的 PR 表就是 percentile ranking。我不是只會算 wOBA 的公式，我是每天都在用這些工具的人。這代表我寫出來的功能不只是「數學正確」，還會知道「球迷期待的體驗是什麼」。
+**對 Rebas 的意義？** 「這就是你們每天在處理的問題 — Trackman 資料、影像標記、文字記錄，三個來源要合在一起。我已經處理過兩個來源的合併，知道最難的不是 code，是資料對齊。」
 
-### 我可以快速把東西做出來
+### ★ 故事 B：從靜態 HTML 到 CI/CD 自動化（架構演進）
 
-我的強項不是「我精通某一個框架」，而是「你給我一個問題，我可以很快找到對的工具把它解決」。這次的 portfolio 就是例子 — ETL、DB、API、前端、CI/CD、部署，一週內從零到上線。我接觸過的技術夠多，不會卡在「這個我沒用過所以不會」。
+> 一開始只是幾張靜態 HTML + ECharts 圖表，後來長成完整自動化系統。
 
-### 我是付費會員，我理解你們的產品
+**演進過程？**
+1. v1：手動跑 script → 手動改 HTML
+2. v2：FastAPI 提供 API → 前端讀 JSON
+3. v3：GitHub Actions 每日 cron → 自動 seed + export + deploy
 
-我訂閱了之後花了很多時間研究每一個功能 — Rzone、投打對決、配球策略、WE/RE 矩陣。我不會進去之後還要花一個月搞懂你們的系統在幹嘛。
+**對 Rebas 的意義？** 「每次迭代都是實際需求驅動。加 API 是因為手動改資料太痛苦；加 CI/CD 是因為球季中每天有比賽，手動更新不可能持續。我習慣從最小可行版本開始，根據實際痛點逐步升級架構。」
 
-### Python + AI 工具是你們需要但可能缺的
+### 備用：AB/H 反轉 Bug（資料品質）
 
-你們主要用 NodeJS，但像人工標記自動化、數據計算、wRC+ / WAR 這類東西，Python 在 ML 和數據處理上就是比較強。另外我平常大量使用 AI 開發工具，對怎麼把 AI 整合進工作流程很有經驗 — 不管是加速開發還是自動化重複性工作。
+> 如果聊到資料品質時自然帶出
 
----
+CPBL 資料裡打數和安打對調了。匯入後全聯盟打擊率 300%+，不合理。ETL 加了 sanity check — `h > ab` 自動交換 + 告警。
 
-## 我看完你們產品之後的想法
-
-> 語氣：不是批評，是「如果我進來，我會想先處理這些」
-
-### 前端效能
-
-首頁一次載入 166 張圖片，但沒有一張有用 lazy loading。加上去就能馬上改善首次載入速度，這種事情半天就可以做完。
-
-字體的部分，因為用了 Google Fonts 的 Noto Sans TC，一個頁面要載入 18 個 woff2 分片。如果自己 subset 常用的三千多個漢字，可以壓到 2-3 個請求就好。
-
-圖片目前還在用 PNG 和 JPG，沒有 WebP。轉成 WebP 大概可以省掉三成的圖片體積。
-
-### SEO 是個大問題
-
-目前整站是 Create React App 的 SPA 架構（CSR），頁面內容完全靠 JavaScript render。Google 爬蟲雖然可以跑 JS，但效果跟 SSR 差很多。像球員頁面、排行榜這些本來很適合被搜尋到的頁面，現在可能根本沒被好好索引。
-
-具體缺的東西：沒有 canonical 標籤、沒有 JSON-LD 結構化資料、沒有 preconnect hints。球員頁面很適合用 schema.org 的 Person 標記，排行榜適合用 Table 標記，這些加了就有機會在 Google 搜尋結果拿到 rich snippet。
-
-如果要根本解決，長期考慮遷移到 Next.js 做 SSR。不然至少做個 pre-rendering。
-
-### 手機版體驗
-
-進階數據的排行榜有 17 個以上的欄位，在手機上全部擠在一起幾乎看不到數字。比較好的做法是把球員名字固定在左邊，其他欄位可以水平滾動。或者提供一個「精簡模式」只顯示最重要的 5-6 個欄位。
-
-球員頁的上半部也是，PR 表 + 落點圖 + 成績表在手機上全部擠在一起。改成垂直堆疊加上可收合的面板會好很多。
-
-Nav 在窄螢幕的時候沒有變成 hamburger menu，文字只是縮小。「分析工具」和「新數據」的下拉選單在手機上特別難點。
-
-### 功能面（很多可以參考 MLB 的做法）
-
-1. **球員比較** — FanGraphs 有一個比較工具可以把兩個球員的數據疊在一起看。你們目前只能看一個球員的頁面，如果可以做 side-by-side 的 PR 表和 Rzone 比較，球迷在討論「張育成跟林安可誰比較強」的時候就會直接貼你們的連結
-2. **篩選條件 Deep Link** — Savant 的搜尋器做得很好，篩選條件都會寫進 URL，可以直接把一個很複雜的查詢結果分享給朋友。你們 Rzone 的篩選功能很強（對手、球數、壘包都有），但篩完之後 URL 不會變，沒辦法分享
-3. **排行榜可排序** — FanGraphs 的排行榜每個欄位都可以點擊排序，這是很基本但很實用的功能
-4. **Savant 風格的搜尋器** — 長期可以考慮做一個類似 Savant Statcast Search 的工具，讓進階用戶可以用多條件交叉查詢逐球資料。你們的資料粒度已經夠了，只是缺一個前端介面
-5. **API 參數小 bug** — 排行榜的 API 請求帶了 `pa=undefined`，前端發請求之前應該清一下參數
-
-### 無障礙
-
-有 50 張圖片缺 alt text、5 個按鈕沒有 aria-label、11 個空連結。這些修起來不難但對 Lighthouse 分數影響很大。
-
-### 人工標記流程
-
-從「專屬功能」頁可以看到，每場比賽的逐球球種 / 進壘點都需要人工標記，目前 2026 球季已完成 13 場。你們同時在徵 4 名影像紀錄員，代表這個流程是靠人力在撐的。
-
-如果我進來，我想做的第一件事就是研究能不能用 ML 做預標記 — 用歷史資料訓練一個分類器（投手慣用球種配比 + 球速區間 → 球種預測），標記人員只需要校正模型標錯的部分，速度可以快很多。這剛好是 Python 擅長的事。
-
----
-
-## 你們即將推出的功能，我做了功課
-
-### wRC+
-
-你們的方案頁寫到「打者 wRC+ 即將推出」。我知道公式是從 wOBA 延伸的：
-
-```
-wRC+ = ((wOBA - 聯盟wOBA) / wOBA_scale + 聯盟R/PA) / 聯盟R/PA × 100
-```
-
-你們已經有 wOBA 了，所以 wRC+ 最難的部分其實是 Park Factor。CPBL 五個主場的打擊環境差蠻多的 — 洲際跟大巨蛋就差很遠。Park Factor 要用多少年的資料來算、怎麼處理球場整修後的資料斷裂，這些是 CPBL 特有的問題。
-
-我有用我自己 DB 裡的 2025 全季資料試算過，可以聊聊我遇到的坑。
-
-### 聯盟平均本壘板紀律
-
-你們球員 Rzone 頁已經有分區（核心 / 邊線 / 追打 / 無效區），也有標示聯盟平均的欄位但還沒完整。
-
-做聯盟平均要注意的是不能只算一個「大平均」— 左打右打要分開、球數情境也要分開。打者領先時的追打率跟打者落後時差很多，混在一起就失去參考價值了。
-
-### 打者 WAR
-
-你們目前只有投手 WAR（tRA-based），打者 WAR 更複雜一層：
-
-```
-Batting Runs + Baserunning Runs + Fielding Runs + 守位調整 + 聯盟調整 + 替補水準
-```
-
-最難的是守備評價。沒有 Statcast 的情況下，可以用 RF/9 + 你們已有的守備指標做近似，但要老實說這部分的精度不如 MLB 的 UZR/DRS。不過 FanGraphs 早期也是用比較粗的守備模型在算，CPBL 用類似的方法也完全合理。
-
----
-
-## 接觸過的技術（對應職缺要求）
-
-| 他們寫的 | 我的狀況 |
-|---------|---------|
-| 1 年+ 後端開發 | 不是傳統後端工程師出身，但這套系統就是完整的後端：ETL + DB + API + CI/CD，從零到部署 |
-| 雲端服務 (GCP/AWS/Azure) | 用過 Cloudflare Pages + Workers + D1。有評估過 GCP，理解雲端服務的概念 |
-| 關聯式資料庫 | SQLite 9 張表、設計過 index 策略、WAL mode。理解 SQL、join、schema design |
-| NodeJS | 主力是 Python，NodeJS 不算熟但接觸過 npm 生態系。學習新框架對我來說不是障礙 |
-| Git | GitHub Actions CI/CD pipeline，每日 cron job。日常都用 Git |
-| 棒球知識（加分） | 三個 Fantasy 聯盟 + 職業棒球攝影 + 四個分析模組。真的懂棒球 |
-| 外部 API 串接（加分） | 串過 CPBL API、Rebas JSON、Yahoo Fantasy API、Discord Webhook、Spotify API |
-| Python（加分） | 目前最熟的語言，portfolio 全 Python |
-| Docker（加分） | 寫過 multi-stage Dockerfile + docker-compose |
-| 獨立開發能力（加分） | 整套系統一個人做完，這就是我的強項 |
-| 前端開發能力（加分） | ECharts + Tailwind dashboard，不是前端專家但做得出來 |
-| 金流串接（加分） | 沒有直接經驗，但理解第三方金流 API 的整合模式 |
+**一句話版：** 「外部資料永遠不可信，ETL 層必須有 validation。你們的人工標記流程很重視品質，我在資料管線也是用同樣的態度。」
 
 ---
 
 ## 我的 Portfolio 數字
 
-377 場比賽 / 28,502 打席 / 111,983 逐球事件 / 9 張 DB 表 / 17 個 API / 168 個測試 / 84% 覆蓋率 / GitHub Actions 每日自動更新 / Cloudflare Pages 部署
+377 場比賽 / 28,502 打席 / 111,983 逐球事件 / 9 張表 / 17 個 API / 168 個 pytest / 84% coverage / 每日自動更新 / Cloudflare Pages 部署
 
 線上：https://cpblanalysis.mursfoto.com
 
 ---
 
-## 不要說的
+## 30 秒回覆清單
 
-- 不說「爬蟲」→ 說「資料整合」
-- 不說「你們的網站有問題」→ 說「我看到一些可以優化的地方」
-- 不用「Vibe Coding」這個詞 → 但可以說「我善用 AI 工具加速開發」
-- 不跟 Rebas 比數據深度 → 強調我的建造能力和 domain knowledge
-- 不假裝自己是資深後端 → 誠實說我是 builder，學什麼都很快
-- 不批評人工標記 → 說「這個流程如果加上 ML 預標記可以更快」
-
----
-
-## 如果他們問「你的後端經驗好像不是很多」
-
-「對，我不是從大公司出來的後端工程師。但你們看到的這個 portfolio 是真的能跑的系統，不是教學練習。我的優勢是我學東西很快、我能獨立把一個完整的東西做出來、而且我真的懂你們的 domain。NodeJS 我不熟沒錯，但 Python 到 NodeJS 的轉換不難，核心的後端概念 — API 設計、DB、快取、部署 — 是一樣的。比起找一個很懂 NodeJS 但要花三個月搞懂棒球數據的人，我覺得我上手的總時間更短。」
+| 問題 | 回答 |
+|------|------|
+| 後端經驗多久？ | 不是大公司出來的，但這套系統是完整後端：ETL + DB + API + CI/CD，一個人從零到上線 |
+| 不會 NodeJS？ | 主力 Python，後端核心概念相通。比找一個會 NodeJS 但要花三個月搞懂棒球的人更快上手 |
+| 為什麼選 SQLite？ | 12 萬行綽綽有餘且零維護。規模長大後遷移 PostgreSQL 很簡單 |
+| 為什麼選 Cloudflare？ | 免費、全球 CDN、Serverless 按用量計費。球季流量波動大，比固定 VM 省 |
+| 怎麼測試？ | 168 個 pytest，84% coverage。ETL 有 integration test 打真實 SQLite |
+| 你的專案跟我們有什麼不同？ | 做「延伸分析」（LOB%/Clutch/Fatigue），不重複你們的核心指標。進去後可整合 |
+| 為什麼選我們不選大公司？ | 我想做棒球數據。台灣做這件事的就是你們，沒有第二家。全遠端讓我繼續在球場拍照 |
+| 後端經驗不夠多？ | 我學東西快、能獨立做出完整系統、真的懂 domain。上手總時間比純工程師短 |
 
 ---
 
-## 如果他們問「為什麼選我們不選大公司」
+## 絕對不要說的
 
-「因為我想做的就是棒球數據這件事。我每天都在看 Savant 跟 FanGraphs，我知道 MLB 的數據產品做到什麼程度，我也很清楚你們在把同樣的東西帶到中職。台灣做這件事的公司就是你們，沒有第二家。我不是找一份純軟體工程的工作，我是想把我對棒球的熱情跟建造能力結合在一起。而且全遠端讓我可以繼續在球場拍照，兩邊不衝突。」
+- ❌「爬蟲」→ ✅「資料整合」
+- ❌「你們的網站有問題」→ ✅「我看到一些可以優化的地方」
+- ❌「Vibe Coding」→ ✅「我善用 AI 工具加速開發」
+- ❌ 跟 Rebas 比數據深度 → ✅ 強調建造能力和 domain knowledge
+- ❌ 假裝資深後端 → ✅ 誠實說是 builder，學什麼都很快
+- ❌ 批評人工標記 → ✅「加上 ML 預標記可以更快」
+
+---
+
+## 加分話題（他們問到再聊）
+
+### 我研究過你們的產品
+
+> 語氣：不是批評，是「如果我進來，會想處理這些」
+
+- **前端效能**：166 張圖沒 lazy loading、Google Fonts 18 個 woff2 分片可以 subset、圖片沒 WebP
+- **SEO**：CRA SPA 架構，球員頁搜尋不到。加 JSON-LD + canonical，長期考慮 Next.js SSR
+- **手機版**：排行榜 17 欄擠在一起，建議 sticky 球員名 + 水平滾動
+- **功能**：球員比較（side-by-side）、篩選 Deep Link（URL 帶參數）、排行榜可排序
+
+### 你們即將推出的功能
+
+- **wRC+**：公式不難，難的是 Park Factor。CPBL 五個主場差異大，我用 2025 全季資料試算過
+- **聯盟平均本壘板紀律**：左右打要分開、球數情境要分開，不能算一個大平均
+- **打者 WAR**：最難的是守備評價。沒 Statcast 可以用 RF/9 近似，FanGraphs 早期也是這樣
+
+### 人工標記可以用 ML 加速
+
+你們同時在徵 4 名影像紀錄員，代表流程靠人力撐。用歷史資料訓練分類器（投手慣用球種 + 球速區間 → 球種預測），標記人員只需校正模型標錯的部分。Python 擅長的事。
+
+---
+
+## 技術對照表
+
+| 職缺要求 | 我的狀況 |
+|---------|---------|
+| 1 年+ 後端開發 | 完整後端系統：ETL + DB + API + CI/CD，從零到部署 |
+| 雲端服務 | Cloudflare Pages + Workers + D1 + KV。理解雲端概念 |
+| 關聯式資料庫 | SQLite 9 張表、index 策略、WAL mode |
+| NodeJS | 主力 Python，學習新框架不是障礙 |
+| Git | GitHub Actions CI/CD pipeline，每日 cron |
+| 棒球知識（加分） | 三聯盟 Fantasy + 職業棒球攝影 + 四個分析模組 |
+| 外部 API 串接（加分） | CPBL API、Rebas JSON、Yahoo Fantasy、Discord、Spotify |
+| Python（加分） | 最熟的語言，portfolio 全 Python |
+| Docker（加分） | multi-stage Dockerfile + docker-compose |
+| 獨立開發能力（加分） | 整套系統一個人做完 |
